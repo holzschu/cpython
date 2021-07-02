@@ -25,7 +25,6 @@ get_xcframework() {
 }
 
 mkdir -p Python-aux
-pushd Python-aux
 get_xcframework $PYTHON_AUX_RELEASE_URL libffi
 get_xcframework $PYTHON_AUX_RELEASE_URL crypto
 get_xcframework $PYTHON_AUX_RELEASE_URL openssl
@@ -41,8 +40,6 @@ get_xcframework $PYTHON_AUX_RELEASE_URL libexslt
 get_xcframework $PYTHON_AUX_RELEASE_URL libfftw3
 get_xcframework $PYTHON_AUX_RELEASE_URL libfftw3_threads
 get_xcframework $IOS_SYSTEM_RELEASE_URL ios_system
-
-popd
 
 # Set to 1 if you have gfortran for arm64 installed. gfortran support is highly experimental.
 # You might need to edit the script as well.
