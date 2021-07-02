@@ -1,38 +1,46 @@
 #! /bin/sh
 
-curl -OL https://github.com/holzschu/ios_system/releases/download/v2.8.0/ios_error.h
+TARGET_IOS_SYSTEM_VERSION="v2.8.0"
+TARGET_PYTHON_AUX_VERSION="1.0"
+
+PYTHON_AUX_RELEASE_URL="https://github.com/holzschu/Python-aux/releases/download/$TARGET_PYTHON_AUX_VERSION"
+IOS_SYSTEM_RELEASE_URL="https://github.com/holzschu/ios_system/releases/download/$TARGET_IOS_SYSTEM_VERSION"
+
+curl -OL $IOS_SYSTEM_RELEASE_URL/ios_error.h
+
+## Fetch the requested xcframework and unzip it.
+## @param $1 The release URL. Should be $PYTHON_AUX_RELEASE_URL or $IOS_SYSTEM_RELEASE_URL
+## @param $2 The name of the framework. For example, if fetching "libffi.xcframework.zip", $2 would be "libffi".
+get_xcframework() {
+	pushd Python-aux
+
+	echo "Downloading $2..."
+	curl -OL $1/$2.xcframework.zip
+
+	echo "Unzipping $2..."
+	rm -rf $2.xcframework
+	unzip -q $2.xcframework.zip
+
+	popd Python-aux
+}
+
 mkdir -p Python-aux
 pushd Python-aux
-curl -OL https://github.com/holzschu/Python-aux/releases/download/1.0/libffi.xcframework.zip
-curl -OL https://github.com/holzschu/Python-aux/releases/download/1.0/crypto.xcframework.zip
-curl -OL https://github.com/holzschu/Python-aux/releases/download/1.0/openssl.xcframework.zip
-curl -OL https://github.com/holzschu/Python-aux/releases/download/1.0/openblas.xcframework.zip
-curl -OL https://github.com/holzschu/Python-aux/releases/download/1.0/libzmq.xcframework.zip
-curl -OL https://github.com/holzschu/Python-aux/releases/download/1.0/libjpeg.xcframework.zip
-curl -OL https://github.com/holzschu/Python-aux/releases/download/1.0/libtiff.xcframework.zip
-curl -OL https://github.com/holzschu/Python-aux/releases/download/1.0/freetype.xcframework.zip
-curl -OL https://github.com/holzschu/Python-aux/releases/download/1.0/harfbuzz.xcframework.zip
-curl -OL https://github.com/holzschu/Python-aux/releases/download/1.0/libpng.xcframework.zip
-curl -OL https://github.com/holzschu/Python-aux/releases/download/1.0/libxslt.xcframework.zip
-curl -OL https://github.com/holzschu/Python-aux/releases/download/1.0/libexslt.xcframework.zip
-curl -OL https://github.com/holzschu/Python-aux/releases/download/1.0/libfftw3.xcframework.zip
-curl -OL https://github.com/holzschu/ios_system/releases/download/v2.8.0/ios_system.xcframework.zip
-
-rm -rf libffi.xcframework crypto.xcframework openssl.xcframework openblas.xcframework ios_system.xcframework libzmq.xcframework libjpeg.xcframework libtiff.xcframework freetype.xcframework harfbuzz.xcframework libpng.xcframework libxslt.xcframework libexslt.xcframework
-unzip -q libffi.xcframework.zip
-unzip -q crypto.xcframework.zip
-unzip -q openssl.xcframework.zip
-unzip -q openblas.xcframework.zip
-unzip -q libzmq.xcframework.zip
-unzip -q libjpeg.xcframework.zip
-unzip -q libtiff.xcframework.zip
-unzip -q freetype.xcframework.zip
-unzip -q harfbuzz.xcframework.zip
-unzip -q libpng.xcframework.zip
-unzip -q libxslt.xcframework.zip
-unzip -q libexslt.xcframework.zip
-unzip -q libfftw3.xcframework.zip
-unzip -q ios_system.xcframework.zip
+get_xcframework $PYTHON_AUX_RELEASE_URL libffi
+get_xcframework $PYTHON_AUX_RELEASE_URL crypto
+get_xcframework $PYTHON_AUX_RELEASE_URL openssl
+get_xcframework $PYTHON_AUX_RELEASE_URL openblas
+get_xcframework $PYTHON_AUX_RELEASE_URL libzmq
+get_xcframework $PYTHON_AUX_RELEASE_URL libjpeg
+get_xcframework $PYTHON_AUX_RELEASE_URL libtiff
+get_xcframework $PYTHON_AUX_RELEASE_URL freetype
+get_xcframework $PYTHON_AUX_RELEASE_URL harfbuzz
+get_xcframework $PYTHON_AUX_RELEASE_URL libpng
+get_xcframework $PYTHON_AUX_RELEASE_URL libxslt
+get_xcframework $PYTHON_AUX_RELEASE_URL libexslt
+get_xcframework $PYTHON_AUX_RELEASE_URL libfftw3
+get_xcframework $PYTHON_AUX_RELEASE_URL libfftw3_threads
+get_xcframework $IOS_SYSTEM_RELEASE_URL ios_system
 
 popd
 
