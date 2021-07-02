@@ -21,7 +21,7 @@ get_xcframework() {
 	rm -rf $2.xcframework
 	unzip -q $2.xcframework.zip
 
-	popd Python-aux
+	popd
 }
 
 mkdir -p Python-aux
