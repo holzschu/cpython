@@ -1,0 +1,464 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>lxml.doctestcompare module &mdash; lxml  documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+
+  
+  
+  
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="lxml.etree module" href="lxml.etree.html" />
+    <link rel="prev" title="lxml.cssselect module" href="lxml.cssselect.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="index.html" class="icon icon-home" alt="Documentation Home"> lxml
+          
+
+          
+            
+            <img src="_static/python-xml.png" class="logo" alt="Logo"/>
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                4.6.2
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="lxml.html">lxml package</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="lxml.html.html">lxml.html package</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="lxml.html.ElementSoup.html">lxml.html.ElementSoup module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="lxml.html._diffcommand.html">lxml.html._diffcommand module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="lxml.html._setmixin.html">lxml.html._setmixin module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="lxml.html.builder.html">lxml.html.builder module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="lxml.html.clean.html">lxml.html.clean module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="lxml.html.defs.html">lxml.html.defs module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="lxml.html.diff.html">lxml.html.diff module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="lxml.html.formfill.html">lxml.html.formfill module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="lxml.html.html5parser.html">lxml.html.html5parser module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="lxml.html.soupparser.html">lxml.html.soupparser module</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="lxml.isoschematron.html">lxml.isoschematron package</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lxml.ElementInclude.html">lxml.ElementInclude module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lxml._elementpath.html">lxml._elementpath module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lxml.builder.html">lxml.builder module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lxml.cssselect.html">lxml.cssselect module</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">lxml.doctestcompare module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lxml.etree.html">lxml.etree module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lxml.objectify.html">lxml.objectify module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lxml.sax.html">lxml.sax module</a></li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">lxml</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="lxml.html">lxml package</a> &raquo;</li>
+        
+      <li>lxml.doctestcompare module</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/lxml.doctestcompare.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="module-lxml.doctestcompare">
+<span id="lxml-doctestcompare-module"></span><h1>lxml.doctestcompare module<a class="headerlink" href="#module-lxml.doctestcompare" title="Permalink to this headline">¶</a></h1>
+<p>lxml-based doctest output comparison.</p>
+<p>Note: normally, you should just import the <cite>lxml.usedoctest</cite> and
+<cite>lxml.html.usedoctest</cite> modules from within a doctest, instead of this
+one:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">lxml.usedoctest</span> <span class="c1"># for XML output</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">lxml.html.usedoctest</span> <span class="c1"># for HTML output</span>
+</pre></div>
+</div>
+<p>To use this module directly, you must call <code class="docutils literal notranslate"><span class="pre">lxmldoctest.install()</span></code>,
+which will cause doctest to use this in all subsequent calls.</p>
+<p>This changes the way output is checked and comparisons are made for
+XML or HTML-like content.</p>
+<p>XML or HTML content is noticed because the example starts with <code class="docutils literal notranslate"><span class="pre">&lt;</span></code>
+(it’s HTML if it starts with <code class="docutils literal notranslate"><span class="pre">&lt;html</span></code>).  You can also use the
+<code class="docutils literal notranslate"><span class="pre">PARSE_HTML</span></code> and <code class="docutils literal notranslate"><span class="pre">PARSE_XML</span></code> flags to force parsing.</p>
+<p>Some rough wildcard-like things are allowed.  Whitespace is generally
+ignored (except in attributes).  In text (attributes and text in the
+body) you can use <code class="docutils literal notranslate"><span class="pre">...</span></code> as a wildcard.  In an example it also
+matches any trailing tags in the element, though it does not match
+leading tags.  You may create a tag <code class="docutils literal notranslate"><span class="pre">&lt;any&gt;</span></code> or include an <code class="docutils literal notranslate"><span class="pre">any</span></code>
+attribute in the tag.  An <code class="docutils literal notranslate"><span class="pre">any</span></code> tag matches any tag, while the
+attribute matches any and all attributes.</p>
+<p>When a match fails, the reformatted example and gotten text is
+displayed (indented), and a rough diff-like output is given.  Anything
+marked with <code class="docutils literal notranslate"><span class="pre">+</span></code> is in the output but wasn’t supposed to be, and
+similarly <code class="docutils literal notranslate"><span class="pre">-</span></code> means its in the example but wasn’t in the output.</p>
+<p>You can disable parsing on one line with <code class="docutils literal notranslate"><span class="pre">#</span> <span class="pre">doctest:+NOPARSE_MARKUP</span></code></p>
+<dl class="py class">
+<dt id="lxml.doctestcompare.LHTMLOutputChecker">
+<em class="property">class </em><code class="sig-prename descclassname">lxml.doctestcompare.</code><code class="sig-name descname">LHTMLOutputChecker</code><a class="reference internal" href="_modules/lxml/doctestcompare.html#LHTMLOutputChecker"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lxml.doctestcompare.LHTMLOutputChecker" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#lxml.doctestcompare.LXMLOutputChecker" title="lxml.doctestcompare.LXMLOutputChecker"><code class="xref py py-class docutils literal notranslate"><span class="pre">lxml.doctestcompare.LXMLOutputChecker</span></code></a></p>
+<dl class="py method">
+<dt id="lxml.doctestcompare.LHTMLOutputChecker.get_default_parser">
+<code class="sig-name descname">get_default_parser</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/lxml/doctestcompare.html#LHTMLOutputChecker.get_default_parser"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lxml.doctestcompare.LHTMLOutputChecker.get_default_parser" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="lxml.doctestcompare.LXMLOutputChecker">
+<em class="property">class </em><code class="sig-prename descclassname">lxml.doctestcompare.</code><code class="sig-name descname">LXMLOutputChecker</code><a class="reference internal" href="_modules/lxml/doctestcompare.html#LXMLOutputChecker"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lxml.doctestcompare.LXMLOutputChecker" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">doctest.OutputChecker</span></code></p>
+<dl class="py method">
+<dt id="lxml.doctestcompare.LXMLOutputChecker._looks_like_markup">
+<code class="sig-name descname">_looks_like_markup</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">s</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lxml/doctestcompare.html#LXMLOutputChecker._looks_like_markup"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lxml.doctestcompare.LXMLOutputChecker._looks_like_markup" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="lxml.doctestcompare.LXMLOutputChecker.check_output">
+<code class="sig-name descname">check_output</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">want</span></em>, <em class="sig-param"><span class="n">got</span></em>, <em class="sig-param"><span class="n">optionflags</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lxml/doctestcompare.html#LXMLOutputChecker.check_output"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lxml.doctestcompare.LXMLOutputChecker.check_output" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return True iff the actual output from an example (<cite>got</cite>)
+matches the expected output (<cite>want</cite>).  These strings are
+always considered to match if they are identical; but
+depending on what option flags the test runner is using,
+several non-exact match types are also possible.  See the
+documentation for <cite>TestRunner</cite> for more information about
+option flags.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="lxml.doctestcompare.LXMLOutputChecker.collect_diff">
+<code class="sig-name descname">collect_diff</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">want</span></em>, <em class="sig-param"><span class="n">got</span></em>, <em class="sig-param"><span class="n">html</span></em>, <em class="sig-param"><span class="n">indent</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lxml/doctestcompare.html#LXMLOutputChecker.collect_diff"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lxml.doctestcompare.LXMLOutputChecker.collect_diff" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="lxml.doctestcompare.LXMLOutputChecker.collect_diff_end_tag">
+<code class="sig-name descname">collect_diff_end_tag</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">want</span></em>, <em class="sig-param"><span class="n">got</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lxml/doctestcompare.html#LXMLOutputChecker.collect_diff_end_tag"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lxml.doctestcompare.LXMLOutputChecker.collect_diff_end_tag" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="lxml.doctestcompare.LXMLOutputChecker.collect_diff_tag">
+<code class="sig-name descname">collect_diff_tag</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">want</span></em>, <em class="sig-param"><span class="n">got</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lxml/doctestcompare.html#LXMLOutputChecker.collect_diff_tag"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lxml.doctestcompare.LXMLOutputChecker.collect_diff_tag" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="lxml.doctestcompare.LXMLOutputChecker.collect_diff_text">
+<code class="sig-name descname">collect_diff_text</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">want</span></em>, <em class="sig-param"><span class="n">got</span></em>, <em class="sig-param"><span class="n">strip</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lxml/doctestcompare.html#LXMLOutputChecker.collect_diff_text"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lxml.doctestcompare.LXMLOutputChecker.collect_diff_text" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="lxml.doctestcompare.LXMLOutputChecker.compare_docs">
+<code class="sig-name descname">compare_docs</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">want</span></em>, <em class="sig-param"><span class="n">got</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lxml/doctestcompare.html#LXMLOutputChecker.compare_docs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lxml.doctestcompare.LXMLOutputChecker.compare_docs" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="lxml.doctestcompare.LXMLOutputChecker.format_doc">
+<code class="sig-name descname">format_doc</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">doc</span></em>, <em class="sig-param"><span class="n">html</span></em>, <em class="sig-param"><span class="n">indent</span></em>, <em class="sig-param"><span class="n">prefix</span><span class="o">=</span><span class="default_value">''</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lxml/doctestcompare.html#LXMLOutputChecker.format_doc"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lxml.doctestcompare.LXMLOutputChecker.format_doc" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="lxml.doctestcompare.LXMLOutputChecker.format_end_tag">
+<code class="sig-name descname">format_end_tag</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">el</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lxml/doctestcompare.html#LXMLOutputChecker.format_end_tag"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lxml.doctestcompare.LXMLOutputChecker.format_end_tag" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="lxml.doctestcompare.LXMLOutputChecker.format_tag">
+<code class="sig-name descname">format_tag</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">el</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lxml/doctestcompare.html#LXMLOutputChecker.format_tag"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lxml.doctestcompare.LXMLOutputChecker.format_tag" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="lxml.doctestcompare.LXMLOutputChecker.format_text">
+<code class="sig-name descname">format_text</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">text</span></em>, <em class="sig-param"><span class="n">strip</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lxml/doctestcompare.html#LXMLOutputChecker.format_text"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lxml.doctestcompare.LXMLOutputChecker.format_text" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="lxml.doctestcompare.LXMLOutputChecker.get_default_parser">
+<code class="sig-name descname">get_default_parser</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/lxml/doctestcompare.html#LXMLOutputChecker.get_default_parser"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lxml.doctestcompare.LXMLOutputChecker.get_default_parser" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="lxml.doctestcompare.LXMLOutputChecker.get_parser">
+<code class="sig-name descname">get_parser</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">want</span></em>, <em class="sig-param"><span class="n">got</span></em>, <em class="sig-param"><span class="n">optionflags</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lxml/doctestcompare.html#LXMLOutputChecker.get_parser"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lxml.doctestcompare.LXMLOutputChecker.get_parser" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="lxml.doctestcompare.LXMLOutputChecker.html_empty_tag">
+<code class="sig-name descname">html_empty_tag</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">el</span></em>, <em class="sig-param"><span class="n">html</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lxml/doctestcompare.html#LXMLOutputChecker.html_empty_tag"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lxml.doctestcompare.LXMLOutputChecker.html_empty_tag" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="lxml.doctestcompare.LXMLOutputChecker.output_difference">
+<code class="sig-name descname">output_difference</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">example</span></em>, <em class="sig-param"><span class="n">got</span></em>, <em class="sig-param"><span class="n">optionflags</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lxml/doctestcompare.html#LXMLOutputChecker.output_difference"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lxml.doctestcompare.LXMLOutputChecker.output_difference" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a string describing the differences between the
+expected output for a given example (<cite>example</cite>) and the actual
+output (<cite>got</cite>).  <cite>optionflags</cite> is the set of option flags used
+to compare <cite>want</cite> and <cite>got</cite>.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="lxml.doctestcompare.LXMLOutputChecker.tag_compare">
+<code class="sig-name descname">tag_compare</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">want</span></em>, <em class="sig-param"><span class="n">got</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lxml/doctestcompare.html#LXMLOutputChecker.tag_compare"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lxml.doctestcompare.LXMLOutputChecker.tag_compare" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="lxml.doctestcompare.LXMLOutputChecker.text_compare">
+<code class="sig-name descname">text_compare</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">want</span></em>, <em class="sig-param"><span class="n">got</span></em>, <em class="sig-param"><span class="n">strip</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lxml/doctestcompare.html#LXMLOutputChecker.text_compare"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lxml.doctestcompare.LXMLOutputChecker.text_compare" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="lxml.doctestcompare.LXMLOutputChecker.empty_tags">
+<code class="sig-name descname">empty_tags</code><em class="property"> = ('param', 'img', 'area', 'br', 'basefont', 'input', 'base', 'meta', 'link', 'col')</em><a class="headerlink" href="#lxml.doctestcompare.LXMLOutputChecker.empty_tags" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="lxml.doctestcompare._RestoreChecker">
+<em class="property">class </em><code class="sig-prename descclassname">lxml.doctestcompare.</code><code class="sig-name descname">_RestoreChecker</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">dt_self</span></em>, <em class="sig-param"><span class="n">old_checker</span></em>, <em class="sig-param"><span class="n">new_checker</span></em>, <em class="sig-param"><span class="n">check_func</span></em>, <em class="sig-param"><span class="n">clone_func</span></em>, <em class="sig-param"><span class="n">del_module</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lxml/doctestcompare.html#_RestoreChecker"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lxml.doctestcompare._RestoreChecker" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt id="lxml.doctestcompare._RestoreChecker.call_super">
+<code class="sig-name descname">call_super</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kw</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lxml/doctestcompare.html#_RestoreChecker.call_super"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lxml.doctestcompare._RestoreChecker.call_super" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="lxml.doctestcompare._RestoreChecker.install_clone">
+<code class="sig-name descname">install_clone</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/lxml/doctestcompare.html#_RestoreChecker.install_clone"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lxml.doctestcompare._RestoreChecker.install_clone" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="lxml.doctestcompare._RestoreChecker.install_dt_self">
+<code class="sig-name descname">install_dt_self</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/lxml/doctestcompare.html#_RestoreChecker.install_dt_self"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lxml.doctestcompare._RestoreChecker.install_dt_self" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="lxml.doctestcompare._RestoreChecker.uninstall_clone">
+<code class="sig-name descname">uninstall_clone</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/lxml/doctestcompare.html#_RestoreChecker.uninstall_clone"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lxml.doctestcompare._RestoreChecker.uninstall_clone" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="lxml.doctestcompare._RestoreChecker.uninstall_dt_self">
+<code class="sig-name descname">uninstall_dt_self</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/lxml/doctestcompare.html#_RestoreChecker.uninstall_dt_self"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lxml.doctestcompare._RestoreChecker.uninstall_dt_self" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="lxml.doctestcompare._RestoreChecker.uninstall_module">
+<code class="sig-name descname">uninstall_module</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/lxml/doctestcompare.html#_RestoreChecker.uninstall_module"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lxml.doctestcompare._RestoreChecker.uninstall_module" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt id="lxml.doctestcompare._find_doctest_frame">
+<code class="sig-prename descclassname">lxml.doctestcompare.</code><code class="sig-name descname">_find_doctest_frame</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/lxml/doctestcompare.html#_find_doctest_frame"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lxml.doctestcompare._find_doctest_frame" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="lxml.doctestcompare.html_fromstring">
+<code class="sig-prename descclassname">lxml.doctestcompare.</code><code class="sig-name descname">html_fromstring</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">html</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lxml/doctestcompare.html#html_fromstring"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lxml.doctestcompare.html_fromstring" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="lxml.doctestcompare.install">
+<code class="sig-prename descclassname">lxml.doctestcompare.</code><code class="sig-name descname">install</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">html</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lxml/doctestcompare.html#install"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lxml.doctestcompare.install" title="Permalink to this definition">¶</a></dt>
+<dd><p>Install doctestcompare for all future doctests.</p>
+<p>If html is true, then by default the HTML parser will be used;
+otherwise the XML parser is used.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="lxml.doctestcompare.norm_whitespace">
+<code class="sig-prename descclassname">lxml.doctestcompare.</code><code class="sig-name descname">norm_whitespace</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">v</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lxml/doctestcompare.html#norm_whitespace"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lxml.doctestcompare.norm_whitespace" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="lxml.doctestcompare.strip">
+<code class="sig-prename descclassname">lxml.doctestcompare.</code><code class="sig-name descname">strip</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">v</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lxml/doctestcompare.html#strip"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lxml.doctestcompare.strip" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="lxml.doctestcompare.temp_install">
+<code class="sig-prename descclassname">lxml.doctestcompare.</code><code class="sig-name descname">temp_install</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">html</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">del_module</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lxml/doctestcompare.html#temp_install"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lxml.doctestcompare.temp_install" title="Permalink to this definition">¶</a></dt>
+<dd><p>Use this <em>inside</em> a doctest to enable this checker for this
+doctest only.</p>
+<p>If html is true, then by default the HTML parser will be used;
+otherwise the XML parser is used.</p>
+</dd></dl>
+
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="lxml.etree.html" class="btn btn-neutral float-right" title="lxml.etree module" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="lxml.cssselect.html" class="btn btn-neutral float-left" title="lxml.cssselect module" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        
+        &copy; Copyright 2020, lxml dev team
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

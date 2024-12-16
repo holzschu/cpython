@@ -1,5 +1,5 @@
-:mod:`test` --- Regression tests package for Python
-===================================================
+:mod:`!test` --- Regression tests package for Python
+====================================================
 
 .. module:: test
    :synopsis: Regression tests package containing the testing suite for Python.
@@ -143,7 +143,7 @@ guidelines to be followed:
          arg = (1, 2, 3)
 
   When using this pattern, remember that all classes that inherit from
-  :class:`unittest.TestCase` are run as tests.  The :class:`Mixin` class in the example above
+  :class:`unittest.TestCase` are run as tests.  The :class:`!TestFuncAcceptsSequencesMixin` class in the example above
   does not have any data and so can't be run by itself, thus it does not
   inherit from :class:`unittest.TestCase`.
 
@@ -158,6 +158,9 @@ guidelines to be followed:
 
 Running tests using the command-line interface
 ----------------------------------------------
+
+.. module:: test.regrtest
+   :synopsis: Drives the regression test suite.
 
 The :mod:`test` package can be run as a script to drive Python's regression
 test suite, thanks to the :option:`-m` option: :program:`python -m test`. Under
@@ -319,6 +322,15 @@ The :mod:`test.support` module defines the following constants:
    to make writes blocking.
 
 
+.. data:: Py_DEBUG
+
+   ``True`` if Python was built with the :c:macro:`Py_DEBUG` macro
+   defined, that is, if
+   Python was :ref:`built in debug mode <debug-build>`.
+
+   .. versionadded:: 3.12
+
+
 .. data:: SOCK_MAX_SIZE
 
    A constant that is likely larger than the underlying OS socket buffer size,
@@ -404,6 +416,51 @@ The :mod:`test.support` module defines the following constants:
 
 The :mod:`test.support` module defines the following functions:
 
+.. function:: busy_retry(timeout, err_msg=None, /, *, error=True)
+
+   Run the loop body until ``break`` stops the loop.
+
+   After *timeout* seconds, raise an :exc:`AssertionError` if *error* is true,
+   or just stop the loop if *error* is false.
+
+   Example::
+
+       for _ in support.busy_retry(support.SHORT_TIMEOUT):
+           if check():
+               break
+
+   Example of error=False usage::
+
+       for _ in support.busy_retry(support.SHORT_TIMEOUT, error=False):
+           if check():
+               break
+       else:
+           raise RuntimeError('my custom error')
+
+.. function:: sleeping_retry(timeout, err_msg=None, /, *, init_delay=0.010, max_delay=1.0, error=True)
+
+   Wait strategy that applies exponential backoff.
+
+   Run the loop body until ``break`` stops the loop. Sleep at each loop
+   iteration, but not at the first iteration. The sleep delay is doubled at
+   each iteration (up to *max_delay* seconds).
+
+   See :func:`busy_retry` documentation for the parameters usage.
+
+   Example raising an exception after SHORT_TIMEOUT seconds::
+
+       for _ in support.sleeping_retry(support.SHORT_TIMEOUT):
+           if check():
+               break
+
+   Example of error=False usage::
+
+       for _ in support.sleeping_retry(support.SHORT_TIMEOUT, error=False):
+           if check():
+               break
+       else:
+           raise RuntimeError('my custom error')
+
 .. function:: is_resource_enabled(resource)
 
    Return ``True`` if *resource* is enabled and available. The list of
@@ -418,7 +475,7 @@ The :mod:`test.support` module defines the following functions:
 
 .. function:: with_pymalloc()
 
-   Return :data:`_testcapi.WITH_PYMALLOC`.
+   Return :const:`_testcapi.WITH_PYMALLOC`.
 
 
 .. function:: requires(resource, msg=None)
@@ -444,42 +501,11 @@ The :mod:`test.support` module defines the following functions:
    rather than looking directly in the path directories.
 
 
-.. function:: match_test(test)
+.. function:: get_pagesize()
 
-   Determine whether *test* matches the patterns set in :func:`set_match_tests`.
+   Get size of a page in bytes.
 
-
-.. function:: set_match_tests(accept_patterns=None, ignore_patterns=None)
-
-   Define match patterns on test filenames and test method names for filtering tests.
-
-
-.. function:: run_unittest(*classes)
-
-   Execute :class:`unittest.TestCase` subclasses passed to the function. The
-   function scans the classes for methods starting with the prefix ``test_``
-   and executes the tests individually.
-
-   It is also legal to pass strings as parameters; these should be keys in
-   ``sys.modules``. Each associated module will be scanned by
-   ``unittest.TestLoader.loadTestsFromModule()``. This is usually seen in the
-   following :func:`test_main` function::
-
-      def test_main():
-          support.run_unittest(__name__)
-
-   This will run all tests defined in the named module.
-
-
-.. function:: run_doctest(module, verbosity=None, optionflags=0)
-
-   Run :func:`doctest.testmod` on the given *module*.  Return
-   ``(failure_count, test_count)``.
-
-   If *verbosity* is ``None``, :func:`doctest.testmod` is run with verbosity
-   set to :data:`verbose`.  Otherwise, it is run with verbosity set to
-   ``None``.  *optionflags* is passed as ``optionflags`` to
-   :func:`doctest.testmod`.
+   .. versionadded:: 3.12
 
 
 .. function:: setswitchinterval(interval)
@@ -705,6 +731,12 @@ The :mod:`test.support` module defines the following functions:
    macOS version is less than the minimum, the test is skipped.
 
 
+.. decorator:: requires_gil_enabled
+
+   Decorator for skipping tests on the free-threaded build.  If the
+   :term:`GIL` is disabled, the test is skipped.
+
+
 .. decorator:: requires_IEEE_754
 
    Decorator for skipping tests on non-IEEE 754 platforms.
@@ -738,6 +770,12 @@ The :mod:`test.support` module defines the following functions:
 .. decorator:: requires_docstrings
 
    Decorator for only running the test if :data:`HAVE_DOCSTRINGS`.
+
+
+.. decorator:: requires_limited_api
+
+   Decorator for only running the test if :ref:`Limited C API <limited-c-api>`
+   is available.
 
 
 .. decorator:: cpython_only
@@ -908,7 +946,7 @@ The :mod:`test.support` module defines the following functions:
    other modules, possibly a C backend (like ``csv`` and its ``_csv``).
 
    The *extra* argument can be a set of names that wouldn't otherwise be automatically
-   detected as "public", like objects without a proper ``__module__``
+   detected as "public", like objects without a proper :attr:`~definition.__module__`
    attribute. If provided, it will be added to the automatically detected ones.
 
    The *not_exported* argument can be a set of names that must not be treated
@@ -973,10 +1011,10 @@ The :mod:`test.support` module defines the following classes:
    `SetErrorMode <https://msdn.microsoft.com/en-us/library/windows/desktop/ms680621.aspx>`_.
 
    On UNIX, :func:`resource.setrlimit` is used to set
-   :attr:`resource.RLIMIT_CORE`'s soft limit to 0 to prevent coredump file
+   :const:`resource.RLIMIT_CORE`'s soft limit to 0 to prevent coredump file
    creation.
 
-   On both platforms, the old value is restored by :meth:`__exit__`.
+   On both platforms, the old value is restored by :meth:`~object.__exit__`.
 
 
 .. class:: SaveSignals()
@@ -1005,13 +1043,6 @@ The :mod:`test.support` module defines the following classes:
    .. method:: match_value(self, k, dv, v)
 
       Try to match a single stored value (*dv*) with a supplied value (*v*).
-
-
-.. class:: BasicTestRunner()
-
-   .. method:: run(test)
-
-      Run *test* and return the result.
 
 
 :mod:`test.support.socket_helper` --- Utilities for socket tests
@@ -1383,7 +1414,8 @@ The :mod:`test.support.os_helper` module provides support for os tests.
 
 .. class:: FakePath(path)
 
-   Simple :term:`path-like object`.  It implements the :meth:`__fspath__`
+   Simple :term:`path-like object`.  It implements the
+   :meth:`~os.PathLike.__fspath__`
    method which just returns the *path* argument.  If *path* is an exception,
    it will be raised in :meth:`!__fspath__`.
 
@@ -1631,6 +1663,21 @@ The :mod:`test.support.warnings_helper` module provides support for warnings tes
 .. versionadded:: 3.10
 
 
+.. function:: ignore_warnings(*, category)
+
+   Suppress warnings that are instances of *category*,
+   which must be :exc:`Warning` or a subclass.
+   Roughly equivalent to :func:`warnings.catch_warnings`
+   with :meth:`warnings.simplefilter('ignore', category=category) <warnings.simplefilter>`.
+   For example::
+
+      @warning_helper.ignore_warnings(category=DeprecationWarning)
+      def test_suppress_warning():
+          # do something
+
+   .. versionadded:: 3.8
+
+
 .. function:: check_no_resource_warning(testcase)
 
    Context manager to check that no :exc:`ResourceWarning` was raised.  You
@@ -1654,7 +1701,7 @@ The :mod:`test.support.warnings_helper` module provides support for warnings tes
 
 .. function:: check_warnings(*filters, quiet=True)
 
-   A convenience wrapper for :func:`warnings.catch_warnings()` that makes it
+   A convenience wrapper for :func:`warnings.catch_warnings` that makes it
    easier to test that a warning was correctly raised.  It is approximately
    equivalent to calling ``warnings.catch_warnings(record=True)`` with
    :meth:`warnings.simplefilter` set to ``always`` and with the option to

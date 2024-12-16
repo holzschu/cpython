@@ -149,8 +149,10 @@ def _compile(code, pattern, flags):
                 emit(0) # look ahead
             else:
                 lo, hi = av[1].getwidth()
+                if lo > MAXCODE:
+                    raise error("looks too much behind")
                 if lo != hi:
-                    raise error("look-behind requires fixed-width pattern")
+                    raise PatternError("look-behind requires fixed-width pattern")
                 emit(lo) # look behind
             _compile(code, av[1], flags)
             emit(SUCCESS)
@@ -209,7 +211,7 @@ def _compile(code, pattern, flags):
             else:
                 code[skipyes] = _len(code) - skipyes + 1
         else:
-            raise error("internal: unsupported operand type %r" % (op,))
+            raise PatternError(f"internal: unsupported operand type {op!r}")
 
 def _compile_charset(charset, flags, code):
     # compile charset subprogram
@@ -235,7 +237,7 @@ def _compile_charset(charset, flags, code):
             else:
                 emit(av)
         else:
-            raise error("internal: unsupported set operator %r" % (op,))
+            raise PatternError(f"internal: unsupported set operator {op!r}")
     emit(FAILURE)
 
 def _optimize_charset(charset, iscased=None, fixup=None, fixes=None):
@@ -248,11 +250,11 @@ def _optimize_charset(charset, iscased=None, fixup=None, fixes=None):
         while True:
             try:
                 if op is LITERAL:
-                    if fixup:
-                        lo = fixup(av)
-                        charmap[lo] = 1
-                        if fixes and lo in fixes:
-                            for k in fixes[lo]:
+                    if fixup: # IGNORECASE and not LOCALE
+                        av = fixup(av)
+                        charmap[av] = 1
+                        if fixes and av in fixes:
+                            for k in fixes[av]:
                                 charmap[k] = 1
                         if not hascased and iscased(av):
                             hascased = True
@@ -260,7 +262,7 @@ def _optimize_charset(charset, iscased=None, fixup=None, fixes=None):
                         charmap[av] = 1
                 elif op is RANGE:
                     r = range(av[0], av[1]+1)
-                    if fixup:
+                    if fixup: # IGNORECASE and not LOCALE
                         if fixes:
                             for i in map(fixup, r):
                                 charmap[i] = 1
@@ -287,8 +289,7 @@ def _optimize_charset(charset, iscased=None, fixup=None, fixes=None):
                 # Character set contains non-BMP character codes.
                 # For range, all BMP characters in the range are already
                 # proceeded.
-                if fixup:
-                    hascased = True
+                if fixup: # IGNORECASE and not LOCALE
                     # For now, IN_UNI_IGNORE+LITERAL and
                     # IN_UNI_IGNORE+RANGE_UNI_IGNORE work for all non-BMP
                     # characters, because two characters (at least one of
@@ -299,7 +300,13 @@ def _optimize_charset(charset, iscased=None, fixup=None, fixes=None):
                     # Also, both c.lower() and c.lower().upper() are single
                     # characters for every non-BMP character.
                     if op is RANGE:
-                        op = RANGE_UNI_IGNORE
+                        if fixes: # not ASCII
+                            op = RANGE_UNI_IGNORE
+                        hascased = True
+                    else:
+                        assert op is LITERAL
+                        if not hascased and iscased(av):
+                            hascased = True
                 tail.append((op, av))
             break
 
@@ -549,7 +556,7 @@ def _compile_info(code, pattern, flags):
     else:
         emit(MAXCODE)
         prefix = prefix[:MAXCODE]
-    emit(min(hi, MAXCODE))
+    emit(hi)
     # add literal prefix
     if prefix:
         emit(len(prefix)) # length

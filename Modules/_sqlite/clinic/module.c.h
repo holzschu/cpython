@@ -2,6 +2,12 @@
 preserve
 [clinic start generated code]*/
 
+#if defined(Py_BUILD_CORE) && !defined(Py_BUILD_CORE_MODULE)
+#  include "pycore_gc.h"          // PyGC_Head
+#  include "pycore_runtime.h"     // _Py_ID()
+#endif
+#include "pycore_modsupport.h"    // _PyArg_UnpackKeywords()
+
 PyDoc_STRVAR(pysqlite_complete_statement__doc__,
 "complete_statement($module, /, statement)\n"
 "--\n"
@@ -18,8 +24,31 @@ static PyObject *
 pysqlite_complete_statement(PyObject *module, PyObject *const *args, Py_ssize_t nargs, PyObject *kwnames)
 {
     PyObject *return_value = NULL;
+    #if defined(Py_BUILD_CORE) && !defined(Py_BUILD_CORE_MODULE)
+
+    #define NUM_KEYWORDS 1
+    static struct {
+        PyGC_Head _this_is_not_used;
+        PyObject_VAR_HEAD
+        PyObject *ob_item[NUM_KEYWORDS];
+    } _kwtuple = {
+        .ob_base = PyVarObject_HEAD_INIT(&PyTuple_Type, NUM_KEYWORDS)
+        .ob_item = { &_Py_ID(statement), },
+    };
+    #undef NUM_KEYWORDS
+    #define KWTUPLE (&_kwtuple.ob_base.ob_base)
+
+    #else  // !Py_BUILD_CORE
+    #  define KWTUPLE NULL
+    #endif  // !Py_BUILD_CORE
+
     static const char * const _keywords[] = {"statement", NULL};
-    static _PyArg_Parser _parser = {NULL, _keywords, "complete_statement", 0};
+    static _PyArg_Parser _parser = {
+        .keywords = _keywords,
+        .fname = "complete_statement",
+        .kwtuple = KWTUPLE,
+    };
+    #undef KWTUPLE
     PyObject *argsbuf[1];
     const char *statement;
 
@@ -41,46 +70,6 @@ pysqlite_complete_statement(PyObject *module, PyObject *const *args, Py_ssize_t 
         goto exit;
     }
     return_value = pysqlite_complete_statement_impl(module, statement);
-
-exit:
-    return return_value;
-}
-
-PyDoc_STRVAR(pysqlite_enable_shared_cache__doc__,
-"enable_shared_cache($module, /, do_enable)\n"
-"--\n"
-"\n"
-"Enable or disable shared cache mode for the calling thread.\n"
-"\n"
-"This method is deprecated and will be removed in Python 3.12.\n"
-"Shared cache is strongly discouraged by the SQLite 3 documentation.\n"
-"If shared cache must be used, open the database in URI mode using\n"
-"the cache=shared query parameter.");
-
-#define PYSQLITE_ENABLE_SHARED_CACHE_METHODDEF    \
-    {"enable_shared_cache", _PyCFunction_CAST(pysqlite_enable_shared_cache), METH_FASTCALL|METH_KEYWORDS, pysqlite_enable_shared_cache__doc__},
-
-static PyObject *
-pysqlite_enable_shared_cache_impl(PyObject *module, int do_enable);
-
-static PyObject *
-pysqlite_enable_shared_cache(PyObject *module, PyObject *const *args, Py_ssize_t nargs, PyObject *kwnames)
-{
-    PyObject *return_value = NULL;
-    static const char * const _keywords[] = {"do_enable", NULL};
-    static _PyArg_Parser _parser = {NULL, _keywords, "enable_shared_cache", 0};
-    PyObject *argsbuf[1];
-    int do_enable;
-
-    args = _PyArg_UnpackKeywords(args, nargs, NULL, kwnames, &_parser, 1, 1, 0, argsbuf);
-    if (!args) {
-        goto exit;
-    }
-    do_enable = _PyLong_AsInt(args[0]);
-    if (do_enable == -1 && PyErr_Occurred()) {
-        goto exit;
-    }
-    return_value = pysqlite_enable_shared_cache_impl(module, do_enable);
 
 exit:
     return return_value;
@@ -144,9 +133,6 @@ pysqlite_register_converter(PyObject *module, PyObject *const *args, Py_ssize_t 
         _PyArg_BadArgument("register_converter", "argument 1", "str", args[0]);
         goto exit;
     }
-    if (PyUnicode_READY(args[0]) == -1) {
-        goto exit;
-    }
     orig_name = args[0];
     callable = args[1];
     return_value = pysqlite_register_converter_impl(module, orig_name, callable);
@@ -173,7 +159,7 @@ pysqlite_enable_callback_trace(PyObject *module, PyObject *arg)
     PyObject *return_value = NULL;
     int enable;
 
-    enable = _PyLong_AsInt(arg);
+    enable = PyLong_AsInt(arg);
     if (enable == -1 && PyErr_Occurred()) {
         goto exit;
     }
@@ -222,4 +208,4 @@ skip_optional:
 exit:
     return return_value;
 }
-/*[clinic end generated code: output=ecaf4e0a239c2685 input=a9049054013a1b77]*/
+/*[clinic end generated code: output=457ab0fdbb9e1880 input=a9049054013a1b77]*/

@@ -1,0 +1,10 @@
+cppy/__init__.py,sha256=SlSyMFxl6WI6HLjvIsFPMyZFkVKatVNWhVhLtBHVavo,621
+cppy/include/cppy/cppy.h,sha256=wEiSJPjKGhgqj5jLltsSw-FLPnkZeFG5qDZ94XsS-I4,728
+cppy/include/cppy/defines.h,sha256=AlISU1LT4GG5qPwYnqXurE4m9LRbZUbUisGxpj762_k,485
+cppy/include/cppy/errors.h,sha256=ZUaG-DKns9-fUauePg7YN_V_eCjBp_PbuhmZ2UMCWVc,1417
+cppy/include/cppy/ptr.h,sha256=GFfg_jKirABzuxLBM1HUV0agqRoFIKqwdIVyD1IVhME,8016
+cppy-1.1.0.dist-info/LICENSE,sha256=23oAi_8eY8zsOXz6AzEJdAxNxssSBwpw0M_mmronxN8,1485
+cppy-1.1.0.dist-info/METADATA,sha256=sJ3OS0OkEO4hdvAEDl03P4aSc8Yg-U-ch6PoJpGDLOY,626
+cppy-1.1.0.dist-info/WHEEL,sha256=EVRjI69F5qVjm_YgqcTXPnTAv3BfSUr0WVAHuSP3Xoo,92
+cppy-1.1.0.dist-info/top_level.txt,sha256=j4twH9RPL2IL5slfsTrfCIkQWZtugse1x_4nSfpnnBc,5
+cppy-1.1.0.dist-info/RECORD,,

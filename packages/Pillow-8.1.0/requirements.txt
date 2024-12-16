@@ -1,0 +1,14 @@
+# Development, documentation & testing requirements.
+black
+check-manifest
+coverage
+markdown2
+olefile
+packaging
+pyroma
+pytest
+pytest-cov
+sphinx>=2.4
+sphinx-issues
+sphinx-removed-in
+sphinx-rtd-theme

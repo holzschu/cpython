@@ -1,0 +1,761 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>lxml.objectify module &mdash; lxml  documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+
+  
+  
+  
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="lxml.sax module" href="lxml.sax.html" />
+    <link rel="prev" title="lxml.etree module" href="lxml.etree.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="index.html" class="icon icon-home" alt="Documentation Home"> lxml
+          
+
+          
+            
+            <img src="_static/python-xml.png" class="logo" alt="Logo"/>
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                4.6.2
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="lxml.html">lxml package</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="lxml.html.html">lxml.html package</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="lxml.html.ElementSoup.html">lxml.html.ElementSoup module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="lxml.html._diffcommand.html">lxml.html._diffcommand module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="lxml.html._setmixin.html">lxml.html._setmixin module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="lxml.html.builder.html">lxml.html.builder module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="lxml.html.clean.html">lxml.html.clean module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="lxml.html.defs.html">lxml.html.defs module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="lxml.html.diff.html">lxml.html.diff module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="lxml.html.formfill.html">lxml.html.formfill module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="lxml.html.html5parser.html">lxml.html.html5parser module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="lxml.html.soupparser.html">lxml.html.soupparser module</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="lxml.isoschematron.html">lxml.isoschematron package</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lxml.ElementInclude.html">lxml.ElementInclude module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lxml._elementpath.html">lxml._elementpath module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lxml.builder.html">lxml.builder module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lxml.cssselect.html">lxml.cssselect module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lxml.doctestcompare.html">lxml.doctestcompare module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lxml.etree.html">lxml.etree module</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">lxml.objectify module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lxml.sax.html">lxml.sax module</a></li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">lxml</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="lxml.html">lxml package</a> &raquo;</li>
+        
+      <li>lxml.objectify module</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/lxml.objectify.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="module-lxml.objectify">
+<span id="lxml-objectify-module"></span><h1>lxml.objectify module<a class="headerlink" href="#module-lxml.objectify" title="Permalink to this headline">¶</a></h1>
+<p>The <code class="docutils literal notranslate"><span class="pre">lxml.objectify</span></code> module implements a Python object API for XML.
+It is based on <cite>lxml.etree</cite>.</p>
+<dl class="py class">
+<dt id="lxml.objectify.BoolElement">
+<em class="property">class </em><code class="sig-prename descclassname">lxml.objectify.</code><code class="sig-name descname">BoolElement</code><a class="headerlink" href="#lxml.objectify.BoolElement" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#lxml.objectify.IntElement" title="lxml.objectify.IntElement"><code class="xref py py-class docutils literal notranslate"><span class="pre">lxml.objectify.IntElement</span></code></a></p>
+<p>Boolean type base on string values: ‘true’ or ‘false’.</p>
+<p>Note that this inherits from IntElement to mimic the behaviour of
+Python’s bool type.</p>
+<dl class="py method">
+<dt id="lxml.objectify.BoolElement._init">
+<code class="sig-name descname">_init</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em><span class="sig-paren">)</span><a class="headerlink" href="#lxml.objectify.BoolElement._init" title="Permalink to this definition">¶</a></dt>
+<dd><p>Called after object initialisation.  Custom subclasses may override
+this if they recursively call _init() in the superclasses.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="lxml.objectify.BoolElement.pyval">
+<code class="sig-name descname">pyval</code><a class="headerlink" href="#lxml.objectify.BoolElement.pyval" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="lxml.objectify.ElementMaker">
+<em class="property">class </em><code class="sig-prename descclassname">lxml.objectify.</code><code class="sig-name descname">ElementMaker</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em>, <em class="sig-param"><span class="n">namespace</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">nsmap</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">annotate</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">makeelement</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#lxml.objectify.ElementMaker" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>An ElementMaker that can be used for constructing trees.</p>
+<p>Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">M</span> <span class="o">=</span> <span class="n">ElementMaker</span><span class="p">(</span><span class="n">annotate</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">attributes</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;class&#39;</span><span class="p">:</span> <span class="s1">&#39;par&#39;</span><span class="p">}</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">html</span> <span class="o">=</span> <span class="n">M</span><span class="o">.</span><span class="n">html</span><span class="p">(</span> <span class="n">M</span><span class="o">.</span><span class="n">body</span><span class="p">(</span> <span class="n">M</span><span class="o">.</span><span class="n">p</span><span class="p">(</span><span class="s1">&#39;hello&#39;</span><span class="p">,</span> <span class="n">attributes</span><span class="p">,</span> <span class="n">M</span><span class="o">.</span><span class="n">br</span><span class="p">,</span> <span class="s1">&#39;objectify&#39;</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="s2">&quot;font-weight: bold&quot;</span><span class="p">)</span> <span class="p">)</span> <span class="p">)</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">lxml.etree</span> <span class="kn">import</span> <span class="n">tostring</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">tostring</span><span class="p">(</span><span class="n">html</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;html&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;ascii&#39;</span><span class="p">))</span>
+<span class="go">&lt;html&gt;&lt;body&gt;&lt;p style=&quot;font-weight: bold&quot; class=&quot;par&quot;&gt;hello&lt;br&gt;objectify&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</span>
+</pre></div>
+</div>
+<p>To create tags that are not valid Python identifiers, call the factory
+directly and pass the tag name as first argument:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">root</span> <span class="o">=</span> <span class="n">M</span><span class="p">(</span><span class="s1">&#39;tricky-tag&#39;</span><span class="p">,</span> <span class="s1">&#39;some text&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">root</span><span class="o">.</span><span class="n">tag</span><span class="p">)</span>
+<span class="go">tricky-tag</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">root</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+<span class="go">some text</span>
+</pre></div>
+</div>
+<p>Note that this module has a predefined ElementMaker instance called <code class="docutils literal notranslate"><span class="pre">E</span></code>.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="lxml.objectify.FloatElement">
+<em class="property">class </em><code class="sig-prename descclassname">lxml.objectify.</code><code class="sig-name descname">FloatElement</code><a class="headerlink" href="#lxml.objectify.FloatElement" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#lxml.objectify.NumberElement" title="lxml.objectify.NumberElement"><code class="xref py py-class docutils literal notranslate"><span class="pre">lxml.objectify.NumberElement</span></code></a></p>
+<dl class="py method">
+<dt id="lxml.objectify.FloatElement._init">
+<code class="sig-name descname">_init</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em><span class="sig-paren">)</span><a class="headerlink" href="#lxml.objectify.FloatElement._init" title="Permalink to this definition">¶</a></dt>
+<dd><p>Called after object initialisation.  Custom subclasses may override
+this if they recursively call _init() in the superclasses.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="lxml.objectify.IntElement">
+<em class="property">class </em><code class="sig-prename descclassname">lxml.objectify.</code><code class="sig-name descname">IntElement</code><a class="headerlink" href="#lxml.objectify.IntElement" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#lxml.objectify.NumberElement" title="lxml.objectify.NumberElement"><code class="xref py py-class docutils literal notranslate"><span class="pre">lxml.objectify.NumberElement</span></code></a></p>
+<dl class="py method">
+<dt id="lxml.objectify.IntElement._init">
+<code class="sig-name descname">_init</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em><span class="sig-paren">)</span><a class="headerlink" href="#lxml.objectify.IntElement._init" title="Permalink to this definition">¶</a></dt>
+<dd><p>Called after object initialisation.  Custom subclasses may override
+this if they recursively call _init() in the superclasses.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="lxml.objectify.LongElement">
+<em class="property">class </em><code class="sig-prename descclassname">lxml.objectify.</code><code class="sig-name descname">LongElement</code><a class="headerlink" href="#lxml.objectify.LongElement" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#lxml.objectify.NumberElement" title="lxml.objectify.NumberElement"><code class="xref py py-class docutils literal notranslate"><span class="pre">lxml.objectify.NumberElement</span></code></a></p>
+<dl class="py method">
+<dt id="lxml.objectify.LongElement._init">
+<code class="sig-name descname">_init</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em><span class="sig-paren">)</span><a class="headerlink" href="#lxml.objectify.LongElement._init" title="Permalink to this definition">¶</a></dt>
+<dd><p>Called after object initialisation.  Custom subclasses may override
+this if they recursively call _init() in the superclasses.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="lxml.objectify.NoneElement">
+<em class="property">class </em><code class="sig-prename descclassname">lxml.objectify.</code><code class="sig-name descname">NoneElement</code><a class="headerlink" href="#lxml.objectify.NoneElement" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#lxml.objectify.ObjectifiedDataElement" title="lxml.objectify.ObjectifiedDataElement"><code class="xref py py-class docutils literal notranslate"><span class="pre">lxml.objectify.ObjectifiedDataElement</span></code></a></p>
+<dl class="py attribute">
+<dt id="lxml.objectify.NoneElement.pyval">
+<code class="sig-name descname">pyval</code><a class="headerlink" href="#lxml.objectify.NoneElement.pyval" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="lxml.objectify.NumberElement">
+<em class="property">class </em><code class="sig-prename descclassname">lxml.objectify.</code><code class="sig-name descname">NumberElement</code><a class="headerlink" href="#lxml.objectify.NumberElement" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#lxml.objectify.ObjectifiedDataElement" title="lxml.objectify.ObjectifiedDataElement"><code class="xref py py-class docutils literal notranslate"><span class="pre">lxml.objectify.ObjectifiedDataElement</span></code></a></p>
+<dl class="py method">
+<dt id="lxml.objectify.NumberElement._setValueParser">
+<code class="sig-name descname">_setValueParser</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">function</span></em><span class="sig-paren">)</span><a class="headerlink" href="#lxml.objectify.NumberElement._setValueParser" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set the function that parses the Python value from a string.</p>
+<p>Do not use this unless you know what you are doing.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="lxml.objectify.NumberElement.pyval">
+<code class="sig-name descname">pyval</code><a class="headerlink" href="#lxml.objectify.NumberElement.pyval" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="lxml.objectify.ObjectPath">
+<em class="property">class </em><code class="sig-prename descclassname">lxml.objectify.</code><code class="sig-name descname">ObjectPath</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">path</span></em><span class="sig-paren">)</span><a class="headerlink" href="#lxml.objectify.ObjectPath" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Immutable object that represents a compiled object path.</p>
+<p>Example for a path: ‘root.child[1].{other}child[25]’</p>
+<dl class="py method">
+<dt id="lxml.objectify.ObjectPath.addattr">
+<code class="sig-name descname">addattr</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em>, <em class="sig-param"><span class="n">root</span></em>, <em class="sig-param"><span class="n">value</span></em><span class="sig-paren">)</span><a class="headerlink" href="#lxml.objectify.ObjectPath.addattr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Append a value to the target element in a subtree.</p>
+<p>If any of the children on the path does not exist, it is created.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="lxml.objectify.ObjectPath.hasattr">
+<code class="sig-name descname">hasattr</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em>, <em class="sig-param"><span class="n">root</span></em><span class="sig-paren">)</span><a class="headerlink" href="#lxml.objectify.ObjectPath.hasattr" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="lxml.objectify.ObjectPath.setattr">
+<code class="sig-name descname">setattr</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em>, <em class="sig-param"><span class="n">root</span></em>, <em class="sig-param"><span class="n">value</span></em><span class="sig-paren">)</span><a class="headerlink" href="#lxml.objectify.ObjectPath.setattr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set the value of the target element in a subtree.</p>
+<p>If any of the children on the path does not exist, it is created.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="lxml.objectify.ObjectPath.find">
+<code class="sig-name descname">find</code><a class="headerlink" href="#lxml.objectify.ObjectPath.find" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="lxml.objectify.ObjectifiedDataElement">
+<em class="property">class </em><code class="sig-prename descclassname">lxml.objectify.</code><code class="sig-name descname">ObjectifiedDataElement</code><a class="headerlink" href="#lxml.objectify.ObjectifiedDataElement" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#lxml.objectify.ObjectifiedElement" title="lxml.objectify.ObjectifiedElement"><code class="xref py py-class docutils literal notranslate"><span class="pre">lxml.objectify.ObjectifiedElement</span></code></a></p>
+<p>This is the base class for all data type Elements.  Subclasses should
+override the ‘pyval’ property and possibly the __str__ method.</p>
+<dl class="py method">
+<dt id="lxml.objectify.ObjectifiedDataElement._setText">
+<code class="sig-name descname">_setText</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">s</span></em><span class="sig-paren">)</span><a class="headerlink" href="#lxml.objectify.ObjectifiedDataElement._setText" title="Permalink to this definition">¶</a></dt>
+<dd><p>For use in subclasses only. Don’t use unless you know what you are
+doing.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="lxml.objectify.ObjectifiedDataElement.pyval">
+<code class="sig-name descname">pyval</code><a class="headerlink" href="#lxml.objectify.ObjectifiedDataElement.pyval" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="lxml.objectify.ObjectifiedElement">
+<em class="property">class </em><code class="sig-prename descclassname">lxml.objectify.</code><code class="sig-name descname">ObjectifiedElement</code><a class="headerlink" href="#lxml.objectify.ObjectifiedElement" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="lxml.etree.html#lxml.etree.ElementBase" title="lxml.etree.ElementBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">lxml.etree.ElementBase</span></code></a></p>
+<p>Main XML Element class.</p>
+<p>Element children are accessed as object attributes.  Multiple children
+with the same name are available through a list index.  Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">root</span> <span class="o">=</span> <span class="n">XML</span><span class="p">(</span><span class="s2">&quot;&lt;root&gt;&lt;c1&gt;&lt;c2&gt;0&lt;/c2&gt;&lt;c2&gt;1&lt;/c2&gt;&lt;/c1&gt;&lt;/root&gt;&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">second_c2</span> <span class="o">=</span> <span class="n">root</span><span class="o">.</span><span class="n">c1</span><span class="o">.</span><span class="n">c2</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">second_c2</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+<span class="go">1</span>
+</pre></div>
+</div>
+<p>Note that you cannot (and must not) instantiate this class or its
+subclasses.</p>
+<dl class="py method">
+<dt id="lxml.objectify.ObjectifiedElement.addattr">
+<code class="sig-name descname">addattr</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em>, <em class="sig-param"><span class="n">tag</span></em>, <em class="sig-param"><span class="n">value</span></em><span class="sig-paren">)</span><a class="headerlink" href="#lxml.objectify.ObjectifiedElement.addattr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add a child value to the element.</p>
+<p>As opposed to append(), it sets a data value, not an element.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="lxml.objectify.ObjectifiedElement.countchildren">
+<code class="sig-name descname">countchildren</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em><span class="sig-paren">)</span><a class="headerlink" href="#lxml.objectify.ObjectifiedElement.countchildren" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the number of children of this element, regardless of their
+name.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="lxml.objectify.ObjectifiedElement.descendantpaths">
+<code class="sig-name descname">descendantpaths</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em>, <em class="sig-param"><span class="n">prefix</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#lxml.objectify.ObjectifiedElement.descendantpaths" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a list of object path expressions for all descendants.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="lxml.objectify.ObjectifiedElement.getchildren">
+<code class="sig-name descname">getchildren</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em><span class="sig-paren">)</span><a class="headerlink" href="#lxml.objectify.ObjectifiedElement.getchildren" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a sequence of all direct children.  The elements are
+returned in document order.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="lxml.objectify.ObjectifiedElement.text">
+<code class="sig-name descname">text</code><a class="headerlink" href="#lxml.objectify.ObjectifiedElement.text" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="lxml.objectify.ObjectifyElementClassLookup">
+<em class="property">class </em><code class="sig-prename descclassname">lxml.objectify.</code><code class="sig-name descname">ObjectifyElementClassLookup</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em>, <em class="sig-param"><span class="n">tree_class</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">empty_data_class</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#lxml.objectify.ObjectifyElementClassLookup" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="lxml.etree.html#lxml.etree.ElementClassLookup" title="lxml.etree.ElementClassLookup"><code class="xref py py-class docutils literal notranslate"><span class="pre">lxml.etree.ElementClassLookup</span></code></a></p>
+<p>Element class lookup method that uses the objectify classes.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="lxml.objectify.PyType">
+<em class="property">class </em><code class="sig-prename descclassname">lxml.objectify.</code><code class="sig-name descname">PyType</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em>, <em class="sig-param"><span class="n">name</span></em>, <em class="sig-param"><span class="n">type_check</span></em>, <em class="sig-param"><span class="n">type_class</span></em>, <em class="sig-param"><span class="n">stringify</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#lxml.objectify.PyType" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>User defined type.</p>
+<p>Named type that contains a type check function, a type class that
+inherits from ObjectifiedDataElement and an optional “stringification”
+function.  The type check must take a string as argument and raise
+ValueError or TypeError if it cannot handle the string value.  It may be
+None in which case it is not considered for type guessing.  For registered
+named types, the ‘stringify’ function (or unicode() if None) is used to
+convert a Python object with type name ‘name’ to the string representation
+stored in the XML tree.</p>
+<p>Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">PyType</span><span class="p">(</span><span class="s1">&#39;int&#39;</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="n">MyIntClass</span><span class="p">)</span><span class="o">.</span><span class="n">register</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>Note that the order in which types are registered matters.  The first
+matching type will be used.</p>
+<dl class="py method">
+<dt id="lxml.objectify.PyType.register">
+<code class="sig-name descname">register</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em>, <em class="sig-param"><span class="n">before</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">after</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#lxml.objectify.PyType.register" title="Permalink to this definition">¶</a></dt>
+<dd><p>Register the type.</p>
+<p>The additional keyword arguments ‘before’ and ‘after’ accept a
+sequence of type names that must appear before/after the new type in
+the type list.  If any of them is not currently known, it is simply
+ignored.  Raises ValueError if the dependencies cannot be fulfilled.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="lxml.objectify.PyType.unregister">
+<code class="sig-name descname">unregister</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em><span class="sig-paren">)</span><a class="headerlink" href="#lxml.objectify.PyType.unregister" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="lxml.objectify.PyType.name">
+<code class="sig-name descname">name</code><a class="headerlink" href="#lxml.objectify.PyType.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="lxml.objectify.PyType.stringify">
+<code class="sig-name descname">stringify</code><a class="headerlink" href="#lxml.objectify.PyType.stringify" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="lxml.objectify.PyType.type_check">
+<code class="sig-name descname">type_check</code><a class="headerlink" href="#lxml.objectify.PyType.type_check" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="lxml.objectify.PyType.xmlSchemaTypes">
+<code class="sig-name descname">xmlSchemaTypes</code><a class="headerlink" href="#lxml.objectify.PyType.xmlSchemaTypes" title="Permalink to this definition">¶</a></dt>
+<dd><p>The list of XML Schema datatypes this Python type maps to.</p>
+<p>Note that this must be set before registering the type!</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="lxml.objectify.StringElement">
+<em class="property">class </em><code class="sig-prename descclassname">lxml.objectify.</code><code class="sig-name descname">StringElement</code><a class="headerlink" href="#lxml.objectify.StringElement" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#lxml.objectify.ObjectifiedDataElement" title="lxml.objectify.ObjectifiedDataElement"><code class="xref py py-class docutils literal notranslate"><span class="pre">lxml.objectify.ObjectifiedDataElement</span></code></a></p>
+<p>String data class.</p>
+<p>Note that this class does <em>not</em> support the sequence protocol of strings:
+len(), iter(), str_attr[0], str_attr[0:1], etc. are <em>not</em> supported.
+Instead, use the .text attribute to get a ‘real’ string.</p>
+<dl class="py method">
+<dt id="lxml.objectify.StringElement.strlen">
+<code class="sig-name descname">strlen</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#lxml.objectify.StringElement.strlen" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="lxml.objectify.StringElement.pyval">
+<code class="sig-name descname">pyval</code><a class="headerlink" href="#lxml.objectify.StringElement.pyval" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt id="lxml.objectify.DataElement">
+<code class="sig-prename descclassname">lxml.objectify.</code><code class="sig-name descname">DataElement</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">_value</span></em>, <em class="sig-param"><span class="n">attrib</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">nsmap</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">_pytype</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">_xsi</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">_attributes</span></em><span class="sig-paren">)</span><a class="headerlink" href="#lxml.objectify.DataElement" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a new element from a Python value and XML attributes taken from
+keyword arguments or a dictionary passed as second argument.</p>
+<p>Automatically adds a ‘pytype’ attribute for the Python type of the value,
+if the type can be identified.  If ‘_pytype’ or ‘_xsi’ are among the
+keyword arguments, they will be used instead.</p>
+<p>If the _value argument is an ObjectifiedDataElement instance, its py:pytype,
+xsi:type and other attributes and nsmap are reused unless they are redefined
+in attrib and/or keyword arguments.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="lxml.objectify.Element">
+<code class="sig-prename descclassname">lxml.objectify.</code><code class="sig-name descname">Element</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">_tag</span></em>, <em class="sig-param"><span class="n">attrib</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">nsmap</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">_pytype</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">_attributes</span></em><span class="sig-paren">)</span><a class="headerlink" href="#lxml.objectify.Element" title="Permalink to this definition">¶</a></dt>
+<dd><p>Objectify specific version of the lxml.etree Element() factory that
+always creates a structural (tree) element.</p>
+<p>NOTE: requires parser based element class lookup activated in lxml.etree!</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="lxml.objectify.XML">
+<code class="sig-prename descclassname">lxml.objectify.</code><code class="sig-name descname">XML</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">xml</span></em>, <em class="sig-param"><span class="n">parser</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">base_url</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#lxml.objectify.XML" title="Permalink to this definition">¶</a></dt>
+<dd><p>Objectify specific version of the lxml.etree XML() literal factory
+that uses the objectify parser.</p>
+<p>You can pass a different parser as second argument.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">base_url</span></code> keyword argument allows to set the original base URL of
+the document to support relative Paths when looking up external entities
+(DTD, XInclude, …).</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="lxml.objectify.__checkBool">
+<code class="sig-prename descclassname">lxml.objectify.</code><code class="sig-name descname">__checkBool</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">s</span></em><span class="sig-paren">)</span><a class="headerlink" href="#lxml.objectify.__checkBool" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="lxml.objectify.__lower_bool">
+<code class="sig-prename descclassname">lxml.objectify.</code><code class="sig-name descname">__lower_bool</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">b</span></em><span class="sig-paren">)</span><a class="headerlink" href="#lxml.objectify.__lower_bool" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="lxml.objectify.__parseBool">
+<code class="sig-prename descclassname">lxml.objectify.</code><code class="sig-name descname">__parseBool</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">s</span></em><span class="sig-paren">)</span><a class="headerlink" href="#lxml.objectify.__parseBool" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="lxml.objectify.__unpickleElementTree">
+<code class="sig-prename descclassname">lxml.objectify.</code><code class="sig-name descname">__unpickleElementTree</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">data</span></em><span class="sig-paren">)</span><a class="headerlink" href="#lxml.objectify.__unpickleElementTree" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="lxml.objectify.annotate">
+<code class="sig-prename descclassname">lxml.objectify.</code><code class="sig-name descname">annotate</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">element_or_tree</span></em>, <em class="sig-param"><span class="n">ignore_old</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">ignore_xsi</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">empty_pytype</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">empty_type</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">annotate_xsi</span><span class="o">=</span><span class="default_value">0</span></em>, <em class="sig-param"><span class="n">annotate_pytype</span><span class="o">=</span><span class="default_value">1</span></em><span class="sig-paren">)</span><a class="headerlink" href="#lxml.objectify.annotate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Recursively annotates the elements of an XML tree with ‘xsi:type’
+and/or ‘py:pytype’ attributes.</p>
+<p>If the ‘ignore_old’ keyword argument is True (the default), current
+‘py:pytype’ attributes will be ignored for the type annotation. Set to False
+if you want reuse existing ‘py:pytype’ information (iff appropriate for the
+element text value).</p>
+<p>If the ‘ignore_xsi’ keyword argument is False (the default), existing
+‘xsi:type’ attributes will be used for the type annotation, if they fit the
+element text values.</p>
+<p>Note that the mapping from Python types to XSI types is usually ambiguous.
+Currently, only the first XSI type name in the corresponding PyType
+definition will be used for annotation.  Thus, you should consider naming
+the widest type first if you define additional types.</p>
+<p>The default ‘py:pytype’ annotation of empty elements can be set with the
+<code class="docutils literal notranslate"><span class="pre">empty_pytype</span></code> keyword argument. Pass ‘str’, for example, to make
+string values the default.</p>
+<p>The default ‘xsi:type’ annotation of empty elements can be set with the
+<code class="docutils literal notranslate"><span class="pre">empty_type</span></code> keyword argument.  The default is not to annotate empty
+elements.  Pass ‘string’, for example, to make string values the default.</p>
+<p>The keyword arguments ‘annotate_xsi’ (default: 0) and ‘annotate_pytype’
+(default: 1) control which kind(s) of annotation to use.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="lxml.objectify.deannotate">
+<code class="sig-prename descclassname">lxml.objectify.</code><code class="sig-name descname">deannotate</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">element_or_tree</span></em>, <em class="sig-param"><span class="n">pytype</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">xsi</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">xsi_nil</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">cleanup_namespaces</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#lxml.objectify.deannotate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Recursively de-annotate the elements of an XML tree by removing ‘py:pytype’
+and/or ‘xsi:type’ attributes and/or ‘xsi:nil’ attributes.</p>
+<p>If the ‘pytype’ keyword argument is True (the default), ‘py:pytype’
+attributes will be removed. If the ‘xsi’ keyword argument is True (the 
+default), ‘xsi:type’ attributes will be removed.
+If the ‘xsi_nil’ keyword argument is True (default: False), ‘xsi:nil’
+attributes will be removed.</p>
+<p>Note that this does not touch the namespace declarations by
+default.  If you want to remove unused namespace declarations from
+the tree, pass the option <code class="docutils literal notranslate"><span class="pre">cleanup_namespaces=True</span></code>.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="lxml.objectify.dump">
+<code class="sig-prename descclassname">lxml.objectify.</code><code class="sig-name descname">dump</code><span class="sig-paren">(</span><em class="sig-param">_Element element not None</em><span class="sig-paren">)</span><a class="headerlink" href="#lxml.objectify.dump" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a recursively generated string representation of an element.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="lxml.objectify.enable_recursive_str">
+<code class="sig-prename descclassname">lxml.objectify.</code><code class="sig-name descname">enable_recursive_str</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">on</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#lxml.objectify.enable_recursive_str" title="Permalink to this definition">¶</a></dt>
+<dd><p>Enable a recursively generated tree representation for str(element),
+based on objectify.dump(element).</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="lxml.objectify.fromstring">
+<code class="sig-prename descclassname">lxml.objectify.</code><code class="sig-name descname">fromstring</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">xml</span></em>, <em class="sig-param"><span class="n">parser</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">base_url</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#lxml.objectify.fromstring" title="Permalink to this definition">¶</a></dt>
+<dd><p>Objectify specific version of the lxml.etree fromstring() function
+that uses the objectify parser.</p>
+<p>You can pass a different parser as second argument.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">base_url</span></code> keyword argument allows to set the original base URL of
+the document to support relative Paths when looking up external entities
+(DTD, XInclude, …).</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="lxml.objectify.getRegisteredTypes">
+<code class="sig-prename descclassname">lxml.objectify.</code><code class="sig-name descname">getRegisteredTypes</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#lxml.objectify.getRegisteredTypes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a list of the currently registered PyType objects.</p>
+<p>To add a new type, retrieve this list and call unregister() for all
+entries.  Then add the new type at a suitable position (possibly replacing
+an existing one) and call register() for all entries.</p>
+<p>This is necessary if the new type interferes with the type check functions
+of existing ones (normally only int/float/bool) and must the tried before
+other types.  To add a type that is not yet parsable by the current type
+check functions, you can simply register() it, which will append it to the
+end of the type list.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="lxml.objectify.makeparser">
+<code class="sig-prename descclassname">lxml.objectify.</code><code class="sig-name descname">makeparser</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">remove_blank_text</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kw</span></em><span class="sig-paren">)</span><a class="headerlink" href="#lxml.objectify.makeparser" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a new XML parser for objectify trees.</p>
+<p>You can pass all keyword arguments that are supported by
+<code class="docutils literal notranslate"><span class="pre">etree.XMLParser()</span></code>.  Note that this parser defaults to removing
+blank text.  You can disable this by passing the
+<code class="docutils literal notranslate"><span class="pre">remove_blank_text</span></code> boolean keyword option yourself.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="lxml.objectify.parse">
+<code class="sig-prename descclassname">lxml.objectify.</code><code class="sig-name descname">parse</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">f</span></em>, <em class="sig-param"><span class="n">parser</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">base_url</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#lxml.objectify.parse" title="Permalink to this definition">¶</a></dt>
+<dd><p>Parse a file or file-like object with the objectify parser.</p>
+<p>You can pass a different parser as second argument.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">base_url</span></code> keyword allows setting a URL for the document
+when parsing from a file-like object.  This is needed when looking
+up external entities (DTD, XInclude, …) with relative paths.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="lxml.objectify.pyannotate">
+<code class="sig-prename descclassname">lxml.objectify.</code><code class="sig-name descname">pyannotate</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">element_or_tree</span></em>, <em class="sig-param"><span class="n">ignore_old</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">ignore_xsi</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">empty_pytype</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#lxml.objectify.pyannotate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Recursively annotates the elements of an XML tree with ‘pytype’
+attributes.</p>
+<p>If the ‘ignore_old’ keyword argument is True (the default), current ‘pytype’
+attributes will be ignored and replaced.  Otherwise, they will be checked
+and only replaced if they no longer fit the current text value.</p>
+<p>Setting the keyword argument <code class="docutils literal notranslate"><span class="pre">ignore_xsi</span></code> to True makes the function
+additionally ignore existing <code class="docutils literal notranslate"><span class="pre">xsi:type</span></code> annotations.  The default is to
+use them as a type hint.</p>
+<p>The default annotation of empty elements can be set with the
+<code class="docutils literal notranslate"><span class="pre">empty_pytype</span></code> keyword argument.  The default is not to annotate empty
+elements.  Pass ‘str’, for example, to make string values the default.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="lxml.objectify.pytypename">
+<code class="sig-prename descclassname">lxml.objectify.</code><code class="sig-name descname">pytypename</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">obj</span></em><span class="sig-paren">)</span><a class="headerlink" href="#lxml.objectify.pytypename" title="Permalink to this definition">¶</a></dt>
+<dd><p>Find the name of the corresponding PyType for a Python object.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="lxml.objectify.set_default_parser">
+<code class="sig-prename descclassname">lxml.objectify.</code><code class="sig-name descname">set_default_parser</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">new_parser</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#lxml.objectify.set_default_parser" title="Permalink to this definition">¶</a></dt>
+<dd><p>Replace the default parser used by objectify’s Element() and
+fromstring() functions.</p>
+<p>The new parser must be an etree.XMLParser.</p>
+<p>Call without arguments to reset to the original parser.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="lxml.objectify.set_pytype_attribute_tag">
+<code class="sig-prename descclassname">lxml.objectify.</code><code class="sig-name descname">set_pytype_attribute_tag</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">attribute_tag</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#lxml.objectify.set_pytype_attribute_tag" title="Permalink to this definition">¶</a></dt>
+<dd><p>Change name and namespace of the XML attribute that holds Python type
+information.</p>
+<p>Do not use this unless you know what you are doing.</p>
+<p>Reset by calling without argument.</p>
+<p>Default: “{<a class="reference external" href="http://codespeak.net/lxml/objectify/pytype">http://codespeak.net/lxml/objectify/pytype</a>}pytype”</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="lxml.objectify.xsiannotate">
+<code class="sig-prename descclassname">lxml.objectify.</code><code class="sig-name descname">xsiannotate</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">element_or_tree</span></em>, <em class="sig-param"><span class="n">ignore_old</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">ignore_pytype</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">empty_type</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#lxml.objectify.xsiannotate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Recursively annotates the elements of an XML tree with ‘xsi:type’
+attributes.</p>
+<p>If the ‘ignore_old’ keyword argument is True (the default), current
+‘xsi:type’ attributes will be ignored and replaced.  Otherwise, they will be
+checked and only replaced if they no longer fit the current text value.</p>
+<p>Note that the mapping from Python types to XSI types is usually ambiguous.
+Currently, only the first XSI type name in the corresponding PyType
+definition will be used for annotation.  Thus, you should consider naming
+the widest type first if you define additional types.</p>
+<p>Setting the keyword argument <code class="docutils literal notranslate"><span class="pre">ignore_pytype</span></code> to True makes the function
+additionally ignore existing <code class="docutils literal notranslate"><span class="pre">pytype</span></code> annotations.  The default is to
+use them as a type hint.</p>
+<p>The default annotation of empty elements can be set with the
+<code class="docutils literal notranslate"><span class="pre">empty_type</span></code> keyword argument.  The default is not to annotate empty
+elements.  Pass ‘string’, for example, to make string values the default.</p>
+</dd></dl>
+
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="lxml.sax.html" class="btn btn-neutral float-right" title="lxml.sax module" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="lxml.etree.html" class="btn btn-neutral float-left" title="lxml.etree module" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        
+        &copy; Copyright 2020, lxml dev team
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

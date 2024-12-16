@@ -28,6 +28,7 @@ socket.getdefaulttimeout() -- get the default timeout value
 socket.setdefaulttimeout() -- set the default timeout value
 create_connection() -- connects to an address, with an optional timeout and
                        optional source address.
+create_server() -- create a TCP socket and bind it to a specified address.
 
  [*] not available on all platforms!
 
@@ -305,7 +306,8 @@ class socket(_socket.socket):
         """makefile(...) -> an I/O stream connected to the socket
 
         The arguments are as for io.open() after the filename, except the only
-        supported mode values are 'r' (default), 'w' and 'b'.
+        supported mode values are 'r' (default), 'w', 'b', or a combination of
+        those.
         """
         # XXX refactor to share code?
         if not set(mode) <= {"r", "w", "b"}:
@@ -381,7 +383,7 @@ class socket(_socket.socket):
                     if timeout and not selector_select(timeout):
                         raise TimeoutError('timed out')
                     if count:
-                        blocksize = count - total_sent
+                        blocksize = min(count - total_sent, blocksize)
                         if blocksize <= 0:
                             break
                     try:
@@ -590,16 +592,65 @@ if hasattr(_socket.socket, "share"):
         return socket(0, 0, 0, info)
     __all__.append("fromshare")
 
+# Origin: https://gist.github.com/4325783, by Geert Jansen.  Public domain.
+# This is used if _socket doesn't natively provide socketpair. It's
+# always defined so that it can be patched in for testing purposes.
+def _fallback_socketpair(family=AF_INET, type=SOCK_STREAM, proto=0):
+    if family == AF_INET:
+        host = _LOCALHOST
+    elif family == AF_INET6:
+        host = _LOCALHOST_V6
+    else:
+        raise ValueError("Only AF_INET and AF_INET6 socket address families "
+                         "are supported")
+    if type != SOCK_STREAM:
+        raise ValueError("Only SOCK_STREAM socket type is supported")
+    if proto != 0:
+        raise ValueError("Only protocol zero is supported")
+
+    # We create a connected TCP socket. Note the trick with
+    # setblocking(False) that prevents us from having to create a thread.
+    lsock = socket(family, type, proto)
+    try:
+        lsock.bind((host, 0))
+        lsock.listen()
+        # On IPv6, ignore flow_info and scope_id
+        addr, port = lsock.getsockname()[:2]
+        csock = socket(family, type, proto)
+        try:
+            csock.setblocking(False)
+            try:
+                csock.connect((addr, port))
+            except (BlockingIOError, InterruptedError):
+                pass
+            csock.setblocking(True)
+            ssock, _ = lsock.accept()
+        except:
+            csock.close()
+            raise
+    finally:
+        lsock.close()
+
+    # Authenticating avoids using a connection from something else
+    # able to connect to {host}:{port} instead of us.
+    # We expect only AF_INET and AF_INET6 families.
+    try:
+        if (
+            ssock.getsockname() != csock.getpeername()
+            or csock.getsockname() != ssock.getpeername()
+        ):
+            raise ConnectionError("Unexpected peer connection")
+    except:
+        # getsockname() and getpeername() can fail
+        # if either socket isn't connected.
+        ssock.close()
+        csock.close()
+        raise
+
+    return (ssock, csock)
+
 if hasattr(_socket, "socketpair"):
-
     def socketpair(family=None, type=SOCK_STREAM, proto=0):
-        """socketpair([family[, type[, proto]]]) -> (socket object, socket object)
-
-        Create a pair of socket objects from the sockets returned by the platform
-        socketpair() function.
-        The arguments are the same as for socket() except the default family is
-        AF_UNIX if defined on the platform; otherwise, the default is AF_INET.
-        """
         if family is None:
             try:
                 family = AF_UNIX
@@ -611,44 +662,7 @@ if hasattr(_socket, "socketpair"):
         return a, b
 
 else:
-
-    # Origin: https://gist.github.com/4325783, by Geert Jansen.  Public domain.
-    def socketpair(family=AF_INET, type=SOCK_STREAM, proto=0):
-        if family == AF_INET:
-            host = _LOCALHOST
-        elif family == AF_INET6:
-            host = _LOCALHOST_V6
-        else:
-            raise ValueError("Only AF_INET and AF_INET6 socket address families "
-                             "are supported")
-        if type != SOCK_STREAM:
-            raise ValueError("Only SOCK_STREAM socket type is supported")
-        if proto != 0:
-            raise ValueError("Only protocol zero is supported")
-
-        # We create a connected TCP socket. Note the trick with
-        # setblocking(False) that prevents us from having to create a thread.
-        lsock = socket(family, type, proto)
-        try:
-            lsock.bind((host, 0))
-            lsock.listen()
-            # On IPv6, ignore flow_info and scope_id
-            addr, port = lsock.getsockname()[:2]
-            csock = socket(family, type, proto)
-            try:
-                csock.setblocking(False)
-                try:
-                    csock.connect((addr, port))
-                except (BlockingIOError, InterruptedError):
-                    pass
-                csock.setblocking(True)
-                ssock, _ = lsock.accept()
-            except:
-                csock.close()
-                raise
-        finally:
-            lsock.close()
-        return (ssock, csock)
+    socketpair = _fallback_socketpair
     __all__.append("socketpair")
 
 socketpair.__doc__ = """socketpair([family[, type[, proto]]]) -> (socket object, socket object)
@@ -701,16 +715,15 @@ class SocketIO(io.RawIOBase):
         self._checkReadable()
         if self._timeout_occurred:
             raise OSError("cannot read from timed out object")
-        while True:
-            try:
-                return self._sock.recv_into(b)
-            except timeout:
-                self._timeout_occurred = True
-                raise
-            except error as e:
-                if e.errno in _blocking_errnos:
-                    return None
-                raise
+        try:
+            return self._sock.recv_into(b)
+        except timeout:
+            self._timeout_occurred = True
+            raise
+        except error as e:
+            if e.errno in _blocking_errnos:
+                return None
+            raise
 
     def write(self, b):
         """Write the given bytes or bytearray object *b* to the socket
@@ -784,11 +797,11 @@ def getfqdn(name=''):
 
     First the hostname returned by gethostbyaddr() is checked, then
     possibly existing aliases. In case no FQDN is available and `name`
-    was given, it is returned unchanged. If `name` was empty or '0.0.0.0',
+    was given, it is returned unchanged. If `name` was empty, '0.0.0.0' or '::',
     hostname from gethostname() is returned.
     """
     name = name.strip()
-    if not name or name == '0.0.0.0':
+    if not name or name in ('0.0.0.0', '::'):
         name = gethostname()
     try:
         hostname, aliases, ipaddrs = gethostbyaddr(name)
@@ -909,7 +922,7 @@ def create_server(address, *, family=AF_INET, backlog=None, reuse_port=False,
         # address, effectively preventing this one from accepting
         # connections. Also, it may set the process in a state where
         # it'll no longer respond to any signals or graceful kills.
-        # See: msdn2.microsoft.com/en-us/library/ms740621(VS.85).aspx
+        # See: https://learn.microsoft.com/windows/win32/winsock/using-so-reuseaddr-and-so-exclusiveaddruse
         if os.name not in ('nt', 'cygwin') and \
                 hasattr(_socket, 'SO_REUSEADDR'):
             try:

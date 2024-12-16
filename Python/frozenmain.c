@@ -1,8 +1,13 @@
 /* Python interpreter main program for frozen scripts */
 
 #include "Python.h"
-#include "pycore_runtime.h"  // _PyRuntime_Initialize()
-#include <locale.h>
+#include "pycore_pystate.h"       // _Py_GetConfig()
+#include "pycore_runtime.h"       // _PyRuntime_Initialize()
+
+#ifdef HAVE_UNISTD_H
+#  include <unistd.h>             // isatty()
+#endif
+
 
 #ifdef MS_WINDOWS
 extern void PyWinFreeze_ExeInit(void);
@@ -49,16 +54,18 @@ Py_FrozenMain(int argc, char **argv)
         Py_ExitStatusException(status);
     }
 
+    PyInterpreterState *interp = PyInterpreterState_Get();
+    if (_PyInterpreterState_SetRunningMain(interp) < 0) {
+        PyErr_Print();
+        exit(1);
+    }
+
 #ifdef MS_WINDOWS
     PyWinFreeze_ExeInit();
 #endif
 
-    if (Py_VerboseFlag) {
-#if !TARGET_OS_IPHONE
+    if (_Py_GetConfig()->verbose) {
         fprintf(stderr, "Python %s\n%s\n",
-#else
-        fprintf(thread_stderr, "Python %s\n%s\n",
-#endif
                 Py_GetVersion(), Py_GetCopyright());
     }
 
@@ -75,17 +82,16 @@ Py_FrozenMain(int argc, char **argv)
         sts = 0;
     }
 
-#if !TARGET_OS_IPHONE
     if (inspect && isatty((int)fileno(stdin))) {
-#else
-    if (inspect && ios_isatty((int)fileno(stdin))) {
-#endif
         sts = PyRun_AnyFile(stdin, "<stdin>") != 0;
     }
 
 #ifdef MS_WINDOWS
     PyWinFreeze_ExeTerm();
 #endif
+
+    _PyInterpreterState_SetNotRunningMain(interp);
+
     if (Py_FinalizeEx() < 0) {
         sts = 120;
     }

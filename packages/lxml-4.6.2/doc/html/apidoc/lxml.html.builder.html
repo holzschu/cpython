@@ -1,0 +1,823 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>lxml.html.builder module &mdash; lxml  documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+
+  
+  
+  
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="lxml.html.clean module" href="lxml.html.clean.html" />
+    <link rel="prev" title="lxml.html._setmixin module" href="lxml.html._setmixin.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="index.html" class="icon icon-home" alt="Documentation Home"> lxml
+          
+
+          
+            
+            <img src="_static/python-xml.png" class="logo" alt="Logo"/>
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                4.6.2
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="lxml.html">lxml package</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="lxml.html.html">lxml.html package</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="lxml.html.ElementSoup.html">lxml.html.ElementSoup module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="lxml.html._diffcommand.html">lxml.html._diffcommand module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="lxml.html._setmixin.html">lxml.html._setmixin module</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">lxml.html.builder module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="lxml.html.clean.html">lxml.html.clean module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="lxml.html.defs.html">lxml.html.defs module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="lxml.html.diff.html">lxml.html.diff module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="lxml.html.formfill.html">lxml.html.formfill module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="lxml.html.html5parser.html">lxml.html.html5parser module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="lxml.html.soupparser.html">lxml.html.soupparser module</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="lxml.isoschematron.html">lxml.isoschematron package</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lxml.ElementInclude.html">lxml.ElementInclude module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lxml._elementpath.html">lxml._elementpath module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lxml.builder.html">lxml.builder module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lxml.cssselect.html">lxml.cssselect module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lxml.doctestcompare.html">lxml.doctestcompare module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lxml.etree.html">lxml.etree module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lxml.objectify.html">lxml.objectify module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lxml.sax.html">lxml.sax module</a></li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">lxml</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="lxml.html">lxml package</a> &raquo;</li>
+        
+          <li><a href="lxml.html.html">lxml.html package</a> &raquo;</li>
+        
+      <li>lxml.html.builder module</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/lxml.html.builder.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="module-lxml.html.builder">
+<span id="lxml-html-builder-module"></span><h1>lxml.html.builder module<a class="headerlink" href="#module-lxml.html.builder" title="Permalink to this headline">¶</a></h1>
+<p>A set of HTML generator tags for building HTML documents.</p>
+<p>Usage:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">lxml.html.builder</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">html</span> <span class="o">=</span> <span class="n">HTML</span><span class="p">(</span>
+<span class="gp">... </span>           <span class="n">HEAD</span><span class="p">(</span> <span class="n">TITLE</span><span class="p">(</span><span class="s2">&quot;Hello World&quot;</span><span class="p">)</span> <span class="p">),</span>
+<span class="gp">... </span>           <span class="n">BODY</span><span class="p">(</span> <span class="n">CLASS</span><span class="p">(</span><span class="s2">&quot;main&quot;</span><span class="p">),</span>
+<span class="gp">... </span>                 <span class="n">H1</span><span class="p">(</span><span class="s2">&quot;Hello World !&quot;</span><span class="p">)</span>
+<span class="gp">... </span>           <span class="p">)</span>
+<span class="gp">... </span>       <span class="p">)</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">lxml.etree</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span> <span class="n">lxml</span><span class="o">.</span><span class="n">etree</span><span class="o">.</span><span class="n">tostring</span><span class="p">(</span><span class="n">html</span><span class="p">,</span> <span class="n">pretty_print</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="go">&lt;html&gt;</span>
+<span class="go">  &lt;head&gt;</span>
+<span class="go">    &lt;title&gt;Hello World&lt;/title&gt;</span>
+<span class="go">  &lt;/head&gt;</span>
+<span class="go">  &lt;body class=&quot;main&quot;&gt;</span>
+<span class="go">    &lt;h1&gt;Hello World !&lt;/h1&gt;</span>
+<span class="go">  &lt;/body&gt;</span>
+<span class="go">&lt;/html&gt;</span>
+</pre></div>
+</div>
+<dl class="py function">
+<dt id="lxml.html.builder.CLASS">
+<code class="sig-prename descclassname">lxml.html.builder.</code><code class="sig-name descname">CLASS</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">v</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lxml/html/builder.html#CLASS"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lxml.html.builder.CLASS" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="lxml.html.builder.FOR">
+<code class="sig-prename descclassname">lxml.html.builder.</code><code class="sig-name descname">FOR</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">v</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lxml/html/builder.html#FOR"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lxml.html.builder.FOR" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="lxml.html.builder.A">
+<code class="sig-prename descclassname">lxml.html.builder.</code><code class="sig-name descname">A</code><em class="property"> = functools.partial(&lt;lxml.builder.ElementMaker object&gt;, 'a')</em><a class="headerlink" href="#lxml.html.builder.A" title="Permalink to this definition">¶</a></dt>
+<dd><p>anchor</p>
+</dd></dl>
+
+<dl class="py data">
+<dt id="lxml.html.builder.ABBR">
+<code class="sig-prename descclassname">lxml.html.builder.</code><code class="sig-name descname">ABBR</code><em class="property"> = functools.partial(&lt;lxml.builder.ElementMaker object&gt;, 'abbr')</em><a class="headerlink" href="#lxml.html.builder.ABBR" title="Permalink to this definition">¶</a></dt>
+<dd><p>abbreviated form (e.g., WWW, HTTP, etc.)</p>
+</dd></dl>
+
+<dl class="py data">
+<dt id="lxml.html.builder.ACRONYM">
+<code class="sig-prename descclassname">lxml.html.builder.</code><code class="sig-name descname">ACRONYM</code><em class="property"> = functools.partial(&lt;lxml.builder.ElementMaker object&gt;, 'acronym')</em><a class="headerlink" href="#lxml.html.builder.ACRONYM" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="lxml.html.builder.ADDRESS">
+<code class="sig-prename descclassname">lxml.html.builder.</code><code class="sig-name descname">ADDRESS</code><em class="property"> = functools.partial(&lt;lxml.builder.ElementMaker object&gt;, 'address')</em><a class="headerlink" href="#lxml.html.builder.ADDRESS" title="Permalink to this definition">¶</a></dt>
+<dd><p>information on author</p>
+</dd></dl>
+
+<dl class="py data">
+<dt id="lxml.html.builder.APPLET">
+<code class="sig-prename descclassname">lxml.html.builder.</code><code class="sig-name descname">APPLET</code><em class="property"> = functools.partial(&lt;lxml.builder.ElementMaker object&gt;, 'applet')</em><a class="headerlink" href="#lxml.html.builder.APPLET" title="Permalink to this definition">¶</a></dt>
+<dd><p>Java applet (DEPRECATED)</p>
+</dd></dl>
+
+<dl class="py data">
+<dt id="lxml.html.builder.AREA">
+<code class="sig-prename descclassname">lxml.html.builder.</code><code class="sig-name descname">AREA</code><em class="property"> = functools.partial(&lt;lxml.builder.ElementMaker object&gt;, 'area')</em><a class="headerlink" href="#lxml.html.builder.AREA" title="Permalink to this definition">¶</a></dt>
+<dd><p>client-side image map area</p>
+</dd></dl>
+
+<dl class="py data">
+<dt id="lxml.html.builder.B">
+<code class="sig-prename descclassname">lxml.html.builder.</code><code class="sig-name descname">B</code><em class="property"> = functools.partial(&lt;lxml.builder.ElementMaker object&gt;, 'b')</em><a class="headerlink" href="#lxml.html.builder.B" title="Permalink to this definition">¶</a></dt>
+<dd><p>bold text style</p>
+</dd></dl>
+
+<dl class="py data">
+<dt id="lxml.html.builder.BASE">
+<code class="sig-prename descclassname">lxml.html.builder.</code><code class="sig-name descname">BASE</code><em class="property"> = functools.partial(&lt;lxml.builder.ElementMaker object&gt;, 'base')</em><a class="headerlink" href="#lxml.html.builder.BASE" title="Permalink to this definition">¶</a></dt>
+<dd><p>document base URI</p>
+</dd></dl>
+
+<dl class="py data">
+<dt id="lxml.html.builder.BASEFONT">
+<code class="sig-prename descclassname">lxml.html.builder.</code><code class="sig-name descname">BASEFONT</code><em class="property"> = functools.partial(&lt;lxml.builder.ElementMaker object&gt;, 'basefont')</em><a class="headerlink" href="#lxml.html.builder.BASEFONT" title="Permalink to this definition">¶</a></dt>
+<dd><p>base font size (DEPRECATED)</p>
+</dd></dl>
+
+<dl class="py data">
+<dt id="lxml.html.builder.BDO">
+<code class="sig-prename descclassname">lxml.html.builder.</code><code class="sig-name descname">BDO</code><em class="property"> = functools.partial(&lt;lxml.builder.ElementMaker object&gt;, 'bdo')</em><a class="headerlink" href="#lxml.html.builder.BDO" title="Permalink to this definition">¶</a></dt>
+<dd><p>I18N BiDi over-ride</p>
+</dd></dl>
+
+<dl class="py data">
+<dt id="lxml.html.builder.BIG">
+<code class="sig-prename descclassname">lxml.html.builder.</code><code class="sig-name descname">BIG</code><em class="property"> = functools.partial(&lt;lxml.builder.ElementMaker object&gt;, 'big')</em><a class="headerlink" href="#lxml.html.builder.BIG" title="Permalink to this definition">¶</a></dt>
+<dd><p>large text style</p>
+</dd></dl>
+
+<dl class="py data">
+<dt id="lxml.html.builder.BLOCKQUOTE">
+<code class="sig-prename descclassname">lxml.html.builder.</code><code class="sig-name descname">BLOCKQUOTE</code><em class="property"> = functools.partial(&lt;lxml.builder.ElementMaker object&gt;, 'blockquote')</em><a class="headerlink" href="#lxml.html.builder.BLOCKQUOTE" title="Permalink to this definition">¶</a></dt>
+<dd><p>long quotation</p>
+</dd></dl>
+
+<dl class="py data">
+<dt id="lxml.html.builder.BODY">
+<code class="sig-prename descclassname">lxml.html.builder.</code><code class="sig-name descname">BODY</code><em class="property"> = functools.partial(&lt;lxml.builder.ElementMaker object&gt;, 'body')</em><a class="headerlink" href="#lxml.html.builder.BODY" title="Permalink to this definition">¶</a></dt>
+<dd><p>document body</p>
+</dd></dl>
+
+<dl class="py data">
+<dt id="lxml.html.builder.BR">
+<code class="sig-prename descclassname">lxml.html.builder.</code><code class="sig-name descname">BR</code><em class="property"> = functools.partial(&lt;lxml.builder.ElementMaker object&gt;, 'br')</em><a class="headerlink" href="#lxml.html.builder.BR" title="Permalink to this definition">¶</a></dt>
+<dd><p>forced line break</p>
+</dd></dl>
+
+<dl class="py data">
+<dt id="lxml.html.builder.BUTTON">
+<code class="sig-prename descclassname">lxml.html.builder.</code><code class="sig-name descname">BUTTON</code><em class="property"> = functools.partial(&lt;lxml.builder.ElementMaker object&gt;, 'button')</em><a class="headerlink" href="#lxml.html.builder.BUTTON" title="Permalink to this definition">¶</a></dt>
+<dd><p>push button</p>
+</dd></dl>
+
+<dl class="py data">
+<dt id="lxml.html.builder.CAPTION">
+<code class="sig-prename descclassname">lxml.html.builder.</code><code class="sig-name descname">CAPTION</code><em class="property"> = functools.partial(&lt;lxml.builder.ElementMaker object&gt;, 'caption')</em><a class="headerlink" href="#lxml.html.builder.CAPTION" title="Permalink to this definition">¶</a></dt>
+<dd><p>table caption</p>
+</dd></dl>
+
+<dl class="py data">
+<dt id="lxml.html.builder.CENTER">
+<code class="sig-prename descclassname">lxml.html.builder.</code><code class="sig-name descname">CENTER</code><em class="property"> = functools.partial(&lt;lxml.builder.ElementMaker object&gt;, 'center')</em><a class="headerlink" href="#lxml.html.builder.CENTER" title="Permalink to this definition">¶</a></dt>
+<dd><p>shorthand for DIV align=center (DEPRECATED)</p>
+</dd></dl>
+
+<dl class="py data">
+<dt id="lxml.html.builder.CITE">
+<code class="sig-prename descclassname">lxml.html.builder.</code><code class="sig-name descname">CITE</code><em class="property"> = functools.partial(&lt;lxml.builder.ElementMaker object&gt;, 'cite')</em><a class="headerlink" href="#lxml.html.builder.CITE" title="Permalink to this definition">¶</a></dt>
+<dd><p>citation</p>
+</dd></dl>
+
+<dl class="py data">
+<dt id="lxml.html.builder.CODE">
+<code class="sig-prename descclassname">lxml.html.builder.</code><code class="sig-name descname">CODE</code><em class="property"> = functools.partial(&lt;lxml.builder.ElementMaker object&gt;, 'code')</em><a class="headerlink" href="#lxml.html.builder.CODE" title="Permalink to this definition">¶</a></dt>
+<dd><p>computer code fragment</p>
+</dd></dl>
+
+<dl class="py data">
+<dt id="lxml.html.builder.COL">
+<code class="sig-prename descclassname">lxml.html.builder.</code><code class="sig-name descname">COL</code><em class="property"> = functools.partial(&lt;lxml.builder.ElementMaker object&gt;, 'col')</em><a class="headerlink" href="#lxml.html.builder.COL" title="Permalink to this definition">¶</a></dt>
+<dd><p>table column</p>
+</dd></dl>
+
+<dl class="py data">
+<dt id="lxml.html.builder.COLGROUP">
+<code class="sig-prename descclassname">lxml.html.builder.</code><code class="sig-name descname">COLGROUP</code><em class="property"> = functools.partial(&lt;lxml.builder.ElementMaker object&gt;, 'colgroup')</em><a class="headerlink" href="#lxml.html.builder.COLGROUP" title="Permalink to this definition">¶</a></dt>
+<dd><p>table column group</p>
+</dd></dl>
+
+<dl class="py data">
+<dt id="lxml.html.builder.DD">
+<code class="sig-prename descclassname">lxml.html.builder.</code><code class="sig-name descname">DD</code><em class="property"> = functools.partial(&lt;lxml.builder.ElementMaker object&gt;, 'dd')</em><a class="headerlink" href="#lxml.html.builder.DD" title="Permalink to this definition">¶</a></dt>
+<dd><p>definition description</p>
+</dd></dl>
+
+<dl class="py data">
+<dt id="lxml.html.builder.DEL">
+<code class="sig-prename descclassname">lxml.html.builder.</code><code class="sig-name descname">DEL</code><em class="property"> = functools.partial(&lt;lxml.builder.ElementMaker object&gt;, 'del')</em><a class="headerlink" href="#lxml.html.builder.DEL" title="Permalink to this definition">¶</a></dt>
+<dd><p>deleted text</p>
+</dd></dl>
+
+<dl class="py data">
+<dt id="lxml.html.builder.DFN">
+<code class="sig-prename descclassname">lxml.html.builder.</code><code class="sig-name descname">DFN</code><em class="property"> = functools.partial(&lt;lxml.builder.ElementMaker object&gt;, 'dfn')</em><a class="headerlink" href="#lxml.html.builder.DFN" title="Permalink to this definition">¶</a></dt>
+<dd><p>instance definition</p>
+</dd></dl>
+
+<dl class="py data">
+<dt id="lxml.html.builder.DIR">
+<code class="sig-prename descclassname">lxml.html.builder.</code><code class="sig-name descname">DIR</code><em class="property"> = functools.partial(&lt;lxml.builder.ElementMaker object&gt;, 'dir')</em><a class="headerlink" href="#lxml.html.builder.DIR" title="Permalink to this definition">¶</a></dt>
+<dd><p>directory list (DEPRECATED)</p>
+</dd></dl>
+
+<dl class="py data">
+<dt id="lxml.html.builder.DIV">
+<code class="sig-prename descclassname">lxml.html.builder.</code><code class="sig-name descname">DIV</code><em class="property"> = functools.partial(&lt;lxml.builder.ElementMaker object&gt;, 'div')</em><a class="headerlink" href="#lxml.html.builder.DIV" title="Permalink to this definition">¶</a></dt>
+<dd><p>generic language/style container</p>
+</dd></dl>
+
+<dl class="py data">
+<dt id="lxml.html.builder.DL">
+<code class="sig-prename descclassname">lxml.html.builder.</code><code class="sig-name descname">DL</code><em class="property"> = functools.partial(&lt;lxml.builder.ElementMaker object&gt;, 'dl')</em><a class="headerlink" href="#lxml.html.builder.DL" title="Permalink to this definition">¶</a></dt>
+<dd><p>definition list</p>
+</dd></dl>
+
+<dl class="py data">
+<dt id="lxml.html.builder.DT">
+<code class="sig-prename descclassname">lxml.html.builder.</code><code class="sig-name descname">DT</code><em class="property"> = functools.partial(&lt;lxml.builder.ElementMaker object&gt;, 'dt')</em><a class="headerlink" href="#lxml.html.builder.DT" title="Permalink to this definition">¶</a></dt>
+<dd><p>definition term</p>
+</dd></dl>
+
+<dl class="py data">
+<dt id="lxml.html.builder.EM">
+<code class="sig-prename descclassname">lxml.html.builder.</code><code class="sig-name descname">EM</code><em class="property"> = functools.partial(&lt;lxml.builder.ElementMaker object&gt;, 'em')</em><a class="headerlink" href="#lxml.html.builder.EM" title="Permalink to this definition">¶</a></dt>
+<dd><p>emphasis</p>
+</dd></dl>
+
+<dl class="py data">
+<dt id="lxml.html.builder.FIELDSET">
+<code class="sig-prename descclassname">lxml.html.builder.</code><code class="sig-name descname">FIELDSET</code><em class="property"> = functools.partial(&lt;lxml.builder.ElementMaker object&gt;, 'fieldset')</em><a class="headerlink" href="#lxml.html.builder.FIELDSET" title="Permalink to this definition">¶</a></dt>
+<dd><p>form control group</p>
+</dd></dl>
+
+<dl class="py data">
+<dt id="lxml.html.builder.FONT">
+<code class="sig-prename descclassname">lxml.html.builder.</code><code class="sig-name descname">FONT</code><em class="property"> = functools.partial(&lt;lxml.builder.ElementMaker object&gt;, 'font')</em><a class="headerlink" href="#lxml.html.builder.FONT" title="Permalink to this definition">¶</a></dt>
+<dd><p>local change to font (DEPRECATED)</p>
+</dd></dl>
+
+<dl class="py data">
+<dt id="lxml.html.builder.FORM">
+<code class="sig-prename descclassname">lxml.html.builder.</code><code class="sig-name descname">FORM</code><em class="property"> = functools.partial(&lt;lxml.builder.ElementMaker object&gt;, 'form')</em><a class="headerlink" href="#lxml.html.builder.FORM" title="Permalink to this definition">¶</a></dt>
+<dd><p>interactive form</p>
+</dd></dl>
+
+<dl class="py data">
+<dt id="lxml.html.builder.FRAME">
+<code class="sig-prename descclassname">lxml.html.builder.</code><code class="sig-name descname">FRAME</code><em class="property"> = functools.partial(&lt;lxml.builder.ElementMaker object&gt;, 'frame')</em><a class="headerlink" href="#lxml.html.builder.FRAME" title="Permalink to this definition">¶</a></dt>
+<dd><p>subwindow</p>
+</dd></dl>
+
+<dl class="py data">
+<dt id="lxml.html.builder.FRAMESET">
+<code class="sig-prename descclassname">lxml.html.builder.</code><code class="sig-name descname">FRAMESET</code><em class="property"> = functools.partial(&lt;lxml.builder.ElementMaker object&gt;, 'frameset')</em><a class="headerlink" href="#lxml.html.builder.FRAMESET" title="Permalink to this definition">¶</a></dt>
+<dd><p>window subdivision</p>
+</dd></dl>
+
+<dl class="py data">
+<dt id="lxml.html.builder.H1">
+<code class="sig-prename descclassname">lxml.html.builder.</code><code class="sig-name descname">H1</code><em class="property"> = functools.partial(&lt;lxml.builder.ElementMaker object&gt;, 'h1')</em><a class="headerlink" href="#lxml.html.builder.H1" title="Permalink to this definition">¶</a></dt>
+<dd><p>heading</p>
+</dd></dl>
+
+<dl class="py data">
+<dt id="lxml.html.builder.H2">
+<code class="sig-prename descclassname">lxml.html.builder.</code><code class="sig-name descname">H2</code><em class="property"> = functools.partial(&lt;lxml.builder.ElementMaker object&gt;, 'h2')</em><a class="headerlink" href="#lxml.html.builder.H2" title="Permalink to this definition">¶</a></dt>
+<dd><p>heading</p>
+</dd></dl>
+
+<dl class="py data">
+<dt id="lxml.html.builder.H3">
+<code class="sig-prename descclassname">lxml.html.builder.</code><code class="sig-name descname">H3</code><em class="property"> = functools.partial(&lt;lxml.builder.ElementMaker object&gt;, 'h3')</em><a class="headerlink" href="#lxml.html.builder.H3" title="Permalink to this definition">¶</a></dt>
+<dd><p>heading</p>
+</dd></dl>
+
+<dl class="py data">
+<dt id="lxml.html.builder.H4">
+<code class="sig-prename descclassname">lxml.html.builder.</code><code class="sig-name descname">H4</code><em class="property"> = functools.partial(&lt;lxml.builder.ElementMaker object&gt;, 'h4')</em><a class="headerlink" href="#lxml.html.builder.H4" title="Permalink to this definition">¶</a></dt>
+<dd><p>heading</p>
+</dd></dl>
+
+<dl class="py data">
+<dt id="lxml.html.builder.H5">
+<code class="sig-prename descclassname">lxml.html.builder.</code><code class="sig-name descname">H5</code><em class="property"> = functools.partial(&lt;lxml.builder.ElementMaker object&gt;, 'h5')</em><a class="headerlink" href="#lxml.html.builder.H5" title="Permalink to this definition">¶</a></dt>
+<dd><p>heading</p>
+</dd></dl>
+
+<dl class="py data">
+<dt id="lxml.html.builder.H6">
+<code class="sig-prename descclassname">lxml.html.builder.</code><code class="sig-name descname">H6</code><em class="property"> = functools.partial(&lt;lxml.builder.ElementMaker object&gt;, 'h6')</em><a class="headerlink" href="#lxml.html.builder.H6" title="Permalink to this definition">¶</a></dt>
+<dd><p>heading</p>
+</dd></dl>
+
+<dl class="py data">
+<dt id="lxml.html.builder.HEAD">
+<code class="sig-prename descclassname">lxml.html.builder.</code><code class="sig-name descname">HEAD</code><em class="property"> = functools.partial(&lt;lxml.builder.ElementMaker object&gt;, 'head')</em><a class="headerlink" href="#lxml.html.builder.HEAD" title="Permalink to this definition">¶</a></dt>
+<dd><p>document head</p>
+</dd></dl>
+
+<dl class="py data">
+<dt id="lxml.html.builder.HR">
+<code class="sig-prename descclassname">lxml.html.builder.</code><code class="sig-name descname">HR</code><em class="property"> = functools.partial(&lt;lxml.builder.ElementMaker object&gt;, 'hr')</em><a class="headerlink" href="#lxml.html.builder.HR" title="Permalink to this definition">¶</a></dt>
+<dd><p>horizontal rule</p>
+</dd></dl>
+
+<dl class="py data">
+<dt id="lxml.html.builder.HTML">
+<code class="sig-prename descclassname">lxml.html.builder.</code><code class="sig-name descname">HTML</code><em class="property"> = functools.partial(&lt;lxml.builder.ElementMaker object&gt;, 'html')</em><a class="headerlink" href="#lxml.html.builder.HTML" title="Permalink to this definition">¶</a></dt>
+<dd><p>document root element</p>
+</dd></dl>
+
+<dl class="py data">
+<dt id="lxml.html.builder.I">
+<code class="sig-prename descclassname">lxml.html.builder.</code><code class="sig-name descname">I</code><em class="property"> = functools.partial(&lt;lxml.builder.ElementMaker object&gt;, 'i')</em><a class="headerlink" href="#lxml.html.builder.I" title="Permalink to this definition">¶</a></dt>
+<dd><p>italic text style</p>
+</dd></dl>
+
+<dl class="py data">
+<dt id="lxml.html.builder.IFRAME">
+<code class="sig-prename descclassname">lxml.html.builder.</code><code class="sig-name descname">IFRAME</code><em class="property"> = functools.partial(&lt;lxml.builder.ElementMaker object&gt;, 'iframe')</em><a class="headerlink" href="#lxml.html.builder.IFRAME" title="Permalink to this definition">¶</a></dt>
+<dd><p>inline subwindow</p>
+</dd></dl>
+
+<dl class="py data">
+<dt id="lxml.html.builder.IMG">
+<code class="sig-prename descclassname">lxml.html.builder.</code><code class="sig-name descname">IMG</code><em class="property"> = functools.partial(&lt;lxml.builder.ElementMaker object&gt;, 'img')</em><a class="headerlink" href="#lxml.html.builder.IMG" title="Permalink to this definition">¶</a></dt>
+<dd><p>Embedded image</p>
+</dd></dl>
+
+<dl class="py data">
+<dt id="lxml.html.builder.INPUT">
+<code class="sig-prename descclassname">lxml.html.builder.</code><code class="sig-name descname">INPUT</code><em class="property"> = functools.partial(&lt;lxml.builder.ElementMaker object&gt;, 'input')</em><a class="headerlink" href="#lxml.html.builder.INPUT" title="Permalink to this definition">¶</a></dt>
+<dd><p>form control</p>
+</dd></dl>
+
+<dl class="py data">
+<dt id="lxml.html.builder.INS">
+<code class="sig-prename descclassname">lxml.html.builder.</code><code class="sig-name descname">INS</code><em class="property"> = functools.partial(&lt;lxml.builder.ElementMaker object&gt;, 'ins')</em><a class="headerlink" href="#lxml.html.builder.INS" title="Permalink to this definition">¶</a></dt>
+<dd><p>inserted text</p>
+</dd></dl>
+
+<dl class="py data">
+<dt id="lxml.html.builder.ISINDEX">
+<code class="sig-prename descclassname">lxml.html.builder.</code><code class="sig-name descname">ISINDEX</code><em class="property"> = functools.partial(&lt;lxml.builder.ElementMaker object&gt;, 'isindex')</em><a class="headerlink" href="#lxml.html.builder.ISINDEX" title="Permalink to this definition">¶</a></dt>
+<dd><p>single line prompt (DEPRECATED)</p>
+</dd></dl>
+
+<dl class="py data">
+<dt id="lxml.html.builder.KBD">
+<code class="sig-prename descclassname">lxml.html.builder.</code><code class="sig-name descname">KBD</code><em class="property"> = functools.partial(&lt;lxml.builder.ElementMaker object&gt;, 'kbd')</em><a class="headerlink" href="#lxml.html.builder.KBD" title="Permalink to this definition">¶</a></dt>
+<dd><p>text to be entered by the user</p>
+</dd></dl>
+
+<dl class="py data">
+<dt id="lxml.html.builder.LABEL">
+<code class="sig-prename descclassname">lxml.html.builder.</code><code class="sig-name descname">LABEL</code><em class="property"> = functools.partial(&lt;lxml.builder.ElementMaker object&gt;, 'label')</em><a class="headerlink" href="#lxml.html.builder.LABEL" title="Permalink to this definition">¶</a></dt>
+<dd><p>form field label text</p>
+</dd></dl>
+
+<dl class="py data">
+<dt id="lxml.html.builder.LEGEND">
+<code class="sig-prename descclassname">lxml.html.builder.</code><code class="sig-name descname">LEGEND</code><em class="property"> = functools.partial(&lt;lxml.builder.ElementMaker object&gt;, 'legend')</em><a class="headerlink" href="#lxml.html.builder.LEGEND" title="Permalink to this definition">¶</a></dt>
+<dd><p>fieldset legend</p>
+</dd></dl>
+
+<dl class="py data">
+<dt id="lxml.html.builder.LI">
+<code class="sig-prename descclassname">lxml.html.builder.</code><code class="sig-name descname">LI</code><em class="property"> = functools.partial(&lt;lxml.builder.ElementMaker object&gt;, 'li')</em><a class="headerlink" href="#lxml.html.builder.LI" title="Permalink to this definition">¶</a></dt>
+<dd><p>list item</p>
+</dd></dl>
+
+<dl class="py data">
+<dt id="lxml.html.builder.LINK">
+<code class="sig-prename descclassname">lxml.html.builder.</code><code class="sig-name descname">LINK</code><em class="property"> = functools.partial(&lt;lxml.builder.ElementMaker object&gt;, 'link')</em><a class="headerlink" href="#lxml.html.builder.LINK" title="Permalink to this definition">¶</a></dt>
+<dd><p>a media-independent link</p>
+</dd></dl>
+
+<dl class="py data">
+<dt id="lxml.html.builder.MAP">
+<code class="sig-prename descclassname">lxml.html.builder.</code><code class="sig-name descname">MAP</code><em class="property"> = functools.partial(&lt;lxml.builder.ElementMaker object&gt;, 'map')</em><a class="headerlink" href="#lxml.html.builder.MAP" title="Permalink to this definition">¶</a></dt>
+<dd><p>client-side image map</p>
+</dd></dl>
+
+<dl class="py data">
+<dt id="lxml.html.builder.MENU">
+<code class="sig-prename descclassname">lxml.html.builder.</code><code class="sig-name descname">MENU</code><em class="property"> = functools.partial(&lt;lxml.builder.ElementMaker object&gt;, 'menu')</em><a class="headerlink" href="#lxml.html.builder.MENU" title="Permalink to this definition">¶</a></dt>
+<dd><p>menu list (DEPRECATED)</p>
+</dd></dl>
+
+<dl class="py data">
+<dt id="lxml.html.builder.META">
+<code class="sig-prename descclassname">lxml.html.builder.</code><code class="sig-name descname">META</code><em class="property"> = functools.partial(&lt;lxml.builder.ElementMaker object&gt;, 'meta')</em><a class="headerlink" href="#lxml.html.builder.META" title="Permalink to this definition">¶</a></dt>
+<dd><p>generic metainformation</p>
+</dd></dl>
+
+<dl class="py data">
+<dt id="lxml.html.builder.NOFRAMES">
+<code class="sig-prename descclassname">lxml.html.builder.</code><code class="sig-name descname">NOFRAMES</code><em class="property"> = functools.partial(&lt;lxml.builder.ElementMaker object&gt;, 'noframes')</em><a class="headerlink" href="#lxml.html.builder.NOFRAMES" title="Permalink to this definition">¶</a></dt>
+<dd><p>alternate content container for non frame-based rendering</p>
+</dd></dl>
+
+<dl class="py data">
+<dt id="lxml.html.builder.NOSCRIPT">
+<code class="sig-prename descclassname">lxml.html.builder.</code><code class="sig-name descname">NOSCRIPT</code><em class="property"> = functools.partial(&lt;lxml.builder.ElementMaker object&gt;, 'noscript')</em><a class="headerlink" href="#lxml.html.builder.NOSCRIPT" title="Permalink to this definition">¶</a></dt>
+<dd><p>alternate content container for non script-based rendering</p>
+</dd></dl>
+
+<dl class="py data">
+<dt id="lxml.html.builder.OBJECT">
+<code class="sig-prename descclassname">lxml.html.builder.</code><code class="sig-name descname">OBJECT</code><em class="property"> = functools.partial(&lt;lxml.builder.ElementMaker object&gt;, 'object')</em><a class="headerlink" href="#lxml.html.builder.OBJECT" title="Permalink to this definition">¶</a></dt>
+<dd><p>generic embedded object</p>
+</dd></dl>
+
+<dl class="py data">
+<dt id="lxml.html.builder.OL">
+<code class="sig-prename descclassname">lxml.html.builder.</code><code class="sig-name descname">OL</code><em class="property"> = functools.partial(&lt;lxml.builder.ElementMaker object&gt;, 'ol')</em><a class="headerlink" href="#lxml.html.builder.OL" title="Permalink to this definition">¶</a></dt>
+<dd><p>ordered list</p>
+</dd></dl>
+
+<dl class="py data">
+<dt id="lxml.html.builder.OPTGROUP">
+<code class="sig-prename descclassname">lxml.html.builder.</code><code class="sig-name descname">OPTGROUP</code><em class="property"> = functools.partial(&lt;lxml.builder.ElementMaker object&gt;, 'optgroup')</em><a class="headerlink" href="#lxml.html.builder.OPTGROUP" title="Permalink to this definition">¶</a></dt>
+<dd><p>option group</p>
+</dd></dl>
+
+<dl class="py data">
+<dt id="lxml.html.builder.OPTION">
+<code class="sig-prename descclassname">lxml.html.builder.</code><code class="sig-name descname">OPTION</code><em class="property"> = functools.partial(&lt;lxml.builder.ElementMaker object&gt;, 'option')</em><a class="headerlink" href="#lxml.html.builder.OPTION" title="Permalink to this definition">¶</a></dt>
+<dd><p>selectable choice</p>
+</dd></dl>
+
+<dl class="py data">
+<dt id="lxml.html.builder.P">
+<code class="sig-prename descclassname">lxml.html.builder.</code><code class="sig-name descname">P</code><em class="property"> = functools.partial(&lt;lxml.builder.ElementMaker object&gt;, 'p')</em><a class="headerlink" href="#lxml.html.builder.P" title="Permalink to this definition">¶</a></dt>
+<dd><p>paragraph</p>
+</dd></dl>
+
+<dl class="py data">
+<dt id="lxml.html.builder.PARAM">
+<code class="sig-prename descclassname">lxml.html.builder.</code><code class="sig-name descname">PARAM</code><em class="property"> = functools.partial(&lt;lxml.builder.ElementMaker object&gt;, 'param')</em><a class="headerlink" href="#lxml.html.builder.PARAM" title="Permalink to this definition">¶</a></dt>
+<dd><p>named property value</p>
+</dd></dl>
+
+<dl class="py data">
+<dt id="lxml.html.builder.PRE">
+<code class="sig-prename descclassname">lxml.html.builder.</code><code class="sig-name descname">PRE</code><em class="property"> = functools.partial(&lt;lxml.builder.ElementMaker object&gt;, 'pre')</em><a class="headerlink" href="#lxml.html.builder.PRE" title="Permalink to this definition">¶</a></dt>
+<dd><p>preformatted text</p>
+</dd></dl>
+
+<dl class="py data">
+<dt id="lxml.html.builder.Q">
+<code class="sig-prename descclassname">lxml.html.builder.</code><code class="sig-name descname">Q</code><em class="property"> = functools.partial(&lt;lxml.builder.ElementMaker object&gt;, 'q')</em><a class="headerlink" href="#lxml.html.builder.Q" title="Permalink to this definition">¶</a></dt>
+<dd><p>short inline quotation</p>
+</dd></dl>
+
+<dl class="py data">
+<dt id="lxml.html.builder.S">
+<code class="sig-prename descclassname">lxml.html.builder.</code><code class="sig-name descname">S</code><em class="property"> = functools.partial(&lt;lxml.builder.ElementMaker object&gt;, 's')</em><a class="headerlink" href="#lxml.html.builder.S" title="Permalink to this definition">¶</a></dt>
+<dd><p>strike-through text style (DEPRECATED)</p>
+</dd></dl>
+
+<dl class="py data">
+<dt id="lxml.html.builder.SAMP">
+<code class="sig-prename descclassname">lxml.html.builder.</code><code class="sig-name descname">SAMP</code><em class="property"> = functools.partial(&lt;lxml.builder.ElementMaker object&gt;, 'samp')</em><a class="headerlink" href="#lxml.html.builder.SAMP" title="Permalink to this definition">¶</a></dt>
+<dd><p>sample program output, scripts, etc.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt id="lxml.html.builder.SCRIPT">
+<code class="sig-prename descclassname">lxml.html.builder.</code><code class="sig-name descname">SCRIPT</code><em class="property"> = functools.partial(&lt;lxml.builder.ElementMaker object&gt;, 'script')</em><a class="headerlink" href="#lxml.html.builder.SCRIPT" title="Permalink to this definition">¶</a></dt>
+<dd><p>script statements</p>
+</dd></dl>
+
+<dl class="py data">
+<dt id="lxml.html.builder.SELECT">
+<code class="sig-prename descclassname">lxml.html.builder.</code><code class="sig-name descname">SELECT</code><em class="property"> = functools.partial(&lt;lxml.builder.ElementMaker object&gt;, 'select')</em><a class="headerlink" href="#lxml.html.builder.SELECT" title="Permalink to this definition">¶</a></dt>
+<dd><p>option selector</p>
+</dd></dl>
+
+<dl class="py data">
+<dt id="lxml.html.builder.SMALL">
+<code class="sig-prename descclassname">lxml.html.builder.</code><code class="sig-name descname">SMALL</code><em class="property"> = functools.partial(&lt;lxml.builder.ElementMaker object&gt;, 'small')</em><a class="headerlink" href="#lxml.html.builder.SMALL" title="Permalink to this definition">¶</a></dt>
+<dd><p>small text style</p>
+</dd></dl>
+
+<dl class="py data">
+<dt id="lxml.html.builder.SPAN">
+<code class="sig-prename descclassname">lxml.html.builder.</code><code class="sig-name descname">SPAN</code><em class="property"> = functools.partial(&lt;lxml.builder.ElementMaker object&gt;, 'span')</em><a class="headerlink" href="#lxml.html.builder.SPAN" title="Permalink to this definition">¶</a></dt>
+<dd><p>generic language/style container</p>
+</dd></dl>
+
+<dl class="py data">
+<dt id="lxml.html.builder.STRIKE">
+<code class="sig-prename descclassname">lxml.html.builder.</code><code class="sig-name descname">STRIKE</code><em class="property"> = functools.partial(&lt;lxml.builder.ElementMaker object&gt;, 'strike')</em><a class="headerlink" href="#lxml.html.builder.STRIKE" title="Permalink to this definition">¶</a></dt>
+<dd><p>strike-through text (DEPRECATED)</p>
+</dd></dl>
+
+<dl class="py data">
+<dt id="lxml.html.builder.STRONG">
+<code class="sig-prename descclassname">lxml.html.builder.</code><code class="sig-name descname">STRONG</code><em class="property"> = functools.partial(&lt;lxml.builder.ElementMaker object&gt;, 'strong')</em><a class="headerlink" href="#lxml.html.builder.STRONG" title="Permalink to this definition">¶</a></dt>
+<dd><p>strong emphasis</p>
+</dd></dl>
+
+<dl class="py data">
+<dt id="lxml.html.builder.STYLE">
+<code class="sig-prename descclassname">lxml.html.builder.</code><code class="sig-name descname">STYLE</code><em class="property"> = functools.partial(&lt;lxml.builder.ElementMaker object&gt;, 'style')</em><a class="headerlink" href="#lxml.html.builder.STYLE" title="Permalink to this definition">¶</a></dt>
+<dd><p>style info</p>
+</dd></dl>
+
+<dl class="py data">
+<dt id="lxml.html.builder.SUB">
+<code class="sig-prename descclassname">lxml.html.builder.</code><code class="sig-name descname">SUB</code><em class="property"> = functools.partial(&lt;lxml.builder.ElementMaker object&gt;, 'sub')</em><a class="headerlink" href="#lxml.html.builder.SUB" title="Permalink to this definition">¶</a></dt>
+<dd><p>subscript</p>
+</dd></dl>
+
+<dl class="py data">
+<dt id="lxml.html.builder.SUP">
+<code class="sig-prename descclassname">lxml.html.builder.</code><code class="sig-name descname">SUP</code><em class="property"> = functools.partial(&lt;lxml.builder.ElementMaker object&gt;, 'sup')</em><a class="headerlink" href="#lxml.html.builder.SUP" title="Permalink to this definition">¶</a></dt>
+<dd><p>superscript</p>
+</dd></dl>
+
+<dl class="py data">
+<dt id="lxml.html.builder.TABLE">
+<code class="sig-prename descclassname">lxml.html.builder.</code><code class="sig-name descname">TABLE</code><em class="property"> = functools.partial(&lt;lxml.builder.ElementMaker object&gt;, 'table')</em><a class="headerlink" href="#lxml.html.builder.TABLE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt id="lxml.html.builder.TBODY">
+<code class="sig-prename descclassname">lxml.html.builder.</code><code class="sig-name descname">TBODY</code><em class="property"> = functools.partial(&lt;lxml.builder.ElementMaker object&gt;, 'tbody')</em><a class="headerlink" href="#lxml.html.builder.TBODY" title="Permalink to this definition">¶</a></dt>
+<dd><p>table body</p>
+</dd></dl>
+
+<dl class="py data">
+<dt id="lxml.html.builder.TD">
+<code class="sig-prename descclassname">lxml.html.builder.</code><code class="sig-name descname">TD</code><em class="property"> = functools.partial(&lt;lxml.builder.ElementMaker object&gt;, 'td')</em><a class="headerlink" href="#lxml.html.builder.TD" title="Permalink to this definition">¶</a></dt>
+<dd><p>table data cell</p>
+</dd></dl>
+
+<dl class="py data">
+<dt id="lxml.html.builder.TEXTAREA">
+<code class="sig-prename descclassname">lxml.html.builder.</code><code class="sig-name descname">TEXTAREA</code><em class="property"> = functools.partial(&lt;lxml.builder.ElementMaker object&gt;, 'textarea')</em><a class="headerlink" href="#lxml.html.builder.TEXTAREA" title="Permalink to this definition">¶</a></dt>
+<dd><p>multi-line text field</p>
+</dd></dl>
+
+<dl class="py data">
+<dt id="lxml.html.builder.TFOOT">
+<code class="sig-prename descclassname">lxml.html.builder.</code><code class="sig-name descname">TFOOT</code><em class="property"> = functools.partial(&lt;lxml.builder.ElementMaker object&gt;, 'tfoot')</em><a class="headerlink" href="#lxml.html.builder.TFOOT" title="Permalink to this definition">¶</a></dt>
+<dd><p>table footer</p>
+</dd></dl>
+
+<dl class="py data">
+<dt id="lxml.html.builder.TH">
+<code class="sig-prename descclassname">lxml.html.builder.</code><code class="sig-name descname">TH</code><em class="property"> = functools.partial(&lt;lxml.builder.ElementMaker object&gt;, 'th')</em><a class="headerlink" href="#lxml.html.builder.TH" title="Permalink to this definition">¶</a></dt>
+<dd><p>table header cell</p>
+</dd></dl>
+
+<dl class="py data">
+<dt id="lxml.html.builder.THEAD">
+<code class="sig-prename descclassname">lxml.html.builder.</code><code class="sig-name descname">THEAD</code><em class="property"> = functools.partial(&lt;lxml.builder.ElementMaker object&gt;, 'thead')</em><a class="headerlink" href="#lxml.html.builder.THEAD" title="Permalink to this definition">¶</a></dt>
+<dd><p>table header</p>
+</dd></dl>
+
+<dl class="py data">
+<dt id="lxml.html.builder.TITLE">
+<code class="sig-prename descclassname">lxml.html.builder.</code><code class="sig-name descname">TITLE</code><em class="property"> = functools.partial(&lt;lxml.builder.ElementMaker object&gt;, 'title')</em><a class="headerlink" href="#lxml.html.builder.TITLE" title="Permalink to this definition">¶</a></dt>
+<dd><p>document title</p>
+</dd></dl>
+
+<dl class="py data">
+<dt id="lxml.html.builder.TR">
+<code class="sig-prename descclassname">lxml.html.builder.</code><code class="sig-name descname">TR</code><em class="property"> = functools.partial(&lt;lxml.builder.ElementMaker object&gt;, 'tr')</em><a class="headerlink" href="#lxml.html.builder.TR" title="Permalink to this definition">¶</a></dt>
+<dd><p>table row</p>
+</dd></dl>
+
+<dl class="py data">
+<dt id="lxml.html.builder.TT">
+<code class="sig-prename descclassname">lxml.html.builder.</code><code class="sig-name descname">TT</code><em class="property"> = functools.partial(&lt;lxml.builder.ElementMaker object&gt;, 'tt')</em><a class="headerlink" href="#lxml.html.builder.TT" title="Permalink to this definition">¶</a></dt>
+<dd><p>teletype or monospaced text style</p>
+</dd></dl>
+
+<dl class="py data">
+<dt id="lxml.html.builder.U">
+<code class="sig-prename descclassname">lxml.html.builder.</code><code class="sig-name descname">U</code><em class="property"> = functools.partial(&lt;lxml.builder.ElementMaker object&gt;, 'u')</em><a class="headerlink" href="#lxml.html.builder.U" title="Permalink to this definition">¶</a></dt>
+<dd><p>underlined text style (DEPRECATED)</p>
+</dd></dl>
+
+<dl class="py data">
+<dt id="lxml.html.builder.UL">
+<code class="sig-prename descclassname">lxml.html.builder.</code><code class="sig-name descname">UL</code><em class="property"> = functools.partial(&lt;lxml.builder.ElementMaker object&gt;, 'ul')</em><a class="headerlink" href="#lxml.html.builder.UL" title="Permalink to this definition">¶</a></dt>
+<dd><p>unordered list</p>
+</dd></dl>
+
+<dl class="py data">
+<dt id="lxml.html.builder.VAR">
+<code class="sig-prename descclassname">lxml.html.builder.</code><code class="sig-name descname">VAR</code><em class="property"> = functools.partial(&lt;lxml.builder.ElementMaker object&gt;, 'var')</em><a class="headerlink" href="#lxml.html.builder.VAR" title="Permalink to this definition">¶</a></dt>
+<dd><p>instance of a variable or program argument</p>
+</dd></dl>
+
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="lxml.html.clean.html" class="btn btn-neutral float-right" title="lxml.html.clean module" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="lxml.html._setmixin.html" class="btn btn-neutral float-left" title="lxml.html._setmixin module" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        
+        &copy; Copyright 2020, lxml dev team
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

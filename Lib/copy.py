@@ -4,8 +4,9 @@ Interface summary:
 
         import copy
 
-        x = copy.copy(y)        # make a shallow copy of y
-        x = copy.deepcopy(y)    # make a deep copy of y
+        x = copy.copy(y)                # make a shallow copy of y
+        x = copy.deepcopy(y)            # make a deep copy of y
+        x = copy.replace(y, a=1, b=2)   # new object with fields replaced, as defined by `__replace__`
 
 For module specific errors, copy.Error is raised.
 
@@ -56,12 +57,7 @@ class Error(Exception):
     pass
 error = Error   # backward compatibility
 
-try:
-    from org.python.core import PyStringMap
-except ImportError:
-    PyStringMap = None
-
-__all__ = ["Error", "copy", "deepcopy"]
+__all__ = ["Error", "copy", "deepcopy", "replace"]
 
 def copy(x):
     """Shallow copy operation on arbitrary Python objects.
@@ -106,22 +102,17 @@ _copy_dispatch = d = {}
 
 def _copy_immutable(x):
     return x
-for t in (type(None), int, float, bool, complex, str, tuple,
+for t in (types.NoneType, int, float, bool, complex, str, tuple,
           bytes, frozenset, type, range, slice, property,
-          types.BuiltinFunctionType, type(Ellipsis), type(NotImplemented),
-          types.FunctionType, weakref.ref):
-    d[t] = _copy_immutable
-t = getattr(types, "CodeType", None)
-if t is not None:
+          types.BuiltinFunctionType, types.EllipsisType,
+          types.NotImplementedType, types.FunctionType, types.CodeType,
+          weakref.ref):
     d[t] = _copy_immutable
 
 d[list] = list.copy
 d[dict] = dict.copy
 d[set] = set.copy
 d[bytearray] = bytearray.copy
-
-if PyStringMap is not None:
-    d[PyStringMap] = PyStringMap.copy
 
 del d, t
 
@@ -131,13 +122,13 @@ def deepcopy(x, memo=None, _nil=[]):
     See the module's __doc__ string for more info.
     """
 
+    d = id(x)
     if memo is None:
         memo = {}
-
-    d = id(x)
-    y = memo.get(d, _nil)
-    if y is not _nil:
-        return y
+    else:
+        y = memo.get(d, _nil)
+        if y is not _nil:
+            return y
 
     cls = type(x)
 
@@ -181,9 +172,9 @@ _deepcopy_dispatch = d = {}
 
 def _deepcopy_atomic(x, memo):
     return x
-d[type(None)] = _deepcopy_atomic
-d[type(Ellipsis)] = _deepcopy_atomic
-d[type(NotImplemented)] = _deepcopy_atomic
+d[types.NoneType] = _deepcopy_atomic
+d[types.EllipsisType] = _deepcopy_atomic
+d[types.NotImplementedType] = _deepcopy_atomic
 d[int] = _deepcopy_atomic
 d[float] = _deepcopy_atomic
 d[bool] = _deepcopy_atomic
@@ -231,8 +222,6 @@ def _deepcopy_dict(x, memo, deepcopy=deepcopy):
         y[deepcopy(key, memo)] = deepcopy(value, memo)
     return y
 d[dict] = _deepcopy_dict
-if PyStringMap is not None:
-    d[PyStringMap] = _deepcopy_dict
 
 def _deepcopy_method(x, memo): # Copy instance methods
     return type(x)(x.__func__, deepcopy(x.__self__, memo))
@@ -301,4 +290,17 @@ def _reconstruct(x, memo, func, args,
                 y[key] = value
     return y
 
-del types, weakref, PyStringMap
+del types, weakref
+
+
+def replace(obj, /, **changes):
+    """Return a new object replacing specified fields with new values.
+
+    This is especially useful for immutable objects, like named tuples or
+    frozen dataclasses.
+    """
+    cls = obj.__class__
+    func = getattr(cls, '__replace__', None)
+    if func is None:
+        raise TypeError(f"replace() does not support {cls.__name__} objects")
+    return func(obj, **changes)

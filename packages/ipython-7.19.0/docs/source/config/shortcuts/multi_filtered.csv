@@ -1,0 +1,4 @@
+:kbd:`c-m`	(And: Condition, (Not: Condition), (Or: Condition, Condition))	When the user presses return, insert a newline or execute the code
+:kbd:`c-n`	(And: Condition, Condition)	Control-N in vi edit mode on readline is history previous, unlike default prompt toolkit
+:kbd:`c-o`	(And: Condition, Condition)	insert a newline after the cursor indented appropriately
+:kbd:`c-p`	(And: Condition, Condition)	Control-P in vi edit mode on readline is history next, unlike default prompt toolkit

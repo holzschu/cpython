@@ -52,7 +52,7 @@ _pathseps_with_colon = {f':{s}' for s in path_separators}
 
 # Bootstrap-related code ######################################################
 _CASE_INSENSITIVE_PLATFORMS_STR_KEY = 'win',
-_CASE_INSENSITIVE_PLATFORMS_BYTES_KEY = 'cygwin', 'darwin'
+_CASE_INSENSITIVE_PLATFORMS_BYTES_KEY = 'cygwin', 'darwin', 'ios', 'tvos', 'watchos'
 _CASE_INSENSITIVE_PLATFORMS =  (_CASE_INSENSITIVE_PLATFORMS_BYTES_KEY
                                 + _CASE_INSENSITIVE_PLATFORMS_STR_KEY)
 
@@ -80,6 +80,11 @@ def _pack_uint32(x):
     """Convert a 32-bit integer to little-endian."""
     return (int(x) & 0xFFFFFFFF).to_bytes(4, 'little')
 
+
+def _unpack_uint64(data):
+    """Convert 8 bytes in little-endian to an integer."""
+    assert len(data) == 8
+    return int.from_bytes(data, 'little')
 
 def _unpack_uint32(data):
     """Convert 4 bytes in little-endian to an integer."""
@@ -182,19 +187,33 @@ else:
         return path.startswith(path_separators)
 
 
+def _path_abspath(path):
+    """Replacement for os.path.abspath."""
+    if not _path_isabs(path):
+        for sep in path_separators:
+            path = path.removeprefix(f".{sep}")
+        return _path_join(_os.getcwd(), path)
+    else:
+        return path
+
+
 def _write_atomic(path, data, mode=0o666):
     """Best-effort function to write data to a path atomically.
     Be prepared to handle a FileExistsError if concurrent writing of the
     temporary file is attempted."""
     # id() is used to generate a pseudo-random filename.
-    path_tmp = '{}.{}'.format(path, id(path))
+    path_tmp = f'{path}.{id(path)}'
     fd = _os.open(path_tmp,
                   _os.O_EXCL | _os.O_CREAT | _os.O_WRONLY, mode & 0o666)
     try:
         # We first write data to a temporary file, and then use os.replace() to
         # perform an atomic rename.
         with _io.FileIO(fd, 'wb') as file:
-            file.write(data)
+            bytes_written = file.write(data)
+        if bytes_written != len(data):
+            # Raise an OSError so the 'except' below cleans up the partially
+            # written file.
+            raise OSError("os.write() didn't write the full pyc file")
         _os.replace(path_tmp, path)
     except OSError:
         try:
@@ -404,10 +423,67 @@ _code_type = type(_write_atomic.__code__)
 #     Python 3.11a7 3493 (Make JUMP_IF_TRUE_OR_POP/JUMP_IF_FALSE_OR_POP relative)
 #     Python 3.11a7 3494 (New location info table)
 #     Python 3.11b4 3495 (Set line number of module's RESUME instr to 0 per PEP 626)
-#     Python 3.12 will start with magic number 3500
+#     Python 3.12a1 3500 (Remove PRECALL opcode)
+#     Python 3.12a1 3501 (YIELD_VALUE oparg == stack_depth)
+#     Python 3.12a1 3502 (LOAD_FAST_CHECK, no NULL-check in LOAD_FAST)
+#     Python 3.12a1 3503 (Shrink LOAD_METHOD cache)
+#     Python 3.12a1 3504 (Merge LOAD_METHOD back into LOAD_ATTR)
+#     Python 3.12a1 3505 (Specialization/Cache for FOR_ITER)
+#     Python 3.12a1 3506 (Add BINARY_SLICE and STORE_SLICE instructions)
+#     Python 3.12a1 3507 (Set lineno of module's RESUME to 0)
+#     Python 3.12a1 3508 (Add CLEANUP_THROW)
+#     Python 3.12a1 3509 (Conditional jumps only jump forward)
+#     Python 3.12a2 3510 (FOR_ITER leaves iterator on the stack)
+#     Python 3.12a2 3511 (Add STOPITERATION_ERROR instruction)
+#     Python 3.12a2 3512 (Remove all unused consts from code objects)
+#     Python 3.12a4 3513 (Add CALL_INTRINSIC_1 instruction, removed STOPITERATION_ERROR, PRINT_EXPR, IMPORT_STAR)
+#     Python 3.12a4 3514 (Remove ASYNC_GEN_WRAP, LIST_TO_TUPLE, and UNARY_POSITIVE)
+#     Python 3.12a5 3515 (Embed jump mask in COMPARE_OP oparg)
+#     Python 3.12a5 3516 (Add COMPARE_AND_BRANCH instruction)
+#     Python 3.12a5 3517 (Change YIELD_VALUE oparg to exception block depth)
+#     Python 3.12a6 3518 (Add RETURN_CONST instruction)
+#     Python 3.12a6 3519 (Modify SEND instruction)
+#     Python 3.12a6 3520 (Remove PREP_RERAISE_STAR, add CALL_INTRINSIC_2)
+#     Python 3.12a7 3521 (Shrink the LOAD_GLOBAL caches)
+#     Python 3.12a7 3522 (Removed JUMP_IF_FALSE_OR_POP/JUMP_IF_TRUE_OR_POP)
+#     Python 3.12a7 3523 (Convert COMPARE_AND_BRANCH back to COMPARE_OP)
+#     Python 3.12a7 3524 (Shrink the BINARY_SUBSCR caches)
+#     Python 3.12b1 3525 (Shrink the CALL caches)
+#     Python 3.12b1 3526 (Add instrumentation support)
+#     Python 3.12b1 3527 (Add LOAD_SUPER_ATTR)
+#     Python 3.12b1 3528 (Add LOAD_SUPER_ATTR_METHOD specialization)
+#     Python 3.12b1 3529 (Inline list/dict/set comprehensions)
+#     Python 3.12b1 3530 (Shrink the LOAD_SUPER_ATTR caches)
+#     Python 3.12b1 3531 (Add PEP 695 changes)
+#     Python 3.13a1 3550 (Plugin optimizer support)
+#     Python 3.13a1 3551 (Compact superinstructions)
+#     Python 3.13a1 3552 (Remove LOAD_FAST__LOAD_CONST and LOAD_CONST__LOAD_FAST)
+#     Python 3.13a1 3553 (Add SET_FUNCTION_ATTRIBUTE)
+#     Python 3.13a1 3554 (more efficient bytecodes for f-strings)
+#     Python 3.13a1 3555 (generate specialized opcodes metadata from bytecodes.c)
+#     Python 3.13a1 3556 (Convert LOAD_CLOSURE to a pseudo-op)
+#     Python 3.13a1 3557 (Make the conversion to boolean in jumps explicit)
+#     Python 3.13a1 3558 (Reorder the stack items for CALL)
+#     Python 3.13a1 3559 (Generate opcode IDs from bytecodes.c)
+#     Python 3.13a1 3560 (Add RESUME_CHECK instruction)
+#     Python 3.13a1 3561 (Add cache entry to branch instructions)
+#     Python 3.13a1 3562 (Assign opcode IDs for internal ops in separate range)
+#     Python 3.13a1 3563 (Add CALL_KW and remove KW_NAMES)
+#     Python 3.13a1 3564 (Removed oparg from YIELD_VALUE, changed oparg values of RESUME)
+#     Python 3.13a1 3565 (Oparg of YIELD_VALUE indicates whether it is in a yield-from)
+#     Python 3.13a1 3566 (Emit JUMP_NO_INTERRUPT instead of JUMP for non-loop no-lineno cases)
+#     Python 3.13a1 3567 (Reimplement line number propagation by the compiler)
+#     Python 3.13a1 3568 (Change semantics of END_FOR)
+#     Python 3.13a5 3569 (Specialize CONTAINS_OP)
+#     Python 3.13a6 3570 (Add __firstlineno__ class attribute)
+#     Python 3.13b1 3571 (Fix miscompilation of private names in generic classes)
 
+#     Python 3.14 will start with 3600
 
-#
+#     Please don't copy-paste the same pre-release tag for new entries above!!!
+#     You should always use the *upcoming* tag. For example, if 3.12a6 came out
+#     a week ago, I should put "Python 3.12a7" next to my new magic number.
+
 # MAGIC must change whenever the bytecode emitted by the compiler may no
 # longer be understood by older implementations of the eval loop (usually
 # due to the addition of new opcodes).
@@ -417,7 +493,7 @@ _code_type = type(_write_atomic.__code__)
 # Whenever MAGIC_NUMBER is changed, the ranges in the magic_values array
 # in PC/launcher.c must also be updated.
 
-MAGIC_NUMBER = (3495).to_bytes(2, 'little') + b'\r\n'
+MAGIC_NUMBER = (3571).to_bytes(2, 'little') + b'\r\n'
 
 _RAW_MAGIC_NUMBER = int.from_bytes(MAGIC_NUMBER, 'little')  # For import.c
 
@@ -474,8 +550,8 @@ def cache_from_source(path, debug_override=None, *, optimization=None):
     optimization = str(optimization)
     if optimization != '':
         if not optimization.isalnum():
-            raise ValueError('{!r} is not alphanumeric'.format(optimization))
-        almost_filename = '{}.{}{}'.format(almost_filename, _OPT, optimization)
+            raise ValueError(f'{optimization!r} is not alphanumeric')
+        almost_filename = f'{almost_filename}.{_OPT}{optimization}'
     filename = almost_filename + BYTECODE_SUFFIXES[0]
     if sys.pycache_prefix is not None:
         # We need an absolute path to the py file to avoid the possibility of
@@ -486,8 +562,7 @@ def cache_from_source(path, debug_override=None, *, optimization=None):
         # make it absolute (`C:\Somewhere\Foo\Bar`), then make it root-relative
         # (`Somewhere\Foo\Bar`), so we end up placing the bytecode file in an
         # unambiguous `C:\Bytecode\Somewhere\Foo\Bar\`.
-        if not _path_isabs(head):
-            head = _path_join(_os.getcwd(), head)
+        head = _path_abspath(head)
 
         # Strip initial drive from a Windows path. We know we have an absolute
         # path here, so the second part of the check rules out a POSIX path that
@@ -619,26 +694,6 @@ def _check_name(method):
     return _check_name_wrapper
 
 
-def _find_module_shim(self, fullname):
-    """Try to find a loader for the specified module by delegating to
-    self.find_loader().
-
-    This method is deprecated in favor of finder.find_spec().
-
-    """
-    _warnings.warn("find_module() is deprecated and "
-                   "slated for removal in Python 3.12; use find_spec() instead",
-                   DeprecationWarning)
-    # Call find_loader(). If it returns a string (indicating this
-    # is a namespace package portion), generate a warning and
-    # return None.
-    loader, portions = self.find_loader(fullname)
-    if loader is None and len(portions):
-        msg = 'Not importing directory {}: missing __init__'
-        _warnings.warn(msg.format(portions[0]), ImportWarning)
-    return loader
-
-
 def _classify_pyc(data, name, exc_details):
     """Perform basic validity checking of a pyc header and return the flags field,
     which determines how the pyc should be further validated against the source.
@@ -733,7 +788,7 @@ def _compile_bytecode(data, name=None, bytecode_path=None, source_path=None):
             _imp._fix_co_filename(code, source_path)
         return code
     else:
-        raise ImportError('Non-code object in {!r}'.format(bytecode_path),
+        raise ImportError(f'Non-code object in {bytecode_path!r}',
                           name=name, path=bytecode_path)
 
 
@@ -800,11 +855,10 @@ def spec_from_file_location(name, location=None, *, loader=None,
                 pass
     else:
         location = _os.fspath(location)
-        if not _path_isabs(location):
-            try:
-                location = _path_join(_os.getcwd(), location)
-            except OSError:
-                pass
+        try:
+            location = _path_abspath(location)
+        except OSError:
+            pass
 
     # If the location is on the filesystem, but doesn't actually exist,
     # we could return None here, indicating that the location is not
@@ -844,6 +898,54 @@ def spec_from_file_location(name, location=None, *, loader=None,
             spec.submodule_search_locations.append(dirname)
 
     return spec
+
+
+def _bless_my_loader(module_globals):
+    """Helper function for _warnings.c
+
+    See GH#97850 for details.
+    """
+    # 2022-10-06(warsaw): For now, this helper is only used in _warnings.c and
+    # that use case only has the module globals.  This function could be
+    # extended to accept either that or a module object.  However, in the
+    # latter case, it would be better to raise certain exceptions when looking
+    # at a module, which should have either a __loader__ or __spec__.loader.
+    # For backward compatibility, it is possible that we'll get an empty
+    # dictionary for the module globals, and that cannot raise an exception.
+    if not isinstance(module_globals, dict):
+        return None
+
+    missing = object()
+    loader = module_globals.get('__loader__', None)
+    spec = module_globals.get('__spec__', missing)
+
+    if loader is None:
+        if spec is missing:
+            # If working with a module:
+            # raise AttributeError('Module globals is missing a __spec__')
+            return None
+        elif spec is None:
+            raise ValueError('Module globals is missing a __spec__.loader')
+
+    spec_loader = getattr(spec, 'loader', missing)
+
+    if spec_loader in (missing, None):
+        if loader is None:
+            exc = AttributeError if spec_loader is missing else ValueError
+            raise exc('Module globals is missing a __spec__.loader')
+        _warnings.warn(
+            'Module globals is missing a __spec__.loader',
+            DeprecationWarning)
+        spec_loader = loader
+
+    assert spec_loader is not None
+    if loader is not None and loader != spec_loader:
+        _warnings.warn(
+            'Module globals; __loader__ != __spec__.loader',
+            DeprecationWarning)
+        return loader
+
+    return spec_loader
 
 
 # Loaders #####################################################################
@@ -898,22 +1000,6 @@ class WindowsRegistryFinder:
                                                    origin=filepath)
                 return spec
 
-    @classmethod
-    def find_module(cls, fullname, path=None):
-        """Find module named in the registry.
-
-        This method is deprecated.  Use find_spec() instead.
-
-        """
-        _warnings.warn("WindowsRegistryFinder.find_module() is deprecated and "
-                       "slated for removal in Python 3.12; use find_spec() instead",
-                       DeprecationWarning)
-        spec = cls.find_spec(fullname, path)
-        if spec is not None:
-            return spec.loader
-        else:
-            return None
-
 
 class _LoaderBasics:
 
@@ -935,8 +1021,8 @@ class _LoaderBasics:
         """Execute the module."""
         code = self.get_code(module.__name__)
         if code is None:
-            raise ImportError('cannot load module {!r} when get_code() '
-                              'returns None'.format(module.__name__))
+            raise ImportError(f'cannot load module {module.__name__!r} when '
+                              'get_code() returns None')
         _bootstrap._call_with_frames_removed(exec, code, module.__dict__)
 
     def load_module(self, fullname):
@@ -1077,7 +1163,8 @@ class SourceLoader(_LoaderBasics):
                 source_mtime is not None):
             if hash_based:
                 if source_hash is None:
-                    source_hash = _imp.source_hash(source_bytes)
+                    source_hash = _imp.source_hash(_RAW_MAGIC_NUMBER,
+                                                   source_bytes)
                 data = _code_to_hash_pyc(code_object, source_hash, check_source)
             else:
                 data = _code_to_timestamp_pyc(code_object, source_mtime,
@@ -1321,7 +1408,7 @@ class _NamespacePath:
         return len(self._recalculate())
 
     def __repr__(self):
-        return '_NamespacePath({!r})'.format(self._path)
+        return f'_NamespacePath({self._path!r})'
 
     def __contains__(self, item):
         return item in self._recalculate()
@@ -1332,21 +1419,10 @@ class _NamespacePath:
 
 # This class is actually exposed publicly in a namespace package's __loader__
 # attribute, so it should be available through a non-private name.
-# https://bugs.python.org/issue35673
+# https://github.com/python/cpython/issues/92054
 class NamespaceLoader:
     def __init__(self, name, path, path_finder):
         self._path = _NamespacePath(name, path, path_finder)
-
-    @staticmethod
-    def module_repr(module):
-        """Return repr for the module.
-
-        The method is deprecated.  The import machinery does the job itself.
-
-        """
-        _warnings.warn("NamespaceLoader.module_repr() is deprecated and "
-                       "slated for removal in Python 3.12", DeprecationWarning)
-        return '<module {!r} (namespace)>'.format(module.__name__)
 
     def is_package(self, fullname):
         return True
@@ -1393,7 +1469,7 @@ class PathFinder:
     @staticmethod
     def invalidate_caches():
         """Call the invalidate_caches() method on all path entry finders
-        stored in sys.path_importer_caches (where implemented)."""
+        stored in sys.path_importer_cache (where implemented)."""
         for name, finder in list(sys.path_importer_cache.items()):
             # Drop entry if finder name is a relative path. The current
             # working directory may have changed.
@@ -1404,6 +1480,9 @@ class PathFinder:
         # Also invalidate the caches of _NamespacePaths
         # https://bugs.python.org/issue45703
         _NamespacePath._epoch += 1
+
+        from importlib.metadata import MetadataPathFinder
+        MetadataPathFinder.invalidate_caches()
 
     @staticmethod
     def _path_hooks(path):
@@ -1441,27 +1520,6 @@ class PathFinder:
         return finder
 
     @classmethod
-    def _legacy_get_spec(cls, fullname, finder):
-        # This would be a good place for a DeprecationWarning if
-        # we ended up going that route.
-        if hasattr(finder, 'find_loader'):
-            msg = (f"{_bootstrap._object_name(finder)}.find_spec() not found; "
-                    "falling back to find_loader()")
-            _warnings.warn(msg, ImportWarning)
-            loader, portions = finder.find_loader(fullname)
-        else:
-            msg = (f"{_bootstrap._object_name(finder)}.find_spec() not found; "
-                    "falling back to find_module()")
-            _warnings.warn(msg, ImportWarning)
-            loader = finder.find_module(fullname)
-            portions = []
-        if loader is not None:
-            return _bootstrap.spec_from_loader(fullname, loader)
-        spec = _bootstrap.ModuleSpec(fullname, None)
-        spec.submodule_search_locations = portions
-        return spec
-
-    @classmethod
     def _get_spec(cls, fullname, path, target=None):
         """Find the loader or namespace_path for this module/package name."""
         # If this ends up being a namespace package, namespace_path is
@@ -1472,10 +1530,7 @@ class PathFinder:
                 continue
             finder = cls._path_importer_cache(entry)
             if finder is not None:
-                if hasattr(finder, 'find_spec'):
-                    spec = finder.find_spec(fullname, target)
-                else:
-                    spec = cls._legacy_get_spec(fullname, finder)
+                spec = finder.find_spec(fullname, target)
                 if spec is None:
                     continue
                 if spec.loader is not None:
@@ -1517,22 +1572,6 @@ class PathFinder:
         else:
             return spec
 
-    @classmethod
-    def find_module(cls, fullname, path=None):
-        """find the module on sys.path or 'path' based on sys.path_hooks and
-        sys.path_importer_cache.
-
-        This method is deprecated.  Use find_spec() instead.
-
-        """
-        _warnings.warn("PathFinder.find_module() is deprecated and "
-                       "slated for removal in Python 3.12; use find_spec() instead",
-                       DeprecationWarning)
-        spec = cls.find_spec(fullname, path)
-        if spec is None:
-            return None
-        return spec.loader
-
     @staticmethod
     def find_distributions(*args, **kwargs):
         """
@@ -1567,10 +1606,8 @@ class FileFinder:
         # Base (directory) path
         if not path or path == '.':
             self.path = _os.getcwd()
-        elif not _path_isabs(path):
-            self.path = _path_join(_os.getcwd(), path)
         else:
-            self.path = path
+            self.path = _path_abspath(path)
         self._path_mtime = -1
         self._path_cache = set()
         self._relaxed_path_cache = set()
@@ -1578,23 +1615,6 @@ class FileFinder:
     def invalidate_caches(self):
         """Invalidate the directory mtime."""
         self._path_mtime = -1
-
-    find_module = _find_module_shim
-
-    def find_loader(self, fullname):
-        """Try to find a loader for the specified module, or the namespace
-        package portions. Returns (loader, list-of-portions).
-
-        This method is deprecated.  Use find_spec() instead.
-
-        """
-        _warnings.warn("FileFinder.find_loader() is deprecated and "
-                       "slated for removal in Python 3.12; use find_spec() instead",
-                       DeprecationWarning)
-        spec = self.find_spec(fullname)
-        if spec is None:
-            return None, []
-        return spec.loader, spec.submodule_search_locations or []
 
     def _get_spec(self, loader_class, fullname, path, smsl, target):
         loader = loader_class(fullname, path)
@@ -1645,283 +1665,6 @@ class FileFinder:
                 if _path_isfile(full_path):
                     return self._get_spec(loader_class, fullname, full_path,
                                           None, target)
-            # iOS: check if a framework with proper name exists:
-            # Numpy modules don't use the lib-dynload path.
-            if sys.platform == 'darwin' and _os.uname().machine.startswith('iP'): 
-                _bootstrap._verbose_message('searching for {}', fullname, verbosity=2)
-                if self.path.startswith(sys.prefix) and suffix.endswith('.so'):
-                    pythonName = sys.orig_argv[0]
-                    if (pythonName == "python3") or (pythonName == "python"):
-                        pythonName = "python3_ios"
-                    # Merged numpy, pandas and astropy modules into a single framework:
-                    if fullname in ["numpy.core._operand_flag_tests", 
-                    "numpy.core._multiarray_umath", 
-                    "numpy.core._multiarray_tests", 
-                    "numpy.core._simd", 
-                    "numpy.core._umath_tests",
-                    "numpy.core._rational_tests",
-                    "numpy.core._struct_ufunc_tests",
-                    "numpy.linalg.lapack_lite", 
-                    "numpy.linalg._umath_linalg", 
-                    "numpy.fft._pocketfft_internal", 
-                    "numpy.random.bit_generator", 
-                    "numpy.random.mtrand", 
-                    "numpy.random._generator", 
-                    "numpy.random._pcg64", 
-                    "numpy.random._sfc64", 
-                    "numpy.random._mt19937", 
-                    "numpy.random._philox", 
-                    "numpy.random._bounded_integers", 
-                    "numpy.random._common"]:
-                        frameworkName = pythonName + "-" + "numpy_all"
-                    elif fullname in ["pandas.io.sas._sas",
-                            "pandas.io.sas._byteswap", 
-                            "pandas._libs.index",
-                            "pandas._libs.join",
-                            "pandas._libs.parsers",
-                            "pandas._libs.reduction",
-                            "pandas._libs.tslib",
-                            "pandas._libs.sparse",
-                            "pandas._libs.properties",
-                            "pandas._libs.internals",
-                            "pandas._libs.reshape",
-                            "pandas._libs.ops",
-                            "pandas._libs.indexing",
-                            "pandas._libs.hashing",
-                            "pandas._libs.lib",
-                            "pandas._libs.hashtable",
-                            "pandas._libs.algos",
-                            "pandas._libs.json",
-                            "pandas._libs.arrays",
-                            "pandas._libs.window.indexers",
-                            "pandas._libs.window.aggregations",
-                            "pandas._libs.writers",
-                            "pandas._libs.ops_dispatch",
-                            "pandas._libs.groupby",
-                            "pandas._libs.interval",
-                            "pandas._libs.tslibs.dtypes",
-                            "pandas._libs.tslibs.period",
-                            "pandas._libs.tslibs.conversion",
-                            "pandas._libs.tslibs.ccalendar",
-                            "pandas._libs.tslibs.timedeltas",
-                            "pandas._libs.tslibs.strptime",
-                            "pandas._libs.tslibs.vectorized",
-                            "pandas._libs.tslibs.nattype",
-                            "pandas._libs.tslibs.base",
-                            "pandas._libs.tslibs.timezones",
-                            "pandas._libs.tslibs.timestamps",
-                            "pandas._libs.tslibs.offsets",
-                            "pandas._libs.tslibs.fields",
-                            "pandas._libs.tslibs.np_datetime",
-                            "pandas._libs.tslibs.parsing",
-                            "pandas._libs.tslibs.tzconversion",
-                            "pandas._libs.testing",
-                            "pandas._libs.missing"]:
-                        frameworkName = pythonName + "-" + "pandas_all"
-                    elif fullname in ["astropy.compiler_version",
-                            "astropy.timeseries.periodograms.bls._impl",
-                            "astropy.timeseries.periodograms.lombscargle.implementations.cython_impl",
-                            "astropy.wcs._wcs",
-                            "astropy.io.ascii.cparser",
-                            "astropy.io.fits._utils",
-                            "astropy.io.fits._tiled_compression._compression",
-                            "astropy.io.votable.tablewriter",
-                            "astropy.utils._compiler",
-                            "astropy.utils.xml._iterparser",
-                            "astropy.time._parse_times",
-                            "astropy.table._np_utils",
-                            "astropy.table._column_mixins",
-                            "astropy.cosmology.flrw.scalar_inv_efuncs",
-                            "astropy.convolution._convolve",
-                            "astropy.stats._fast_sigma_clip",
-                            "astropy.stats._stats"]:
-                        frameworkName = pythonName + "-" + "astropy_all"
-                    elif fullname in ["qutip.cy.checks",
-                            "qutip.cy.piqs",
-                            "qutip.cy.ptrace",
-                            "qutip.cy.cqobjevo",
-                            "qutip.cy.mcsolve",
-                            "qutip.cy.spmatfuncs",
-                            "qutip.cy.spconvert",
-                            "qutip.cy.brtools",
-                            "qutip.cy.stochastic",
-                            "qutip.cy.heom",
-                            "qutip.cy.br_tensor",
-                            "qutip.cy.interpolate",
-                            "qutip.cy.brtools_checks",
-                            "qutip.cy.sparse_utils",
-                            "qutip.cy.inter",
-                            "qutip.cy.cqobjevo_factor",
-                            "qutip.cy.graph_utils",
-                            "qutip.cy.math",
-                            "qutip.cy.spmath",
-                            "qutip.control.cy_grape"]:
-                        frameworkName = pythonName + "-" + "qutip_all"
-                    elif fullname in ["scipy._lib._ccallback_c",
-                                      "scipy._lib._fpumode",
-                                      "scipy._lib._test_ccallback",
-                                      "scipy._lib._test_deprecation_call",
-                                      "scipy._lib._test_deprecation_def",
-                                      "scipy._lib._uarray._uarray",
-                                      "scipy._lib.messagestream",
-                                      "scipy.cluster._hierarchy",
-                                      "scipy.cluster._optimal_leaf_ordering",
-                                      "scipy.cluster._vq",
-                                      "scipy.fft._pocketfft.pypocketfft",
-                                      "scipy.fftpack.convolve",
-                                      "scipy.integrate._test_multivariate",
-                                      "scipy.interpolate._bspl",
-                                      "scipy.interpolate._fitpack",
-                                      "scipy.interpolate._ppoly",
-                                      "scipy.interpolate._rgi_cython",
-                                      "scipy.interpolate.dfitpack",
-                                      "scipy.interpolate.interpnd",
-                                      "scipy.io._test_fortran",
-                                      "scipy.io.matlab._mio5_utils",
-                                      "scipy.io.matlab._mio_utils",
-                                      "scipy.io.matlab._streams",
-                                      "scipy.linalg._cythonized_array_utils",
-                                      "scipy.linalg._decomp_update",
-                                      "scipy.linalg._matfuncs_expm",
-                                      "scipy.linalg._matfuncs_sqrtm_triu",
-                                      "scipy.linalg._solve_toeplitz",
-                                      "scipy.ndimage._ctest",
-                                      "scipy.ndimage._cytest",
-                                      "scipy.ndimage._nd_image",
-                                      "scipy.ndimage._ni_label",
-                                      "scipy.odr.__odrpack",
-                                      "scipy.optimize._bglu_dense",
-                                      "scipy.optimize._direct",
-                                      "scipy.optimize._group_columns",
-                                      "scipy.optimize._highs._highs_constants",
-                                      "scipy.optimize._highs._highs_wrapper",
-                                      "scipy.optimize._lsap",
-                                      "scipy.optimize._lsq.givens_elimination",
-                                      "scipy.optimize._moduleTNC",
-                                      "scipy.optimize._zeros",
-                                      "scipy.signal._max_len_seq_inner",
-                                      "scipy.signal._peak_finding_utils",
-                                      "scipy.signal._sigtools",
-                                      "scipy.signal._sosfilt",
-                                      "scipy.signal._spectral",
-                                      "scipy.signal._spline",
-                                      "scipy.signal._upfirdn_apply",
-                                      "scipy.sparse._csparsetools",
-                                      "scipy.sparse.csgraph._flow",
-                                      "scipy.sparse.csgraph._matching",
-                                      "scipy.sparse.csgraph._min_spanning_tree",
-                                      "scipy.sparse.csgraph._reordering",
-                                      "scipy.sparse.csgraph._shortest_path",
-                                      "scipy.sparse.csgraph._tools",
-                                      "scipy.sparse.csgraph._traversal",
-                                      "scipy.sparse._sparsetools",
-                                      "scipy.sparse.sparsetools._sparsetools",
-                                      "scipy.spatial._ckdtree",
-                                      "scipy.spatial._distance_pybind",
-                                      "scipy.spatial._distance_wrap",
-                                      "scipy.spatial._hausdorff",
-                                      "scipy.spatial._voronoi",
-                                      "scipy.spatial.transform._rotation",
-                                      "scipy.special._comb",
-                                      "scipy.special._specfun",
-                                      "scipy.special.cython_special",
-                                      "scipy.stats._biasedurn",
-                                      "scipy.stats._boost.beta_ufunc",
-                                      "scipy.stats._boost.binom_ufunc",
-                                      "scipy.stats._boost.hypergeom_ufunc",
-                                      "scipy.stats._boost.invgauss_ufunc",
-                                      "scipy.stats._boost.nbinom_ufunc",
-                                      "scipy.stats._boost.ncf_ufunc",
-                                      "scipy.stats._boost.nct_ufunc",
-                                      "scipy.stats._boost.ncx2_ufunc",
-                                      "scipy.stats._boost.skewnorm_ufunc",
-                                      "scipy.stats._levy_stable.levyst",
-                                      "scipy.stats._mvn",
-                                      "scipy.stats._qmc_cy",
-                                      "scipy.stats._rcont.rcont",
-                                      "scipy.stats._sobol",
-                                      "scipy.stats._statlib",
-                                      "scipy.stats._stats",
-                                      "scipy.stats._unuran.unuran_wrapper"]:
-                        frameworkName = pythonName + "-" + "scipy_all"
-                    elif fullname in ["PIL._imagingft",
-                            "PIL._imagingmath",
-                            "PIL._imagingtk",
-                            "PIL._imagingmorph",
-                            "PIL._imaging"]:
-                        frameworkName = pythonName + "-" + "PIL_all"
-                    elif fullname in ["lxml.etree",
-                            "lxml.objectify",
-                            "lxml.sax",
-                            "lxml.html.diff",
-                            "lxml.html.clean",
-                            "lxml._elementpath",
-                            "lxml.builder"]:
-                        frameworkName = pythonName + "-" + "lxml_all"
-                    elif fullname in ["fiona.schema",
-                                      "fiona.crs",
-                                      "fiona._err",
-                                      "fiona._transform",
-                                      "fiona._geometry",
-                                      "fiona._env",
-                                      "fiona.ogrext"]:
-                        frameworkName = pythonName + "-" + "fiona_all"
-                    elif fullname in ["pyproj._transformer",
-                            "pyproj._datadir",
-                            "pyproj.list",
-                            "pyproj._compat",
-                            "pyproj._crs",
-                            "pyproj._network",
-                            "pyproj._geod",
-                            "pyproj.database",
-                            "pyproj._sync"]:
-                        frameworkName = pythonName + "-" + "pyproj_all"
-                    elif fullname in ["rasterio._fill",
-                            "rasterio.crs",
-                            "rasterio._err",
-                            "rasterio._warp",
-                            "rasterio._transform",
-                            "rasterio._example",
-                            "rasterio._io",
-                            "rasterio._base",
-                            "rasterio.shutil",
-                            "rasterio._env",
-                            "rasterio._version",
-                            "rasterio._filepath",
-                            "rasterio._features"]:
-                        frameworkName = pythonName + "-" + "rasterio_all"
-                    elif fullname in ["statsmodels.robust._qn",
-                            "statsmodels.nonparametric._smoothers_lowess",
-                            "statsmodels.nonparametric.linbin",
-                            "statsmodels.tsa.statespace._simulation_smoother",
-                            "statsmodels.tsa.statespace._representation",
-                            "statsmodels.tsa.statespace._kalman_filter",
-                            "statsmodels.tsa.statespace._tools",
-                            "statsmodels.tsa.statespace._smoothers._univariate_diffuse",
-                            "statsmodels.tsa.statespace._smoothers._alternative",
-                            "statsmodels.tsa.statespace._smoothers._classical",
-                            "statsmodels.tsa.statespace._smoothers._univariate",
-                            "statsmodels.tsa.statespace._smoothers._conventional",
-                            "statsmodels.tsa.statespace._cfa_simulation_smoother",
-                            "statsmodels.tsa.statespace._kalman_smoother",
-                            "statsmodels.tsa.statespace._initialization",
-                            "statsmodels.tsa.statespace._filters._inversions",
-                            "statsmodels.tsa.regime_switching._kim_smoother",
-                            "statsmodels.tsa.regime_switching._hamilton_filter",
-                            "statsmodels.tsa.innovations._arma_innovations",
-                            "statsmodels.tsa.holtwinters._exponential_smoothers",
-                            "statsmodels.tsa._innovations",
-                            "statsmodels.tsa.exponential_smoothing._ets_smooth",
-                            "statsmodels.tsa.stl._stl"]:
-                        frameworkName = pythonName + "-" + "statsmodels_all"
-                    else:
-                        frameworkName = pythonName + "-" + fullname
-                    home, tail = _path_split(sys.prefix)
-                    full_path = _path_join(home, "Frameworks", frameworkName + ".framework", frameworkName)
-                    _bootstrap._verbose_message('trying {}', full_path, verbosity=2)
-                    if _path_isfile(full_path):
-                        return self._get_spec(loader_class, fullname, full_path, None, target)
-            # end iOS
         if is_namespace:
             _bootstrap._verbose_message('possible namespace for {}', base_path)
             spec = _bootstrap.ModuleSpec(fullname, None)
@@ -1952,7 +1695,7 @@ class FileFinder:
             for item in contents:
                 name, dot, suffix = item.partition('.')
                 if dot:
-                    new_name = '{}.{}'.format(name, suffix.lower())
+                    new_name = f'{name}.{suffix.lower()}'
                 else:
                     new_name = name
                 lower_suffix_contents.add(new_name)
@@ -1979,8 +1722,48 @@ class FileFinder:
         return path_hook_for_FileFinder
 
     def __repr__(self):
-        return 'FileFinder({!r})'.format(self.path)
+        return f'FileFinder({self.path!r})'
 
+
+class AppleFrameworkLoader(ExtensionFileLoader):
+    """A loader for modules that have been packaged as frameworks for
+    compatibility with Apple's iOS App Store policies.
+    """
+    def create_module(self, spec):
+        # If the ModuleSpec has been created by the FileFinder, it will have
+        # been created with an origin pointing to the .fwork file. We need to
+        # redirect this to the location in the Frameworks folder, using the
+        # content of the .fwork file.
+        if spec.origin.endswith(".fwork"):
+            with _io.FileIO(spec.origin, 'r') as file:
+                framework_binary = file.read().decode().strip()
+            bundle_path = _path_split(sys.executable)[0]
+            spec.origin = _path_join(bundle_path, framework_binary)
+
+        # If the loader is created based on the spec for a loaded module, the
+        # path will be pointing at the Framework location. If this occurs,
+        # get the original .fwork location to use as the module's __file__.
+        if self.path.endswith(".fwork"):
+            path = self.path
+        else:
+            with _io.FileIO(self.path + ".origin", 'r') as file:
+                origin = file.read().decode().strip()
+                bundle_path = _path_split(sys.executable)[0]
+                path = _path_join(bundle_path, origin)
+
+        module = _bootstrap._call_with_frames_removed(_imp.create_dynamic, spec)
+
+        _bootstrap._verbose_message(
+            "Apple framework extension module {!r} loaded from {!r} (path {!r})",
+            spec.name,
+            spec.origin,
+            path,
+        )
+
+        # Ensure that the __file__ points at the .fwork location
+        module.__file__ = path
+
+        return module
 
 # Import setup ###############################################################
 
@@ -1997,6 +1780,8 @@ def _fix_up_module(ns, name, pathname, cpathname=None):
             loader = SourceFileLoader(name, pathname)
     if not spec:
         spec = spec_from_file_location(name, pathname, loader=loader)
+        if cpathname:
+            spec.cached = _path_abspath(cpathname)
     try:
         ns['__spec__'] = spec
         ns['__loader__'] = loader
@@ -2012,10 +1797,17 @@ def _get_supported_file_loaders():
 
     Each item is a tuple (loader, suffixes).
     """
-    extensions = ExtensionFileLoader, _imp.extension_suffixes()
+    extension_loaders = []
+    if hasattr(_imp, 'create_dynamic'):
+        if sys.platform in {"ios", "tvos", "watchos"}:
+            extension_loaders = [(AppleFrameworkLoader, [
+                suffix.replace(".so", ".fwork")
+                for suffix in _imp.extension_suffixes()
+            ])]
+        extension_loaders.append((ExtensionFileLoader, _imp.extension_suffixes()))
     source = SourceFileLoader, SOURCE_SUFFIXES
     bytecode = SourcelessFileLoader, BYTECODE_SUFFIXES
-    return [extensions, source, bytecode]
+    return extension_loaders + [source, bytecode]
 
 
 def _set_bootstrap_module(_bootstrap_module):

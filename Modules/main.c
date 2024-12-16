@@ -4,9 +4,11 @@
 #include "pycore_call.h"          // _PyObject_CallNoArgs()
 #include "pycore_initconfig.h"    // _PyArgv
 #include "pycore_interp.h"        // _PyInterpreterState.sysdict
+#include "pycore_long.h"          // _PyLong_GetOne()
 #include "pycore_pathconfig.h"    // _PyPathConfig_ComputeSysPath0()
 #include "pycore_pylifecycle.h"   // _Py_PreInitializeFromPyArgv()
 #include "pycore_pystate.h"       // _PyInterpreterState_GET()
+#include "pycore_pythonrun.h"     // _PyRun_AnyFileObject()
 
 /* Includes for exit_sigint() */
 #include <stdio.h>                // perror()
@@ -24,10 +26,6 @@
 #define COPYRIGHT \
     "Type \"help\", \"copyright\", \"credits\" or \"license\" " \
     "for more information."
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 /* --- pymain_init() ---------------------------------------------- */
 
@@ -92,11 +90,7 @@ static inline int config_run_code(const PyConfig *config)
 static int
 stdin_is_interactive(const PyConfig *config)
 {
-#if !TARGET_OS_IPHONE
     return (isatty(fileno(stdin)) || config->interactive);
-#else
-    return (ios_isatty(fileno(stdin)) || config->interactive);
-#endif
 }
 
 
@@ -196,17 +190,9 @@ pymain_header(const PyConfig *config)
         return;
     }
 
-#if !TARGET_OS_IPHONE
     fprintf(stderr, "Python %s on %s\n", Py_GetVersion(), Py_GetPlatform());
-#else
-    fprintf(thread_stderr, "Python %s on %s\n", Py_GetVersion(), Py_GetPlatform());
-#endif
     if (config->site_import) {
-#if !TARGET_OS_IPHONE
         fprintf(stderr, "%s\n", COPYRIGHT);
-#else
-        fprintf(thread_stderr, "%s\n", COPYRIGHT);
-#endif
     }
 }
 
@@ -220,11 +206,7 @@ pymain_import_readline(const PyConfig *config)
     if (!config->inspect && config_run_code(config)) {
         return;
     }
-#if !TARGET_OS_IPHONE
     if (!isatty(fileno(stdin))) {
-#else
-    if (!ios_isatty(fileno(thread_stdin))) {
-#endif
         return;
     }
 
@@ -268,13 +250,64 @@ pymain_run_command(wchar_t *command)
 
     PyCompilerFlags cf = _PyCompilerFlags_INIT;
     cf.cf_flags |= PyCF_IGNORE_COOKIE;
-    ret = PyRun_SimpleStringFlags(PyBytes_AsString(bytes), &cf);
+    ret = _PyRun_SimpleStringFlagsWithName(PyBytes_AsString(bytes), "<string>", &cf);
     Py_DECREF(bytes);
     return (ret != 0);
 
 error:
     PySys_WriteStderr("Unable to decode the command from the command line:\n");
     return pymain_exit_err_print();
+}
+
+
+static int
+pymain_start_pyrepl_no_main(void)
+{
+    int res = 0;
+    PyObject *console = NULL;
+    PyObject *empty_tuple = NULL;
+    PyObject *kwargs = NULL;
+    PyObject *console_result = NULL;
+
+    PyObject *pyrepl = PyImport_ImportModule("_pyrepl.main");
+    if (pyrepl == NULL) {
+        fprintf(stderr, "Could not import _pyrepl.main\n");
+        res = pymain_exit_err_print();
+        goto done;
+    }
+    console = PyObject_GetAttrString(pyrepl, "interactive_console");
+    if (console == NULL) {
+        fprintf(stderr, "Could not access _pyrepl.main.interactive_console\n");
+        res = pymain_exit_err_print();
+        goto done;
+    }
+    empty_tuple = PyTuple_New(0);
+    if (empty_tuple == NULL) {
+        res = pymain_exit_err_print();
+        goto done;
+    }
+    kwargs = PyDict_New();
+    if (kwargs == NULL) {
+        res = pymain_exit_err_print();
+        goto done;
+    }
+    if (!PyDict_SetItemString(kwargs, "pythonstartup", _PyLong_GetOne())) {
+        _PyRuntime.signals.unhandled_keyboard_interrupt = 0;
+        console_result = PyObject_Call(console, empty_tuple, kwargs);
+        if (!console_result && PyErr_Occurred() == PyExc_KeyboardInterrupt) {
+            _PyRuntime.signals.unhandled_keyboard_interrupt = 1;
+        }
+        if (console_result == NULL) {
+            res = pymain_exit_err_print();
+        }
+    }
+done:
+    Py_XDECREF(console_result);
+    Py_XDECREF(kwargs);
+    Py_XDECREF(empty_tuple);
+    Py_XDECREF(console);
+    Py_XDECREF(pyrepl);
+    return res;
 }
 
 
@@ -287,51 +320,35 @@ pymain_run_module(const wchar_t *modname, int set_argv0)
     }
     runpy = PyImport_ImportModule("runpy");
     if (runpy == NULL) {
-#if !TARGET_OS_IPHONE
         fprintf(stderr, "Could not import runpy module\n");
-#else 
-        fprintf(thread_stderr, "Could not import runpy module\n");
-#endif
         return pymain_exit_err_print();
     }
     runmodule = PyObject_GetAttrString(runpy, "_run_module_as_main");
     if (runmodule == NULL) {
-#if !TARGET_OS_IPHONE
         fprintf(stderr, "Could not access runpy._run_module_as_main\n");
-#else
-        fprintf(thread_stderr, "Could not access runpy._run_module_as_main\n");
-#endif
         Py_DECREF(runpy);
         return pymain_exit_err_print();
     }
     module = PyUnicode_FromWideChar(modname, wcslen(modname));
     if (module == NULL) {
-#if !TARGET_OS_IPHONE
         fprintf(stderr, "Could not convert module name to unicode\n");
-#else
-        fprintf(thread_stderr, "Could not convert module name to unicode\n");
-#endif
         Py_DECREF(runpy);
         Py_DECREF(runmodule);
         return pymain_exit_err_print();
     }
     runargs = PyTuple_Pack(2, module, set_argv0 ? Py_True : Py_False);
     if (runargs == NULL) {
-#if !TARGET_OS_IPHONE
         fprintf(stderr,
-#else
-        fprintf(thread_stderr,
-#endif 
             "Could not create arguments for runpy._run_module_as_main\n");
         Py_DECREF(runpy);
         Py_DECREF(runmodule);
         Py_DECREF(module);
         return pymain_exit_err_print();
     }
-    _Py_UnhandledKeyboardInterrupt = 0;
+    _PyRuntime.signals.unhandled_keyboard_interrupt = 0;
     result = PyObject_Call(runmodule, runargs, NULL);
     if (!result && PyErr_Occurred() == PyExc_KeyboardInterrupt) {
-        _Py_UnhandledKeyboardInterrupt = 1;
+        _PyRuntime.signals.unhandled_keyboard_interrupt = 1;
     }
     Py_DECREF(runpy);
     Py_DECREF(runmodule);
@@ -511,12 +528,23 @@ error:
 }
 
 
+static void
+pymain_set_inspect(PyConfig *config, int inspect)
+{
+    config->inspect = inspect;
+_Py_COMP_DIAG_PUSH
+_Py_COMP_DIAG_IGNORE_DEPR_DECLS
+    Py_InspectFlag = inspect;
+_Py_COMP_DIAG_POP
+}
+
+
 static int
 pymain_run_stdin(PyConfig *config)
 {
     if (stdin_is_interactive(config)) {
-        config->inspect = 0;
-        Py_InspectFlag = 0; /* do exit on SystemExit */
+        // do exit on SystemExit
+        pymain_set_inspect(config, 0);
 
         int exitcode;
         if (pymain_run_startup(config, &exitcode)) {
@@ -537,12 +565,13 @@ pymain_run_stdin(PyConfig *config)
         return pymain_exit_err_print();
     }
 
-    PyCompilerFlags cf = _PyCompilerFlags_INIT;
-#if !TARGET_OS_IPHONE
-    int run = PyRun_AnyFileExFlags(stdin, "<stdin>", 0, &cf);
-#else
-    int run = PyRun_AnyFileExFlags(thread_stdin, "<stdin>", 0, &cf);
-#endif
+    if (!isatty(fileno(stdin))
+        || _Py_GetEnv(config->use_environment, "PYTHON_BASIC_REPL")) {
+        PyCompilerFlags cf = _PyCompilerFlags_INIT;
+        int run = PyRun_AnyFileExFlags(stdin, "<stdin>", 0, &cf);
+        return (run != 0);
+    }
+    int run = pymain_run_module(L"_pyrepl", 0);
     return (run != 0);
 }
 
@@ -553,27 +582,32 @@ pymain_repl(PyConfig *config, int *exitcode)
     /* Check this environment variable at the end, to give programs the
        opportunity to set it from Python. */
     if (!config->inspect && _Py_GetEnv(config->use_environment, "PYTHONINSPECT")) {
-        config->inspect = 1;
-        Py_InspectFlag = 1;
+        pymain_set_inspect(config, 1);
     }
 
     if (!(config->inspect && stdin_is_interactive(config) && config_run_code(config))) {
         return;
     }
 
-    config->inspect = 0;
-    Py_InspectFlag = 0;
+    pymain_set_inspect(config, 0);
     if (pymain_run_interactive_hook(exitcode)) {
         return;
     }
 
-    PyCompilerFlags cf = _PyCompilerFlags_INIT;
-#if !TARGET_OS_IPHONE
-    int res = PyRun_AnyFileFlags(stdin, "<stdin>", &cf);
-#else
-    int res = PyRun_AnyFileFlags(thread_stdin, "<stdin>", &cf);
-#endif
-    *exitcode = (res != 0);
+    if (PySys_Audit("cpython.run_stdin", NULL) < 0) {
+        return;
+    }
+
+    if (!isatty(fileno(stdin))
+        || _Py_GetEnv(config->use_environment, "PYTHON_BASIC_REPL")) {
+        PyCompilerFlags cf = _PyCompilerFlags_INIT;
+        int run = PyRun_AnyFileExFlags(stdin, "<stdin>", 0, &cf);
+        *exitcode = (run != 0);
+        return;
+    }
+    int run = pymain_start_pyrepl_no_main();
+    *exitcode = (run != 0);
+    return;
 }
 
 
@@ -590,6 +624,11 @@ pymain_run_python(int *exitcode)
         goto error;
     }
 
+    // XXX Calculate config->sys_path_0 in getpath.py.
+    // The tricky part is that we can't check the path importers yet
+    // at that point.
+    assert(config->sys_path_0 == NULL);
+
     if (config->run_filename != NULL) {
         /* If filename is a package (ex: directory or ZIP file) which contains
            __main__.py, main_importer_path is set to filename and will be
@@ -605,28 +644,44 @@ pymain_run_python(int *exitcode)
     // import readline and rlcompleter before script dir is added to sys.path
     pymain_import_readline(config);
 
+    PyObject *path0 = NULL;
     if (main_importer_path != NULL) {
-        if (pymain_sys_path_add_path0(interp, main_importer_path) < 0) {
-            goto error;
-        }
+        path0 = Py_NewRef(main_importer_path);
     }
     else if (!config->safe_path) {
-        PyObject *path0 = NULL;
         int res = _PyPathConfig_ComputeSysPath0(&config->argv, &path0);
         if (res < 0) {
             goto error;
         }
-
-        if (res > 0) {
-            if (pymain_sys_path_add_path0(interp, path0) < 0) {
-                Py_DECREF(path0);
-                goto error;
-            }
+        else if (res == 0) {
+            Py_CLEAR(path0);
+        }
+    }
+    // XXX Apply config->sys_path_0 in init_interp_main().  We have
+    // to be sure to get readline/rlcompleter imported at the correct time.
+    if (path0 != NULL) {
+        wchar_t *wstr = PyUnicode_AsWideCharString(path0, NULL);
+        if (wstr == NULL) {
             Py_DECREF(path0);
+            goto error;
+        }
+        config->sys_path_0 = _PyMem_RawWcsdup(wstr);
+        PyMem_Free(wstr);
+        if (config->sys_path_0 == NULL) {
+            Py_DECREF(path0);
+            goto error;
+        }
+        int res = pymain_sys_path_add_path0(interp, path0);
+        Py_DECREF(path0);
+        if (res < 0) {
+            goto error;
         }
     }
 
     pymain_header(config);
+
+    _PyInterpreterState_SetRunningMain(interp);
+    assert(!PyErr_Occurred());
 
     if (config->run_command) {
         *exitcode = pymain_run_command(config->run_command);
@@ -651,6 +706,7 @@ error:
     *exitcode = pymain_exit_err_print();
 
 done:
+    _PyInterpreterState_SetNotRunningMain(interp);
     Py_XDECREF(main_importer_path);
 }
 
@@ -667,7 +723,6 @@ pymain_free(void)
        remain valid after Py_Finalize(), since
        Py_Initialize()-Py_Finalize() can be called multiple times. */
     _PyPathConfig_ClearGlobal();
-    _Py_ClearStandardStreamEncoding();
     _Py_ClearArgcArgv();
     _PyRuntime_Finalize();
 }
@@ -727,7 +782,7 @@ Py_RunMain(void)
 
     pymain_free();
 
-    if (_Py_UnhandledKeyboardInterrupt) {
+    if (_PyRuntime.signals.unhandled_keyboard_interrupt) {
         exitcode = exit_sigint();
     }
 
@@ -773,7 +828,3 @@ Py_BytesMain(int argc, char **argv)
         .wchar_argv = NULL};
     return pymain_main(&args);
 }
-
-#ifdef __cplusplus
-}
-#endif

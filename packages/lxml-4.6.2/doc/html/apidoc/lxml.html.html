@@ -1,0 +1,1176 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>lxml.html package &mdash; lxml  documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+
+  
+  
+  
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="lxml.html.ElementSoup module" href="lxml.html.ElementSoup.html" />
+    <link rel="prev" title="lxml package" href="lxml.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="index.html" class="icon icon-home" alt="Documentation Home"> lxml
+          
+
+          
+            
+            <img src="_static/python-xml.png" class="logo" alt="Logo"/>
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                4.6.2
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="lxml.html">lxml package</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">lxml.html package</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="lxml.html.ElementSoup.html">lxml.html.ElementSoup module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="lxml.html._diffcommand.html">lxml.html._diffcommand module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="lxml.html._setmixin.html">lxml.html._setmixin module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="lxml.html.builder.html">lxml.html.builder module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="lxml.html.clean.html">lxml.html.clean module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="lxml.html.defs.html">lxml.html.defs module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="lxml.html.diff.html">lxml.html.diff module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="lxml.html.formfill.html">lxml.html.formfill module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="lxml.html.html5parser.html">lxml.html.html5parser module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="lxml.html.soupparser.html">lxml.html.soupparser module</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="lxml.isoschematron.html">lxml.isoschematron package</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lxml.ElementInclude.html">lxml.ElementInclude module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lxml._elementpath.html">lxml._elementpath module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lxml.builder.html">lxml.builder module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lxml.cssselect.html">lxml.cssselect module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lxml.doctestcompare.html">lxml.doctestcompare module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lxml.etree.html">lxml.etree module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lxml.objectify.html">lxml.objectify module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lxml.sax.html">lxml.sax module</a></li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">lxml</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="lxml.html">lxml package</a> &raquo;</li>
+        
+      <li>lxml.html package</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/lxml.html.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="lxml-html-package">
+<h1>lxml.html package<a class="headerlink" href="#lxml-html-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="lxml.html.ElementSoup.html">lxml.html.ElementSoup module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="lxml.html._diffcommand.html">lxml.html._diffcommand module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="lxml.html._setmixin.html">lxml.html._setmixin module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="lxml.html.builder.html">lxml.html.builder module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="lxml.html.clean.html">lxml.html.clean module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="lxml.html.defs.html">lxml.html.defs module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="lxml.html.diff.html">lxml.html.diff module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="lxml.html.formfill.html">lxml.html.formfill module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="lxml.html.html5parser.html">lxml.html.html5parser module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="lxml.html.soupparser.html">lxml.html.soupparser module</a></li>
+</ul>
+</div>
+</div>
+<div class="section" id="module-lxml.html">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-lxml.html" title="Permalink to this headline">¶</a></h2>
+<p>The <code class="docutils literal notranslate"><span class="pre">lxml.html</span></code> tool set for HTML handling.</p>
+<dl class="py class">
+<dt id="lxml.html.CheckboxGroup">
+<em class="property">class </em><code class="sig-prename descclassname">lxml.html.</code><code class="sig-name descname">CheckboxGroup</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">iterable</span><span class="o">=</span><span class="default_value">()</span></em>, <em class="sig-param"><span class="o">/</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lxml/html.html#CheckboxGroup"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lxml.html.CheckboxGroup" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></p>
+<p>Represents a group of checkboxes (<code class="docutils literal notranslate"><span class="pre">&lt;input</span> <span class="pre">type=checkbox&gt;</span></code>) that
+have the same name.</p>
+<p>In addition to using this like a list, the <code class="docutils literal notranslate"><span class="pre">.value</span></code> attribute
+returns a set-like object that you can add to or remove from to
+check and uncheck checkboxes.  You can also use <code class="docutils literal notranslate"><span class="pre">.value_options</span></code>
+to get the possible values.</p>
+<dl class="py method">
+<dt id="lxml.html.CheckboxGroup.value">
+<em class="property">property </em><code class="sig-name descname">value</code><a class="headerlink" href="#lxml.html.CheckboxGroup.value" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a set-like object that can be modified to check or
+uncheck individual checkboxes according to their value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="lxml.html.CheckboxGroup.value_options">
+<em class="property">property </em><code class="sig-name descname">value_options</code><a class="headerlink" href="#lxml.html.CheckboxGroup.value_options" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a list of all the possible values.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="lxml.html.CheckboxValues">
+<em class="property">class </em><code class="sig-prename descclassname">lxml.html.</code><code class="sig-name descname">CheckboxValues</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">group</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lxml/html.html#CheckboxValues"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lxml.html.CheckboxValues" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="lxml.html._setmixin.html#lxml.html._setmixin.SetMixin" title="lxml.html._setmixin.SetMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">lxml.html._setmixin.SetMixin</span></code></a></p>
+<p>Represents the values of the checked checkboxes in a group of
+checkboxes with the same name.</p>
+<dl class="py method">
+<dt id="lxml.html.CheckboxValues.add">
+<code class="sig-name descname">add</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">value</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lxml/html.html#CheckboxValues.add"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lxml.html.CheckboxValues.add" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add an element.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="lxml.html.CheckboxValues.remove">
+<code class="sig-name descname">remove</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">value</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lxml/html.html#CheckboxValues.remove"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lxml.html.CheckboxValues.remove" title="Permalink to this definition">¶</a></dt>
+<dd><p>Remove an element. If not a member, raise a KeyError.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="lxml.html.CheckboxValues._abc_impl">
+<code class="sig-name descname">_abc_impl</code><em class="property"> = &lt;_abc_data object&gt;</em><a class="headerlink" href="#lxml.html.CheckboxValues._abc_impl" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="lxml.html.Classes">
+<em class="property">class </em><code class="sig-prename descclassname">lxml.html.</code><code class="sig-name descname">Classes</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">attributes</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lxml/html.html#Classes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lxml.html.Classes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">collections.abc.MutableSet</span></code></p>
+<p>Provides access to an element’s class attribute as a set-like collection.
+Usage:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">el</span> <span class="o">=</span> <span class="n">fromstring</span><span class="p">(</span><span class="s1">&#39;&lt;p class=&quot;hidden large&quot;&gt;Text&lt;/p&gt;&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">classes</span> <span class="o">=</span> <span class="n">el</span><span class="o">.</span><span class="n">classes</span>  <span class="c1"># or: classes = Classes(el.attrib)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">classes</span> <span class="o">|=</span> <span class="p">[</span><span class="s1">&#39;block&#39;</span><span class="p">,</span> <span class="s1">&#39;paragraph&#39;</span><span class="p">]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">el</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;class&#39;</span><span class="p">)</span>
+<span class="go">&#39;hidden large block paragraph&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">classes</span><span class="o">.</span><span class="n">toggle</span><span class="p">(</span><span class="s1">&#39;hidden&#39;</span><span class="p">)</span>
+<span class="go">False</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">el</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;class&#39;</span><span class="p">)</span>
+<span class="go">&#39;large block paragraph&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">classes</span> <span class="o">-=</span> <span class="p">(</span><span class="s1">&#39;some&#39;</span><span class="p">,</span> <span class="s1">&#39;classes&#39;</span><span class="p">,</span> <span class="s1">&#39;block&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">el</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;class&#39;</span><span class="p">)</span>
+<span class="go">&#39;large paragraph&#39;</span>
+</pre></div>
+</div>
+<dl class="py method">
+<dt id="lxml.html.Classes.add">
+<code class="sig-name descname">add</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">value</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lxml/html.html#Classes.add"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lxml.html.Classes.add" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add a class.</p>
+<p>This has no effect if the class is already present.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="lxml.html.Classes.discard">
+<code class="sig-name descname">discard</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">value</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lxml/html.html#Classes.discard"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lxml.html.Classes.discard" title="Permalink to this definition">¶</a></dt>
+<dd><p>Remove a class if it is currently present.</p>
+<p>If the class is not present, do nothing.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="lxml.html.Classes.remove">
+<code class="sig-name descname">remove</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">value</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lxml/html.html#Classes.remove"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lxml.html.Classes.remove" title="Permalink to this definition">¶</a></dt>
+<dd><p>Remove a class; it must currently be present.</p>
+<p>If the class is not present, raise a KeyError.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="lxml.html.Classes.toggle">
+<code class="sig-name descname">toggle</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">value</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lxml/html.html#Classes.toggle"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lxml.html.Classes.toggle" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add a class name if it isn’t there yet, or remove it if it exists.</p>
+<p>Returns true if the class was added (and is now enabled) and
+false if it was removed (and is now disabled).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="lxml.html.Classes.update">
+<code class="sig-name descname">update</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">values</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lxml/html.html#Classes.update"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lxml.html.Classes.update" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add all names from ‘values’.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="lxml.html.Classes._abc_impl">
+<code class="sig-name descname">_abc_impl</code><em class="property"> = &lt;_abc_data object&gt;</em><a class="headerlink" href="#lxml.html.Classes._abc_impl" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="lxml.html.FieldsDict">
+<em class="property">class </em><code class="sig-prename descclassname">lxml.html.</code><code class="sig-name descname">FieldsDict</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">inputs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lxml/html.html#FieldsDict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lxml.html.FieldsDict" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">collections.abc.MutableMapping</span></code></p>
+<dl class="py method">
+<dt id="lxml.html.FieldsDict.keys">
+<code class="sig-name descname">keys</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; a set-like object providing a view on D’s keys<a class="reference internal" href="_modules/lxml/html.html#FieldsDict.keys"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lxml.html.FieldsDict.keys" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="lxml.html.FieldsDict._abc_impl">
+<code class="sig-name descname">_abc_impl</code><em class="property"> = &lt;_abc_data object&gt;</em><a class="headerlink" href="#lxml.html.FieldsDict._abc_impl" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="lxml.html.FormElement">
+<em class="property">class </em><code class="sig-prename descclassname">lxml.html.</code><code class="sig-name descname">FormElement</code><a class="reference internal" href="_modules/lxml/html.html#FormElement"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lxml.html.FormElement" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#lxml.html.HtmlElement" title="lxml.html.HtmlElement"><code class="xref py py-class docutils literal notranslate"><span class="pre">lxml.html.HtmlElement</span></code></a></p>
+<p>Represents a &lt;form&gt; element.</p>
+<dl class="py method">
+<dt id="lxml.html.FormElement._name">
+<code class="sig-name descname">_name</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/lxml/html.html#FormElement._name"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lxml.html.FormElement._name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="lxml.html.FormElement.form_values">
+<code class="sig-name descname">form_values</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/lxml/html.html#FormElement.form_values"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lxml.html.FormElement.form_values" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a list of tuples of the field values for the form.
+This is suitable to be passed to <code class="docutils literal notranslate"><span class="pre">urllib.urlencode()</span></code>.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="lxml.html.FormElement.action">
+<em class="property">property </em><code class="sig-name descname">action</code><a class="headerlink" href="#lxml.html.FormElement.action" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get/set the form’s <code class="docutils literal notranslate"><span class="pre">action</span></code> attribute.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="lxml.html.FormElement.fields">
+<em class="property">property </em><code class="sig-name descname">fields</code><a class="headerlink" href="#lxml.html.FormElement.fields" title="Permalink to this definition">¶</a></dt>
+<dd><p>Dictionary-like object that represents all the fields in this
+form.  You can set values in this dictionary to effect the
+form.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="lxml.html.FormElement.inputs">
+<em class="property">property </em><code class="sig-name descname">inputs</code><a class="headerlink" href="#lxml.html.FormElement.inputs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns an accessor for all the input elements in the form.</p>
+<p>See <cite>InputGetter</cite> for more information about the object.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="lxml.html.FormElement.method">
+<em class="property">property </em><code class="sig-name descname">method</code><a class="headerlink" href="#lxml.html.FormElement.method" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get/set the form’s method.  Always returns a capitalized
+string, and defaults to <code class="docutils literal notranslate"><span class="pre">'GET'</span></code></p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="lxml.html.HTMLParser">
+<em class="property">class </em><code class="sig-prename descclassname">lxml.html.</code><code class="sig-name descname">HTMLParser</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lxml/html.html#HTMLParser"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lxml.html.HTMLParser" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="lxml.etree.html#lxml.etree.HTMLParser" title="lxml.etree.HTMLParser"><code class="xref py py-class docutils literal notranslate"><span class="pre">lxml.etree.HTMLParser</span></code></a></p>
+<p>An HTML parser that is configured to return lxml.html Element
+objects.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="lxml.html.HtmlComment">
+<em class="property">class </em><code class="sig-prename descclassname">lxml.html.</code><code class="sig-name descname">HtmlComment</code><a class="reference internal" href="_modules/lxml/html.html#HtmlComment"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lxml.html.HtmlComment" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="lxml.etree.html#lxml.etree.CommentBase" title="lxml.etree.CommentBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">lxml.etree.CommentBase</span></code></a>, <a class="reference internal" href="#lxml.html.HtmlMixin" title="lxml.html.HtmlMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">lxml.html.HtmlMixin</span></code></a></p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="lxml.html.HtmlElement">
+<em class="property">class </em><code class="sig-prename descclassname">lxml.html.</code><code class="sig-name descname">HtmlElement</code><a class="reference internal" href="_modules/lxml/html.html#HtmlElement"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lxml.html.HtmlElement" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="lxml.etree.html#lxml.etree.ElementBase" title="lxml.etree.ElementBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">lxml.etree.ElementBase</span></code></a>, <a class="reference internal" href="#lxml.html.HtmlMixin" title="lxml.html.HtmlMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">lxml.html.HtmlMixin</span></code></a></p>
+<dl class="py method">
+<dt id="lxml.html.HtmlElement.cssselect">
+<code class="sig-name descname">cssselect</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">expr</span></em>, <em class="sig-param"><span class="n">translator</span><span class="o">=</span><span class="default_value">'html'</span></em><span class="sig-paren">)</span><a class="headerlink" href="#lxml.html.HtmlElement.cssselect" title="Permalink to this definition">¶</a></dt>
+<dd><p>Run the CSS expression on this element and its children,
+returning a list of the results.</p>
+<p>Equivalent to lxml.cssselect.CSSSelect(expr, translator=’html’)(self)
+– note that pre-compiling the expression can provide a substantial
+speedup.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="lxml.html.HtmlElement.set">
+<code class="sig-name descname">set</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em>, <em class="sig-param"><span class="n">key</span></em>, <em class="sig-param"><span class="n">value</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#lxml.html.HtmlElement.set" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets an element attribute.  If no value is provided, or if the value is None,
+creates a ‘boolean’ attribute without value, e.g. “&lt;form novalidate&gt;&lt;/form&gt;”
+for <code class="docutils literal notranslate"><span class="pre">form.set('novalidate')</span></code>.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="lxml.html.HtmlElementClassLookup">
+<em class="property">class </em><code class="sig-prename descclassname">lxml.html.</code><code class="sig-name descname">HtmlElementClassLookup</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">classes</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">mixins</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lxml/html.html#HtmlElementClassLookup"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lxml.html.HtmlElementClassLookup" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="lxml.etree.html#lxml.etree.CustomElementClassLookup" title="lxml.etree.CustomElementClassLookup"><code class="xref py py-class docutils literal notranslate"><span class="pre">lxml.etree.CustomElementClassLookup</span></code></a></p>
+<p>A lookup scheme for HTML Element classes.</p>
+<p>To create a lookup instance with different Element classes, pass a tag
+name mapping of Element classes in the <code class="docutils literal notranslate"><span class="pre">classes</span></code> keyword argument and/or
+a tag name mapping of Mixin classes in the <code class="docutils literal notranslate"><span class="pre">mixins</span></code> keyword argument.
+The special key ‘*’ denotes a Mixin class that should be mixed into all
+Element classes.</p>
+<dl class="py method">
+<dt id="lxml.html.HtmlElementClassLookup.lookup">
+<code class="sig-name descname">lookup</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em>, <em class="sig-param"><span class="n">type</span></em>, <em class="sig-param"><span class="n">doc</span></em>, <em class="sig-param"><span class="n">namespace</span></em>, <em class="sig-param"><span class="n">name</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lxml/html.html#HtmlElementClassLookup.lookup"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lxml.html.HtmlElementClassLookup.lookup" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="lxml.html.HtmlElementClassLookup._default_element_classes">
+<code class="sig-name descname">_default_element_classes</code><em class="property"> = {'form': &lt;class 'lxml.html.FormElement'&gt;, 'input': &lt;class 'lxml.html.InputElement'&gt;, 'label': &lt;class 'lxml.html.LabelElement'&gt;, 'select': &lt;class 'lxml.html.SelectElement'&gt;, 'textarea': &lt;class 'lxml.html.TextareaElement'&gt;}</em><a class="headerlink" href="#lxml.html.HtmlElementClassLookup._default_element_classes" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="lxml.html.HtmlEntity">
+<em class="property">class </em><code class="sig-prename descclassname">lxml.html.</code><code class="sig-name descname">HtmlEntity</code><a class="reference internal" href="_modules/lxml/html.html#HtmlEntity"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lxml.html.HtmlEntity" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="lxml.etree.html#lxml.etree.EntityBase" title="lxml.etree.EntityBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">lxml.etree.EntityBase</span></code></a>, <a class="reference internal" href="#lxml.html.HtmlMixin" title="lxml.html.HtmlMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">lxml.html.HtmlMixin</span></code></a></p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="lxml.html.HtmlMixin">
+<em class="property">class </em><code class="sig-prename descclassname">lxml.html.</code><code class="sig-name descname">HtmlMixin</code><a class="reference internal" href="_modules/lxml/html.html#HtmlMixin"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lxml.html.HtmlMixin" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt id="lxml.html.HtmlMixin.cssselect">
+<code class="sig-name descname">cssselect</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">expr</span></em>, <em class="sig-param"><span class="n">translator</span><span class="o">=</span><span class="default_value">'html'</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lxml/html.html#HtmlMixin.cssselect"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lxml.html.HtmlMixin.cssselect" title="Permalink to this definition">¶</a></dt>
+<dd><p>Run the CSS expression on this element and its children,
+returning a list of the results.</p>
+<p>Equivalent to lxml.cssselect.CSSSelect(expr, translator=’html’)(self)
+– note that pre-compiling the expression can provide a substantial
+speedup.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="lxml.html.HtmlMixin.drop_tag">
+<code class="sig-name descname">drop_tag</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/lxml/html.html#HtmlMixin.drop_tag"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lxml.html.HtmlMixin.drop_tag" title="Permalink to this definition">¶</a></dt>
+<dd><p>Remove the tag, but not its children or text.  The children and text
+are merged into the parent.</p>
+<p>Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">h</span> <span class="o">=</span> <span class="n">fragment_fromstring</span><span class="p">(</span><span class="s1">&#39;&lt;div&gt;Hello &lt;b&gt;World!&lt;/b&gt;&lt;/div&gt;&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">h</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;.//b&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">drop_tag</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">tostring</span><span class="p">(</span><span class="n">h</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s1">&#39;unicode&#39;</span><span class="p">))</span>
+<span class="go">&lt;div&gt;Hello World!&lt;/div&gt;</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt id="lxml.html.HtmlMixin.drop_tree">
+<code class="sig-name descname">drop_tree</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/lxml/html.html#HtmlMixin.drop_tree"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lxml.html.HtmlMixin.drop_tree" title="Permalink to this definition">¶</a></dt>
+<dd><p>Removes this element from the tree, including its children and
+text.  The tail text is joined to the previous element or
+parent.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="lxml.html.HtmlMixin.find_class">
+<code class="sig-name descname">find_class</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">class_name</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lxml/html.html#HtmlMixin.find_class"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lxml.html.HtmlMixin.find_class" title="Permalink to this definition">¶</a></dt>
+<dd><p>Find any elements with the given class name.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="lxml.html.HtmlMixin.find_rel_links">
+<code class="sig-name descname">find_rel_links</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">rel</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lxml/html.html#HtmlMixin.find_rel_links"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lxml.html.HtmlMixin.find_rel_links" title="Permalink to this definition">¶</a></dt>
+<dd><p>Find any links like <code class="docutils literal notranslate"><span class="pre">&lt;a</span> <span class="pre">rel=&quot;{rel}&quot;&gt;...&lt;/a&gt;</span></code>; returns a list of elements.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="lxml.html.HtmlMixin.get_element_by_id">
+<code class="sig-name descname">get_element_by_id</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">id</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">default</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lxml/html.html#HtmlMixin.get_element_by_id"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lxml.html.HtmlMixin.get_element_by_id" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the first element in a document with the given id.  If none is
+found, return the default argument if provided or raise KeyError
+otherwise.</p>
+<p>Note that there can be more than one element with the same id,
+and this isn’t uncommon in HTML documents found in the wild.
+Browsers return only the first match, and this function does
+the same.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="lxml.html.HtmlMixin.iterlinks">
+<code class="sig-name descname">iterlinks</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/lxml/html.html#HtmlMixin.iterlinks"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lxml.html.HtmlMixin.iterlinks" title="Permalink to this definition">¶</a></dt>
+<dd><p>Yield (element, attribute, link, pos), where attribute may be None
+(indicating the link is in the text).  <code class="docutils literal notranslate"><span class="pre">pos</span></code> is the position
+where the link occurs; often 0, but sometimes something else in
+the case of links in stylesheets or style tags.</p>
+<p>Note: &lt;base href&gt; is <em>not</em> taken into account in any way.  The
+link you get is exactly the link in the document.</p>
+<p>Note: multiple links inside of a single text string or
+attribute value are returned in reversed order.  This makes it
+possible to replace or delete them from the text string value
+based on their reported text positions.  Otherwise, a
+modification at one text position can change the positions of
+links reported later on.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="lxml.html.HtmlMixin.make_links_absolute">
+<code class="sig-name descname">make_links_absolute</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">base_url</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">resolve_base_href</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">handle_failures</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lxml/html.html#HtmlMixin.make_links_absolute"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lxml.html.HtmlMixin.make_links_absolute" title="Permalink to this definition">¶</a></dt>
+<dd><p>Make all links in the document absolute, given the
+<code class="docutils literal notranslate"><span class="pre">base_url</span></code> for the document (the full URL where the document
+came from), or if no <code class="docutils literal notranslate"><span class="pre">base_url</span></code> is given, then the <code class="docutils literal notranslate"><span class="pre">.base_url</span></code>
+of the document.</p>
+<p>If <code class="docutils literal notranslate"><span class="pre">resolve_base_href</span></code> is true, then any <code class="docutils literal notranslate"><span class="pre">&lt;base</span> <span class="pre">href&gt;</span></code>
+tags in the document are used <em>and</em> removed from the document.
+If it is false then any such tag is ignored.</p>
+<p>If <code class="docutils literal notranslate"><span class="pre">handle_failures</span></code> is None (default), a failure to process
+a URL will abort the processing.  If set to ‘ignore’, errors
+are ignored.  If set to ‘discard’, failing URLs will be removed.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="lxml.html.HtmlMixin.resolve_base_href">
+<code class="sig-name descname">resolve_base_href</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">handle_failures</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lxml/html.html#HtmlMixin.resolve_base_href"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lxml.html.HtmlMixin.resolve_base_href" title="Permalink to this definition">¶</a></dt>
+<dd><p>Find any <code class="docutils literal notranslate"><span class="pre">&lt;base</span> <span class="pre">href&gt;</span></code> tag in the document, and apply its
+values to all links found in the document.  Also remove the
+tag once it has been applied.</p>
+<p>If <code class="docutils literal notranslate"><span class="pre">handle_failures</span></code> is None (default), a failure to process
+a URL will abort the processing.  If set to ‘ignore’, errors
+are ignored.  If set to ‘discard’, failing URLs will be removed.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="lxml.html.HtmlMixin.rewrite_links">
+<code class="sig-name descname">rewrite_links</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">link_repl_func</span></em>, <em class="sig-param"><span class="n">resolve_base_href</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">base_href</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lxml/html.html#HtmlMixin.rewrite_links"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lxml.html.HtmlMixin.rewrite_links" title="Permalink to this definition">¶</a></dt>
+<dd><p>Rewrite all the links in the document.  For each link
+<code class="docutils literal notranslate"><span class="pre">link_repl_func(link)</span></code> will be called, and the return value
+will replace the old link.</p>
+<p>Note that links may not be absolute (unless you first called
+<code class="docutils literal notranslate"><span class="pre">make_links_absolute()</span></code>), and may be internal (e.g.,
+<code class="docutils literal notranslate"><span class="pre">'#anchor'</span></code>).  They can also be values like
+<code class="docutils literal notranslate"><span class="pre">'mailto:email'</span></code> or <code class="docutils literal notranslate"><span class="pre">'javascript:expr'</span></code>.</p>
+<p>If you give <code class="docutils literal notranslate"><span class="pre">base_href</span></code> then all links passed to
+<code class="docutils literal notranslate"><span class="pre">link_repl_func()</span></code> will take that into account.</p>
+<p>If the <code class="docutils literal notranslate"><span class="pre">link_repl_func</span></code> returns None, the attribute or
+tag text will be removed completely.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="lxml.html.HtmlMixin.set">
+<code class="sig-name descname">set</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em>, <em class="sig-param"><span class="n">key</span></em>, <em class="sig-param"><span class="n">value</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lxml/html.html#HtmlMixin.set"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lxml.html.HtmlMixin.set" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets an element attribute.  If no value is provided, or if the value is None,
+creates a ‘boolean’ attribute without value, e.g. “&lt;form novalidate&gt;&lt;/form&gt;”
+for <code class="docutils literal notranslate"><span class="pre">form.set('novalidate')</span></code>.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="lxml.html.HtmlMixin.text_content">
+<code class="sig-name descname">text_content</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/lxml/html.html#HtmlMixin.text_content"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lxml.html.HtmlMixin.text_content" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the text content of the tag (and the text in any children).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="lxml.html.HtmlMixin.base_url">
+<em class="property">property </em><code class="sig-name descname">base_url</code><a class="headerlink" href="#lxml.html.HtmlMixin.base_url" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the base URL, given when the page was parsed.</p>
+<p>Use with <code class="docutils literal notranslate"><span class="pre">urlparse.urljoin(el.base_url,</span> <span class="pre">href)</span></code> to get
+absolute URLs.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="lxml.html.HtmlMixin.body">
+<em class="property">property </em><code class="sig-name descname">body</code><a class="headerlink" href="#lxml.html.HtmlMixin.body" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the &lt;body&gt; element.  Can be called from a child element
+to get the document’s head.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="lxml.html.HtmlMixin.classes">
+<em class="property">property </em><code class="sig-name descname">classes</code><a class="headerlink" href="#lxml.html.HtmlMixin.classes" title="Permalink to this definition">¶</a></dt>
+<dd><p>A set-like wrapper around the ‘class’ attribute.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="lxml.html.HtmlMixin.forms">
+<em class="property">property </em><code class="sig-name descname">forms</code><a class="headerlink" href="#lxml.html.HtmlMixin.forms" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a list of all the forms</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="lxml.html.HtmlMixin.head">
+<em class="property">property </em><code class="sig-name descname">head</code><a class="headerlink" href="#lxml.html.HtmlMixin.head" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the &lt;head&gt; element.  Can be called from a child
+element to get the document’s head.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="lxml.html.HtmlMixin.label">
+<em class="property">property </em><code class="sig-name descname">label</code><a class="headerlink" href="#lxml.html.HtmlMixin.label" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get or set any &lt;label&gt; element associated with this element.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="lxml.html.HtmlProcessingInstruction">
+<em class="property">class </em><code class="sig-prename descclassname">lxml.html.</code><code class="sig-name descname">HtmlProcessingInstruction</code><a class="reference internal" href="_modules/lxml/html.html#HtmlProcessingInstruction"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lxml.html.HtmlProcessingInstruction" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="lxml.etree.html#lxml.etree.PIBase" title="lxml.etree.PIBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">lxml.etree.PIBase</span></code></a>, <a class="reference internal" href="#lxml.html.HtmlMixin" title="lxml.html.HtmlMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">lxml.html.HtmlMixin</span></code></a></p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="lxml.html.InputElement">
+<em class="property">class </em><code class="sig-prename descclassname">lxml.html.</code><code class="sig-name descname">InputElement</code><a class="reference internal" href="_modules/lxml/html.html#InputElement"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lxml.html.InputElement" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#lxml.html.InputMixin" title="lxml.html.InputMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">lxml.html.InputMixin</span></code></a>, <a class="reference internal" href="#lxml.html.HtmlElement" title="lxml.html.HtmlElement"><code class="xref py py-class docutils literal notranslate"><span class="pre">lxml.html.HtmlElement</span></code></a></p>
+<p>Represents an <code class="docutils literal notranslate"><span class="pre">&lt;input&gt;</span></code> element.</p>
+<p>You can get the type with <code class="docutils literal notranslate"><span class="pre">.type</span></code> (which is lower-cased and
+defaults to <code class="docutils literal notranslate"><span class="pre">'text'</span></code>).</p>
+<p>Also you can get and set the value with <code class="docutils literal notranslate"><span class="pre">.value</span></code></p>
+<p>Checkboxes and radios have the attribute <code class="docutils literal notranslate"><span class="pre">input.checkable</span> <span class="pre">==</span>
+<span class="pre">True</span></code> (for all others it is false) and a boolean attribute
+<code class="docutils literal notranslate"><span class="pre">.checked</span></code>.</p>
+<dl class="py method">
+<dt id="lxml.html.InputElement.checkable">
+<em class="property">property </em><code class="sig-name descname">checkable</code><a class="headerlink" href="#lxml.html.InputElement.checkable" title="Permalink to this definition">¶</a></dt>
+<dd><p>Boolean: can this element be checked?</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="lxml.html.InputElement.checked">
+<em class="property">property </em><code class="sig-name descname">checked</code><a class="headerlink" href="#lxml.html.InputElement.checked" title="Permalink to this definition">¶</a></dt>
+<dd><p>Boolean attribute to get/set the presence of the <code class="docutils literal notranslate"><span class="pre">checked</span></code>
+attribute.</p>
+<p>You can only use this on checkable input types.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="lxml.html.InputElement.type">
+<em class="property">property </em><code class="sig-name descname">type</code><a class="headerlink" href="#lxml.html.InputElement.type" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the type of this element (using the type attribute).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="lxml.html.InputElement.value">
+<em class="property">property </em><code class="sig-name descname">value</code><a class="headerlink" href="#lxml.html.InputElement.value" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get/set the value of this element, using the <code class="docutils literal notranslate"><span class="pre">value</span></code> attribute.</p>
+<p>Also, if this is a checkbox and it has no value, this defaults
+to <code class="docutils literal notranslate"><span class="pre">'on'</span></code>.  If it is a checkbox or radio that is not
+checked, this returns None.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="lxml.html.InputGetter">
+<em class="property">class </em><code class="sig-prename descclassname">lxml.html.</code><code class="sig-name descname">InputGetter</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">form</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lxml/html.html#InputGetter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lxml.html.InputGetter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>An accessor that represents all the input fields in a form.</p>
+<p>You can get fields by name from this, with
+<code class="docutils literal notranslate"><span class="pre">form.inputs['field_name']</span></code>.  If there are a set of checkboxes
+with the same name, they are returned as a list (a <cite>CheckboxGroup</cite>
+which also allows value setting).  Radio inputs are handled
+similarly.  Use <code class="docutils literal notranslate"><span class="pre">.keys()</span></code> and <code class="docutils literal notranslate"><span class="pre">.items()</span></code> to process all fields
+in this way.</p>
+<p>You can also iterate over this to get all input elements.  This
+won’t return the same thing as if you get all the names, as
+checkboxes and radio elements are returned individually.</p>
+<dl class="py method">
+<dt id="lxml.html.InputGetter.items">
+<code class="sig-name descname">items</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/lxml/html.html#InputGetter.items"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lxml.html.InputGetter.items" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns all fields with their names, similar to dict.items().</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>A list of (name, field) tuples.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="lxml.html.InputGetter.keys">
+<code class="sig-name descname">keys</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/lxml/html.html#InputGetter.keys"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lxml.html.InputGetter.keys" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns all unique field names, in document order.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>A list of all unique field names.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="lxml.html.InputMixin">
+<em class="property">class </em><code class="sig-prename descclassname">lxml.html.</code><code class="sig-name descname">InputMixin</code><a class="reference internal" href="_modules/lxml/html.html#InputMixin"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lxml.html.InputMixin" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Mix-in for all input elements (input, select, and textarea)</p>
+<dl class="py method">
+<dt id="lxml.html.InputMixin.name">
+<em class="property">property </em><code class="sig-name descname">name</code><a class="headerlink" href="#lxml.html.InputMixin.name" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get/set the name of the element</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="lxml.html.LabelElement">
+<em class="property">class </em><code class="sig-prename descclassname">lxml.html.</code><code class="sig-name descname">LabelElement</code><a class="reference internal" href="_modules/lxml/html.html#LabelElement"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lxml.html.LabelElement" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#lxml.html.HtmlElement" title="lxml.html.HtmlElement"><code class="xref py py-class docutils literal notranslate"><span class="pre">lxml.html.HtmlElement</span></code></a></p>
+<p>Represents a <code class="docutils literal notranslate"><span class="pre">&lt;label&gt;</span></code> element.</p>
+<p>Label elements are linked to other elements with their <code class="docutils literal notranslate"><span class="pre">for</span></code>
+attribute.  You can access this element with <code class="docutils literal notranslate"><span class="pre">label.for_element</span></code>.</p>
+<dl class="py method">
+<dt id="lxml.html.LabelElement.for_element">
+<em class="property">property </em><code class="sig-name descname">for_element</code><a class="headerlink" href="#lxml.html.LabelElement.for_element" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get/set the element this label points to.  Return None if it
+can’t be found.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="lxml.html.MultipleSelectOptions">
+<em class="property">class </em><code class="sig-prename descclassname">lxml.html.</code><code class="sig-name descname">MultipleSelectOptions</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">select</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lxml/html.html#MultipleSelectOptions"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lxml.html.MultipleSelectOptions" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="lxml.html._setmixin.html#lxml.html._setmixin.SetMixin" title="lxml.html._setmixin.SetMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">lxml.html._setmixin.SetMixin</span></code></a></p>
+<p>Represents all the selected options in a <code class="docutils literal notranslate"><span class="pre">&lt;select</span> <span class="pre">multiple&gt;</span></code> element.</p>
+<p>You can add to this set-like option to select an option, or remove
+to unselect the option.</p>
+<dl class="py method">
+<dt id="lxml.html.MultipleSelectOptions.add">
+<code class="sig-name descname">add</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">item</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lxml/html.html#MultipleSelectOptions.add"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lxml.html.MultipleSelectOptions.add" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add an element.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="lxml.html.MultipleSelectOptions.remove">
+<code class="sig-name descname">remove</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">item</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lxml/html.html#MultipleSelectOptions.remove"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lxml.html.MultipleSelectOptions.remove" title="Permalink to this definition">¶</a></dt>
+<dd><p>Remove an element. If not a member, raise a KeyError.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="lxml.html.MultipleSelectOptions._abc_impl">
+<code class="sig-name descname">_abc_impl</code><em class="property"> = &lt;_abc_data object&gt;</em><a class="headerlink" href="#lxml.html.MultipleSelectOptions._abc_impl" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="lxml.html.MultipleSelectOptions.options">
+<em class="property">property </em><code class="sig-name descname">options</code><a class="headerlink" href="#lxml.html.MultipleSelectOptions.options" title="Permalink to this definition">¶</a></dt>
+<dd><p>Iterator of all the <code class="docutils literal notranslate"><span class="pre">&lt;option&gt;</span></code> elements.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="lxml.html.RadioGroup">
+<em class="property">class </em><code class="sig-prename descclassname">lxml.html.</code><code class="sig-name descname">RadioGroup</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">iterable</span><span class="o">=</span><span class="default_value">()</span></em>, <em class="sig-param"><span class="o">/</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lxml/html.html#RadioGroup"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lxml.html.RadioGroup" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></p>
+<p>This object represents several <code class="docutils literal notranslate"><span class="pre">&lt;input</span> <span class="pre">type=radio&gt;</span></code> elements
+that have the same name.</p>
+<p>You can use this like a list, but also use the property
+<code class="docutils literal notranslate"><span class="pre">.value</span></code> to check/uncheck inputs.  Also you can use
+<code class="docutils literal notranslate"><span class="pre">.value_options</span></code> to get the possible values.</p>
+<dl class="py method">
+<dt id="lxml.html.RadioGroup.value">
+<em class="property">property </em><code class="sig-name descname">value</code><a class="headerlink" href="#lxml.html.RadioGroup.value" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get/set the value, which checks the radio with that value (and
+unchecks any other value).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="lxml.html.RadioGroup.value_options">
+<em class="property">property </em><code class="sig-name descname">value_options</code><a class="headerlink" href="#lxml.html.RadioGroup.value_options" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a list of all the possible values.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="lxml.html.SelectElement">
+<em class="property">class </em><code class="sig-prename descclassname">lxml.html.</code><code class="sig-name descname">SelectElement</code><a class="reference internal" href="_modules/lxml/html.html#SelectElement"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lxml.html.SelectElement" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#lxml.html.InputMixin" title="lxml.html.InputMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">lxml.html.InputMixin</span></code></a>, <a class="reference internal" href="#lxml.html.HtmlElement" title="lxml.html.HtmlElement"><code class="xref py py-class docutils literal notranslate"><span class="pre">lxml.html.HtmlElement</span></code></a></p>
+<p><code class="docutils literal notranslate"><span class="pre">&lt;select&gt;</span></code> element.  You can get the name with <code class="docutils literal notranslate"><span class="pre">.name</span></code>.</p>
+<p><code class="docutils literal notranslate"><span class="pre">.value</span></code> will be the value of the selected option, unless this
+is a multi-select element (<code class="docutils literal notranslate"><span class="pre">&lt;select</span> <span class="pre">multiple&gt;</span></code>), in which case
+it will be a set-like object.  In either case <code class="docutils literal notranslate"><span class="pre">.value_options</span></code>
+gives the possible values.</p>
+<p>The boolean attribute <code class="docutils literal notranslate"><span class="pre">.multiple</span></code> shows if this is a
+multi-select.</p>
+<dl class="py method">
+<dt id="lxml.html.SelectElement.multiple">
+<em class="property">property </em><code class="sig-name descname">multiple</code><a class="headerlink" href="#lxml.html.SelectElement.multiple" title="Permalink to this definition">¶</a></dt>
+<dd><p>Boolean attribute: is there a <code class="docutils literal notranslate"><span class="pre">multiple</span></code> attribute on this element.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="lxml.html.SelectElement.value">
+<em class="property">property </em><code class="sig-name descname">value</code><a class="headerlink" href="#lxml.html.SelectElement.value" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get/set the value of this select (the selected option).</p>
+<p>If this is a multi-select, this is a set-like object that
+represents all the selected options.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="lxml.html.SelectElement.value_options">
+<em class="property">property </em><code class="sig-name descname">value_options</code><a class="headerlink" href="#lxml.html.SelectElement.value_options" title="Permalink to this definition">¶</a></dt>
+<dd><p>All the possible values this select can have (the <code class="docutils literal notranslate"><span class="pre">value</span></code>
+attribute of all the <code class="docutils literal notranslate"><span class="pre">&lt;option&gt;</span></code> elements.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="lxml.html.TextareaElement">
+<em class="property">class </em><code class="sig-prename descclassname">lxml.html.</code><code class="sig-name descname">TextareaElement</code><a class="reference internal" href="_modules/lxml/html.html#TextareaElement"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lxml.html.TextareaElement" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#lxml.html.InputMixin" title="lxml.html.InputMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">lxml.html.InputMixin</span></code></a>, <a class="reference internal" href="#lxml.html.HtmlElement" title="lxml.html.HtmlElement"><code class="xref py py-class docutils literal notranslate"><span class="pre">lxml.html.HtmlElement</span></code></a></p>
+<p><code class="docutils literal notranslate"><span class="pre">&lt;textarea&gt;</span></code> element.  You can get the name with <code class="docutils literal notranslate"><span class="pre">.name</span></code> and
+get/set the value with <code class="docutils literal notranslate"><span class="pre">.value</span></code></p>
+<dl class="py method">
+<dt id="lxml.html.TextareaElement.value">
+<em class="property">property </em><code class="sig-name descname">value</code><a class="headerlink" href="#lxml.html.TextareaElement.value" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get/set the value (which is the contents of this element)</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="lxml.html.XHTMLParser">
+<em class="property">class </em><code class="sig-prename descclassname">lxml.html.</code><code class="sig-name descname">XHTMLParser</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lxml/html.html#XHTMLParser"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lxml.html.XHTMLParser" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="lxml.etree.html#lxml.etree.XMLParser" title="lxml.etree.XMLParser"><code class="xref py py-class docutils literal notranslate"><span class="pre">lxml.etree.XMLParser</span></code></a></p>
+<p>An XML parser that is configured to return lxml.html Element
+objects.</p>
+<p>Note that this parser is not really XHTML aware unless you let it
+load a DTD that declares the HTML entities.  To do this, make sure
+you have the XHTML DTDs installed in your catalogs, and create the
+parser like this:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">parser</span> <span class="o">=</span> <span class="n">XHTMLParser</span><span class="p">(</span><span class="n">load_dtd</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>If you additionally want to validate the document, use this:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">parser</span> <span class="o">=</span> <span class="n">XHTMLParser</span><span class="p">(</span><span class="n">dtd_validation</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>For catalog support, see <a class="reference external" href="http://www.xmlsoft.org/catalog.html">http://www.xmlsoft.org/catalog.html</a>.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="lxml.html._MethodFunc">
+<em class="property">class </em><code class="sig-prename descclassname">lxml.html.</code><code class="sig-name descname">_MethodFunc</code><span class="sig-paren">(</span><em class="sig-param">name</em>, <em class="sig-param">copy=False</em>, <em class="sig-param">source_class=&lt;class 'lxml.html.HtmlMixin'&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lxml/html.html#_MethodFunc"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lxml.html._MethodFunc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>An object that represents a method on an element as a function;
+the function takes either an element or an HTML string.  It
+returns whatever the function normally returns, or if the function
+works in-place (and so returns None) it returns a serialized form
+of the resulting document.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="lxml.html.Element">
+<code class="sig-prename descclassname">lxml.html.</code><code class="sig-name descname">Element</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kw</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lxml/html.html#Element"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lxml.html.Element" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a new HTML Element.</p>
+<p>This can also be used for XHTML documents.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="lxml.html.__bytes_replace_meta_content_type">
+<code class="sig-prename descclassname">lxml.html.</code><code class="sig-name descname">__bytes_replace_meta_content_type</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">repl</span></em>, <em class="sig-param"><span class="n">string</span></em>, <em class="sig-param"><span class="n">count</span><span class="o">=</span><span class="default_value">0</span></em><span class="sig-paren">)</span><a class="headerlink" href="#lxml.html.__bytes_replace_meta_content_type" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the string obtained by replacing the leftmost non-overlapping occurrences of pattern in string by the replacement repl.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="lxml.html.__fix_docstring">
+<code class="sig-prename descclassname">lxml.html.</code><code class="sig-name descname">__fix_docstring</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">s</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lxml/html.html#__fix_docstring"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lxml.html.__fix_docstring" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="lxml.html.__str_replace_meta_content_type">
+<code class="sig-prename descclassname">lxml.html.</code><code class="sig-name descname">__str_replace_meta_content_type</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">repl</span></em>, <em class="sig-param"><span class="n">string</span></em>, <em class="sig-param"><span class="n">count</span><span class="o">=</span><span class="default_value">0</span></em><span class="sig-paren">)</span><a class="headerlink" href="#lxml.html.__str_replace_meta_content_type" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the string obtained by replacing the leftmost non-overlapping occurrences of pattern in string by the replacement repl.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="lxml.html._contains_block_level_tag">
+<code class="sig-prename descclassname">lxml.html.</code><code class="sig-name descname">_contains_block_level_tag</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">el</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lxml/html.html#_contains_block_level_tag"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lxml.html._contains_block_level_tag" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="lxml.html._element_name">
+<code class="sig-prename descclassname">lxml.html.</code><code class="sig-name descname">_element_name</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">el</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lxml/html.html#_element_name"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lxml.html._element_name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="lxml.html._iter_css_imports">
+<code class="sig-prename descclassname">lxml.html.</code><code class="sig-name descname">_iter_css_imports</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">string</span></em>, <em class="sig-param"><span class="n">pos</span><span class="o">=</span><span class="default_value">0</span></em>, <em class="sig-param"><span class="n">endpos</span><span class="o">=</span><span class="default_value">9223372036854775807</span></em><span class="sig-paren">)</span><a class="headerlink" href="#lxml.html._iter_css_imports" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return an iterator over all non-overlapping matches for the RE pattern in string.</p>
+<p>For each match, the iterator returns a match object.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="lxml.html._iter_css_urls">
+<code class="sig-prename descclassname">lxml.html.</code><code class="sig-name descname">_iter_css_urls</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">string</span></em>, <em class="sig-param"><span class="n">pos</span><span class="o">=</span><span class="default_value">0</span></em>, <em class="sig-param"><span class="n">endpos</span><span class="o">=</span><span class="default_value">9223372036854775807</span></em><span class="sig-paren">)</span><a class="headerlink" href="#lxml.html._iter_css_urls" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return an iterator over all non-overlapping matches for the RE pattern in string.</p>
+<p>For each match, the iterator returns a match object.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="lxml.html._looks_like_full_html_bytes">
+<code class="sig-prename descclassname">lxml.html.</code><code class="sig-name descname">_looks_like_full_html_bytes</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">string</span></em>, <em class="sig-param"><span class="n">pos</span><span class="o">=</span><span class="default_value">0</span></em>, <em class="sig-param"><span class="n">endpos</span><span class="o">=</span><span class="default_value">9223372036854775807</span></em><span class="sig-paren">)</span><a class="headerlink" href="#lxml.html._looks_like_full_html_bytes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Matches zero or more characters at the beginning of the string.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="lxml.html._looks_like_full_html_unicode">
+<code class="sig-prename descclassname">lxml.html.</code><code class="sig-name descname">_looks_like_full_html_unicode</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">string</span></em>, <em class="sig-param"><span class="n">pos</span><span class="o">=</span><span class="default_value">0</span></em>, <em class="sig-param"><span class="n">endpos</span><span class="o">=</span><span class="default_value">9223372036854775807</span></em><span class="sig-paren">)</span><a class="headerlink" href="#lxml.html._looks_like_full_html_unicode" title="Permalink to this definition">¶</a></dt>
+<dd><p>Matches zero or more characters at the beginning of the string.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="lxml.html._nons">
+<code class="sig-prename descclassname">lxml.html.</code><code class="sig-name descname">_nons</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">tag</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lxml/html.html#_nons"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lxml.html._nons" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="lxml.html._parse_meta_refresh_url">
+<code class="sig-prename descclassname">lxml.html.</code><code class="sig-name descname">_parse_meta_refresh_url</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">string</span></em>, <em class="sig-param"><span class="n">pos</span><span class="o">=</span><span class="default_value">0</span></em>, <em class="sig-param"><span class="n">endpos</span><span class="o">=</span><span class="default_value">9223372036854775807</span></em><span class="sig-paren">)</span><a class="headerlink" href="#lxml.html._parse_meta_refresh_url" title="Permalink to this definition">¶</a></dt>
+<dd><p>Scan through string looking for a match, and return a corresponding match object instance.</p>
+<p>Return None if no position in the string matches.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="lxml.html._transform_result">
+<code class="sig-prename descclassname">lxml.html.</code><code class="sig-name descname">_transform_result</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">typ</span></em>, <em class="sig-param"><span class="n">result</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lxml/html.html#_transform_result"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lxml.html._transform_result" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert the result back into the input type.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="lxml.html._unquote_match">
+<code class="sig-prename descclassname">lxml.html.</code><code class="sig-name descname">_unquote_match</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">s</span></em>, <em class="sig-param"><span class="n">pos</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lxml/html.html#_unquote_match"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lxml.html._unquote_match" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="lxml.html.document_fromstring">
+<code class="sig-prename descclassname">lxml.html.</code><code class="sig-name descname">document_fromstring</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">html</span></em>, <em class="sig-param"><span class="n">parser</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">ensure_head_body</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kw</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lxml/html.html#document_fromstring"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lxml.html.document_fromstring" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="lxml.html.fragment_fromstring">
+<code class="sig-prename descclassname">lxml.html.</code><code class="sig-name descname">fragment_fromstring</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">html</span></em>, <em class="sig-param"><span class="n">create_parent</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">base_url</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">parser</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kw</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lxml/html.html#fragment_fromstring"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lxml.html.fragment_fromstring" title="Permalink to this definition">¶</a></dt>
+<dd><p>Parses a single HTML element; it is an error if there is more than
+one element, or if anything but whitespace precedes or follows the
+element.</p>
+<p>If <code class="docutils literal notranslate"><span class="pre">create_parent</span></code> is true (or is a tag name) then a parent node
+will be created to encapsulate the HTML in a single element.  In this
+case, leading or trailing text is also allowed, as are multiple elements
+as result of the parsing.</p>
+<p>Passing a <code class="docutils literal notranslate"><span class="pre">base_url</span></code> will set the document’s <code class="docutils literal notranslate"><span class="pre">base_url</span></code> attribute
+(and the tree’s docinfo.URL).</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="lxml.html.fragments_fromstring">
+<code class="sig-prename descclassname">lxml.html.</code><code class="sig-name descname">fragments_fromstring</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">html</span></em>, <em class="sig-param"><span class="n">no_leading_text</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">base_url</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">parser</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kw</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lxml/html.html#fragments_fromstring"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lxml.html.fragments_fromstring" title="Permalink to this definition">¶</a></dt>
+<dd><p>Parses several HTML elements, returning a list of elements.</p>
+<p>The first item in the list may be a string.
+If no_leading_text is true, then it will be an error if there is
+leading text, and it will always be a list of only elements.</p>
+<p>base_url will set the document’s base_url attribute
+(and the tree’s docinfo.URL).</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="lxml.html.fromstring">
+<code class="sig-prename descclassname">lxml.html.</code><code class="sig-name descname">fromstring</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">html</span></em>, <em class="sig-param"><span class="n">base_url</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">parser</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kw</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lxml/html.html#fromstring"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lxml.html.fromstring" title="Permalink to this definition">¶</a></dt>
+<dd><p>Parse the html, returning a single element/document.</p>
+<p>This tries to minimally parse the chunk of text, without knowing if it
+is a fragment or a document.</p>
+<p>base_url will set the document’s base_url attribute (and the tree’s docinfo.URL)</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="lxml.html.html_to_xhtml">
+<code class="sig-prename descclassname">lxml.html.</code><code class="sig-name descname">html_to_xhtml</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">html</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lxml/html.html#html_to_xhtml"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lxml.html.html_to_xhtml" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert all tags in an HTML tree to XHTML by moving them to the
+XHTML namespace.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="lxml.html.open_http_urllib">
+<code class="sig-prename descclassname">lxml.html.</code><code class="sig-name descname">open_http_urllib</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">method</span></em>, <em class="sig-param"><span class="n">url</span></em>, <em class="sig-param"><span class="n">values</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lxml/html.html#open_http_urllib"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lxml.html.open_http_urllib" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="lxml.html.open_in_browser">
+<code class="sig-prename descclassname">lxml.html.</code><code class="sig-name descname">open_in_browser</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">doc</span></em>, <em class="sig-param"><span class="n">encoding</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lxml/html.html#open_in_browser"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lxml.html.open_in_browser" title="Permalink to this definition">¶</a></dt>
+<dd><p>Open the HTML document in a web browser, saving it to a temporary
+file to open it.  Note that this does not delete the file after
+use.  This is mainly meant for debugging.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="lxml.html.parse">
+<code class="sig-prename descclassname">lxml.html.</code><code class="sig-name descname">parse</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">filename_or_url</span></em>, <em class="sig-param"><span class="n">parser</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">base_url</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kw</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lxml/html.html#parse"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lxml.html.parse" title="Permalink to this definition">¶</a></dt>
+<dd><p>Parse a filename, URL, or file-like object into an HTML document
+tree.  Note: this returns a tree, not an element.  Use
+<code class="docutils literal notranslate"><span class="pre">parse(...).getroot()</span></code> to get the document root.</p>
+<p>You can override the base URL with the <code class="docutils literal notranslate"><span class="pre">base_url</span></code> keyword.  This
+is most useful when parsing from a file-like object.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="lxml.html.submit_form">
+<code class="sig-prename descclassname">lxml.html.</code><code class="sig-name descname">submit_form</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">form</span></em>, <em class="sig-param"><span class="n">extra_values</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">open_http</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lxml/html.html#submit_form"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lxml.html.submit_form" title="Permalink to this definition">¶</a></dt>
+<dd><p>Helper function to submit a form.  Returns a file-like object, as from
+<code class="docutils literal notranslate"><span class="pre">urllib.urlopen()</span></code>.  This object also has a <code class="docutils literal notranslate"><span class="pre">.geturl()</span></code> function,
+which shows the URL if there were any redirects.</p>
+<p>You can use this like:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">form</span> <span class="o">=</span> <span class="n">doc</span><span class="o">.</span><span class="n">forms</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+<span class="n">form</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;foo&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="s1">&#39;bar&#39;</span> <span class="c1"># etc</span>
+<span class="n">response</span> <span class="o">=</span> <span class="n">form</span><span class="o">.</span><span class="n">submit</span><span class="p">()</span>
+<span class="n">doc</span> <span class="o">=</span> <span class="n">parse</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
+<span class="n">doc</span><span class="o">.</span><span class="n">make_links_absolute</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">geturl</span><span class="p">())</span>
+</pre></div>
+</div>
+<p>To change the HTTP requester, pass a function as <code class="docutils literal notranslate"><span class="pre">open_http</span></code> keyword
+argument that opens the URL for you.  The function must have the following
+signature:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">open_http</span><span class="p">(</span><span class="n">method</span><span class="p">,</span> <span class="n">URL</span><span class="p">,</span> <span class="n">values</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The action is one of ‘GET’ or ‘POST’, the URL is the target URL as a
+string, and the values are a sequence of <code class="docutils literal notranslate"><span class="pre">(name,</span> <span class="pre">value)</span></code> tuples with the
+form data.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="lxml.html.tostring">
+<code class="sig-prename descclassname">lxml.html.</code><code class="sig-name descname">tostring</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">doc</span></em>, <em class="sig-param"><span class="n">pretty_print</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">include_meta_content_type</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">encoding</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">method</span><span class="o">=</span><span class="default_value">'html'</span></em>, <em class="sig-param"><span class="n">with_tail</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">doctype</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lxml/html.html#tostring"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lxml.html.tostring" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return an HTML string representation of the document.</p>
+<p>Note: if include_meta_content_type is true this will create a
+<code class="docutils literal notranslate"><span class="pre">&lt;meta</span> <span class="pre">http-equiv=&quot;Content-Type&quot;</span> <span class="pre">...&gt;</span></code> tag in the head;
+regardless of the value of include_meta_content_type any existing
+<code class="docutils literal notranslate"><span class="pre">&lt;meta</span> <span class="pre">http-equiv=&quot;Content-Type&quot;</span> <span class="pre">...&gt;</span></code> tag will be removed</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">encoding</span></code> argument controls the output encoding (defaults to
+ASCII, with &amp;#…; character references for any characters outside
+of ASCII).  Note that you can pass the name <code class="docutils literal notranslate"><span class="pre">'unicode'</span></code> as
+<code class="docutils literal notranslate"><span class="pre">encoding</span></code> argument to serialise to a Unicode string.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">method</span></code> argument defines the output method.  It defaults to
+‘html’, but can also be ‘xml’ for xhtml output, or ‘text’ to
+serialise to plain text without markup.</p>
+<p>To leave out the tail text of the top-level element that is being
+serialised, pass <code class="docutils literal notranslate"><span class="pre">with_tail=False</span></code>.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">doctype</span></code> option allows passing in a plain string that will
+be serialised before the XML tree.  Note that passing in non
+well-formed content here will make the XML output non well-formed.
+Also, an existing doctype in the document tree will not be removed
+when serialising an ElementTree instance.</p>
+<p>Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">lxml</span> <span class="kn">import</span> <span class="n">html</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">root</span> <span class="o">=</span> <span class="n">html</span><span class="o">.</span><span class="n">fragment_fromstring</span><span class="p">(</span><span class="s1">&#39;&lt;p&gt;Hello&lt;br&gt;world!&lt;/p&gt;&#39;</span><span class="p">)</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">html</span><span class="o">.</span><span class="n">tostring</span><span class="p">(</span><span class="n">root</span><span class="p">)</span>
+<span class="go">b&#39;&lt;p&gt;Hello&lt;br&gt;world!&lt;/p&gt;&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">html</span><span class="o">.</span><span class="n">tostring</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;html&#39;</span><span class="p">)</span>
+<span class="go">b&#39;&lt;p&gt;Hello&lt;br&gt;world!&lt;/p&gt;&#39;</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">html</span><span class="o">.</span><span class="n">tostring</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;xml&#39;</span><span class="p">)</span>
+<span class="go">b&#39;&lt;p&gt;Hello&lt;br/&gt;world!&lt;/p&gt;&#39;</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">html</span><span class="o">.</span><span class="n">tostring</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;text&#39;</span><span class="p">)</span>
+<span class="go">b&#39;Helloworld!&#39;</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">html</span><span class="o">.</span><span class="n">tostring</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;text&#39;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s1">&#39;unicode&#39;</span><span class="p">)</span>
+<span class="go">&#39;Helloworld!&#39;</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">root</span> <span class="o">=</span> <span class="n">html</span><span class="o">.</span><span class="n">fragment_fromstring</span><span class="p">(</span><span class="s1">&#39;&lt;div&gt;&lt;p&gt;Hello&lt;br&gt;world!&lt;/p&gt;TAIL&lt;/div&gt;&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">html</span><span class="o">.</span><span class="n">tostring</span><span class="p">(</span><span class="n">root</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;text&#39;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s1">&#39;unicode&#39;</span><span class="p">)</span>
+<span class="go">&#39;Helloworld!TAIL&#39;</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">html</span><span class="o">.</span><span class="n">tostring</span><span class="p">(</span><span class="n">root</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;text&#39;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s1">&#39;unicode&#39;</span><span class="p">,</span> <span class="n">with_tail</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="go">&#39;Helloworld!&#39;</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">doc</span> <span class="o">=</span> <span class="n">html</span><span class="o">.</span><span class="n">document_fromstring</span><span class="p">(</span><span class="s1">&#39;&lt;p&gt;Hello&lt;br&gt;world!&lt;/p&gt;&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">html</span><span class="o">.</span><span class="n">tostring</span><span class="p">(</span><span class="n">doc</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;html&#39;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s1">&#39;unicode&#39;</span><span class="p">)</span>
+<span class="go">&#39;&lt;html&gt;&lt;body&gt;&lt;p&gt;Hello&lt;br&gt;world!&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;&#39;</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">html</span><span class="o">.</span><span class="n">tostring</span><span class="p">(</span><span class="n">doc</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;html&#39;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s1">&#39;unicode&#39;</span><span class="p">,</span>
+<span class="gp">... </span>         <span class="n">doctype</span><span class="o">=</span><span class="s1">&#39;&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.01//EN&quot;&#39;</span>
+<span class="gp">... </span>                 <span class="s1">&#39; &quot;http://www.w3.org/TR/html4/strict.dtd&quot;&gt;&#39;</span><span class="p">))</span>
+<span class="go">&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.01//EN&quot; &quot;http://www.w3.org/TR/html4/strict.dtd&quot;&gt;</span>
+<span class="go">&lt;html&gt;&lt;body&gt;&lt;p&gt;Hello&lt;br&gt;world!&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt id="lxml.html.xhtml_to_html">
+<code class="sig-prename descclassname">lxml.html.</code><code class="sig-name descname">xhtml_to_html</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">xhtml</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lxml/html.html#xhtml_to_html"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lxml.html.xhtml_to_html" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert all tags in an XHTML tree to HTML by removing their
+XHTML namespace.</p>
+</dd></dl>
+
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="lxml.html.ElementSoup.html" class="btn btn-neutral float-right" title="lxml.html.ElementSoup module" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="lxml.html" class="btn btn-neutral float-left" title="lxml package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        
+        &copy; Copyright 2020, lxml dev team
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

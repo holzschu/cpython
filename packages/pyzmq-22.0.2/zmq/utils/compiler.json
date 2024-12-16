@@ -1,0 +1,28 @@
+{
+  "libraries": [
+    "zmq"
+  ],
+  "include_dirs": [
+    "/usr/local/include",
+    "zmq/utils"
+  ],
+  "library_dirs": [
+    "/usr/local/lib"
+  ],
+  "runtime_library_dirs": [],
+  "extra_link_args": [
+    "-Wl,-rpath",
+    "-Wl,/usr/local/lib",
+    "-arch",
+    "x86_64",
+    "-miphonesimulator-version-min=14.0",
+    "-isysroot",
+    "/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator14.4.sdk"
+  ],
+  "define_macros": [
+    [
+      "HAVE_SYS_UN_H",
+      1
+    ]
+  ]
+}

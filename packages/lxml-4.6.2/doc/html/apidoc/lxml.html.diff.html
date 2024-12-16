@@ -1,0 +1,670 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>lxml.html.diff module &mdash; lxml  documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+
+  
+  
+  
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="lxml.html.formfill module" href="lxml.html.formfill.html" />
+    <link rel="prev" title="lxml.html.defs module" href="lxml.html.defs.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="index.html" class="icon icon-home" alt="Documentation Home"> lxml
+          
+
+          
+            
+            <img src="_static/python-xml.png" class="logo" alt="Logo"/>
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                4.6.2
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="lxml.html">lxml package</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="lxml.html.html">lxml.html package</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="lxml.html.ElementSoup.html">lxml.html.ElementSoup module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="lxml.html._diffcommand.html">lxml.html._diffcommand module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="lxml.html._setmixin.html">lxml.html._setmixin module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="lxml.html.builder.html">lxml.html.builder module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="lxml.html.clean.html">lxml.html.clean module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="lxml.html.defs.html">lxml.html.defs module</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">lxml.html.diff module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="lxml.html.formfill.html">lxml.html.formfill module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="lxml.html.html5parser.html">lxml.html.html5parser module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="lxml.html.soupparser.html">lxml.html.soupparser module</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="lxml.isoschematron.html">lxml.isoschematron package</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lxml.ElementInclude.html">lxml.ElementInclude module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lxml._elementpath.html">lxml._elementpath module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lxml.builder.html">lxml.builder module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lxml.cssselect.html">lxml.cssselect module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lxml.doctestcompare.html">lxml.doctestcompare module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lxml.etree.html">lxml.etree module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lxml.objectify.html">lxml.objectify module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lxml.sax.html">lxml.sax module</a></li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">lxml</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="lxml.html">lxml package</a> &raquo;</li>
+        
+          <li><a href="lxml.html.html">lxml.html package</a> &raquo;</li>
+        
+      <li>lxml.html.diff module</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/lxml.html.diff.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="module-lxml.html.diff">
+<span id="lxml-html-diff-module"></span><h1>lxml.html.diff module<a class="headerlink" href="#module-lxml.html.diff" title="Permalink to this headline">¶</a></h1>
+<dl class="py exception">
+<dt id="lxml.html.diff.NoDeletes">
+<em class="property">exception </em><code class="sig-prename descclassname">lxml.html.diff.</code><code class="sig-name descname">NoDeletes</code><a class="headerlink" href="#lxml.html.diff.NoDeletes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Exception</span></code></p>
+<p>Raised when the document no longer contains any pending deletes
+(DEL_START/DEL_END)</p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="lxml.html.diff.DEL_END">
+<em class="property">class </em><code class="sig-prename descclassname">lxml.html.diff.</code><code class="sig-name descname">DEL_END</code><a class="headerlink" href="#lxml.html.diff.DEL_END" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="lxml.html.diff.DEL_START">
+<em class="property">class </em><code class="sig-prename descclassname">lxml.html.diff.</code><code class="sig-name descname">DEL_START</code><a class="headerlink" href="#lxml.html.diff.DEL_START" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="lxml.html.diff.InsensitiveSequenceMatcher">
+<em class="property">class </em><code class="sig-prename descclassname">lxml.html.diff.</code><code class="sig-name descname">InsensitiveSequenceMatcher</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">isjunk</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">a</span><span class="o">=</span><span class="default_value">''</span></em>, <em class="sig-param"><span class="n">b</span><span class="o">=</span><span class="default_value">''</span></em>, <em class="sig-param"><span class="n">autojunk</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#lxml.html.diff.InsensitiveSequenceMatcher" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">difflib.SequenceMatcher</span></code></p>
+<p>Acts like SequenceMatcher, but tries not to find very small equal
+blocks amidst large spans of changes</p>
+<dl class="py method">
+<dt id="lxml.html.diff.InsensitiveSequenceMatcher.get_matching_blocks">
+<code class="sig-name descname">get_matching_blocks</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#lxml.html.diff.InsensitiveSequenceMatcher.get_matching_blocks" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return list of triples describing matching subsequences.</p>
+<p>Each triple is of the form (i, j, n), and means that
+a[i:i+n] == b[j:j+n].  The triples are monotonically increasing in
+i and in j.  New in Python 2.5, it’s also guaranteed that if
+(i, j, n) and (i’, j’, n’) are adjacent triples in the list, and
+the second is not the last triple in the list, then i+n != i’ or
+j+n != j’.  IOW, adjacent triples never describe adjacent equal
+blocks.</p>
+<p>The last triple is a dummy, (len(a), len(b), 0), and is the only
+triple with n==0.</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">s</span> <span class="o">=</span> <span class="n">SequenceMatcher</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;abxcd&quot;</span><span class="p">,</span> <span class="s2">&quot;abcd&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">list</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">get_matching_blocks</span><span class="p">())</span>
+<span class="go">[Match(a=0, b=0, size=2), Match(a=3, b=2, size=2), Match(a=5, b=4, size=0)]</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="lxml.html.diff.InsensitiveSequenceMatcher.threshold">
+<code class="sig-name descname">threshold</code><em class="property"> = 2</em><a class="headerlink" href="#lxml.html.diff.InsensitiveSequenceMatcher.threshold" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="lxml.html.diff.href_token">
+<em class="property">class </em><code class="sig-prename descclassname">lxml.html.diff.</code><code class="sig-name descname">href_token</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">text</span></em>, <em class="sig-param"><span class="n">pre_tags</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">post_tags</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">trailing_whitespace</span><span class="o">=</span><span class="default_value">''</span></em><span class="sig-paren">)</span><a class="headerlink" href="#lxml.html.diff.href_token" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#lxml.html.diff.token" title="lxml.html.diff.token"><code class="xref py py-class docutils literal notranslate"><span class="pre">lxml.html.diff.token</span></code></a></p>
+<p>Represents the href in an anchor tag.  Unlike other words, we only
+show the href when it changes.</p>
+<dl class="py method">
+<dt id="lxml.html.diff.href_token.html">
+<code class="sig-name descname">html</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#lxml.html.diff.href_token.html" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="lxml.html.diff.href_token.hide_when_equal">
+<code class="sig-name descname">hide_when_equal</code><em class="property"> = True</em><a class="headerlink" href="#lxml.html.diff.href_token.hide_when_equal" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="lxml.html.diff.tag_token">
+<em class="property">class </em><code class="sig-prename descclassname">lxml.html.diff.</code><code class="sig-name descname">tag_token</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">tag</span></em>, <em class="sig-param"><span class="n">data</span></em>, <em class="sig-param"><span class="n">html_repr</span></em>, <em class="sig-param"><span class="n">pre_tags</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">post_tags</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">trailing_whitespace</span><span class="o">=</span><span class="default_value">''</span></em><span class="sig-paren">)</span><a class="headerlink" href="#lxml.html.diff.tag_token" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#lxml.html.diff.token" title="lxml.html.diff.token"><code class="xref py py-class docutils literal notranslate"><span class="pre">lxml.html.diff.token</span></code></a></p>
+<p>Represents a token that is actually a tag.  Currently this is just
+the &lt;img&gt; tag, which takes up visible space just like a word but
+is only represented in a document by a tag.</p>
+<dl class="py method">
+<dt id="lxml.html.diff.tag_token.html">
+<code class="sig-name descname">html</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#lxml.html.diff.tag_token.html" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="lxml.html.diff.token">
+<em class="property">class </em><code class="sig-prename descclassname">lxml.html.diff.</code><code class="sig-name descname">token</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">text</span></em>, <em class="sig-param"><span class="n">pre_tags</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">post_tags</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">trailing_whitespace</span><span class="o">=</span><span class="default_value">''</span></em><span class="sig-paren">)</span><a class="headerlink" href="#lxml.html.diff.token" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></p>
+<p>Represents a diffable token, generally a word that is displayed to
+the user.  Opening tags are attached to this token when they are
+adjacent (pre_tags) and closing tags that follow the word
+(post_tags).  Some exceptions occur when there are empty tags
+adjacent to a word, so there may be close tags in pre_tags, or
+open tags in post_tags.</p>
+<p>We also keep track of whether the word was originally followed by
+whitespace, even though we do not want to treat the word as
+equivalent to a similar word that does not have a trailing
+space.</p>
+<dl class="py method">
+<dt id="lxml.html.diff.token.html">
+<code class="sig-name descname">html</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#lxml.html.diff.token.html" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="lxml.html.diff.token.hide_when_equal">
+<code class="sig-name descname">hide_when_equal</code><em class="property"> = False</em><a class="headerlink" href="#lxml.html.diff.token.hide_when_equal" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt id="lxml.html.diff._contains_block_level_tag">
+<code class="sig-prename descclassname">lxml.html.diff.</code><code class="sig-name descname">_contains_block_level_tag</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">el</span></em><span class="sig-paren">)</span><a class="headerlink" href="#lxml.html.diff._contains_block_level_tag" title="Permalink to this definition">¶</a></dt>
+<dd><p>True if the element contains any block-level elements, like &lt;p&gt;, &lt;td&gt;, etc.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="lxml.html.diff._fixup_ins_del_tags">
+<code class="sig-prename descclassname">lxml.html.diff.</code><code class="sig-name descname">_fixup_ins_del_tags</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">doc</span></em><span class="sig-paren">)</span><a class="headerlink" href="#lxml.html.diff._fixup_ins_del_tags" title="Permalink to this definition">¶</a></dt>
+<dd><p>fixup_ins_del_tags that works on an lxml document in-place</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="lxml.html.diff._merge_element_contents">
+<code class="sig-prename descclassname">lxml.html.diff.</code><code class="sig-name descname">_merge_element_contents</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">el</span></em><span class="sig-paren">)</span><a class="headerlink" href="#lxml.html.diff._merge_element_contents" title="Permalink to this definition">¶</a></dt>
+<dd><p>Removes an element, but merges its contents into its place, e.g.,
+given &lt;p&gt;Hi &lt;i&gt;there!&lt;/i&gt;&lt;/p&gt;, if you remove the &lt;i&gt; element you get
+&lt;p&gt;Hi there!&lt;/p&gt;</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="lxml.html.diff._move_el_inside_block">
+<code class="sig-prename descclassname">lxml.html.diff.</code><code class="sig-name descname">_move_el_inside_block</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">el</span></em>, <em class="sig-param"><span class="n">tag</span></em><span class="sig-paren">)</span><a class="headerlink" href="#lxml.html.diff._move_el_inside_block" title="Permalink to this definition">¶</a></dt>
+<dd><p>helper for _fixup_ins_del_tags; actually takes the &lt;ins&gt; etc tags
+and moves them inside any block-level tags.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="lxml.html.diff.cleanup_delete">
+<code class="sig-prename descclassname">lxml.html.diff.</code><code class="sig-name descname">cleanup_delete</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">chunks</span></em><span class="sig-paren">)</span><a class="headerlink" href="#lxml.html.diff.cleanup_delete" title="Permalink to this definition">¶</a></dt>
+<dd><p>Cleans up any DEL_START/DEL_END markers in the document, replacing
+them with &lt;del&gt;&lt;/del&gt;.  To do this while keeping the document
+valid, it may need to drop some tags (either start or end tags).</p>
+<p>It may also move the del into adjacent tags to try to move it to a
+similar location where it was originally located (e.g., moving a
+delete into preceding &lt;div&gt; tag, if the del looks like (DEL_START,
+‘Text&lt;/div&gt;’, DEL_END)</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="lxml.html.diff.cleanup_html">
+<code class="sig-prename descclassname">lxml.html.diff.</code><code class="sig-name descname">cleanup_html</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">html</span></em><span class="sig-paren">)</span><a class="headerlink" href="#lxml.html.diff.cleanup_html" title="Permalink to this definition">¶</a></dt>
+<dd><p>This ‘cleans’ the HTML, meaning that any page structure is removed
+(only the contents of &lt;body&gt; are used, if there is any &lt;body).
+Also &lt;ins&gt; and &lt;del&gt; tags are removed.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="lxml.html.diff.compress_merge_back">
+<code class="sig-prename descclassname">lxml.html.diff.</code><code class="sig-name descname">compress_merge_back</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">tokens</span></em>, <em class="sig-param"><span class="n">tok</span></em><span class="sig-paren">)</span><a class="headerlink" href="#lxml.html.diff.compress_merge_back" title="Permalink to this definition">¶</a></dt>
+<dd><p>Merge tok into the last element of tokens (modifying the list of
+tokens in-place).</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="lxml.html.diff.compress_tokens">
+<code class="sig-prename descclassname">lxml.html.diff.</code><code class="sig-name descname">compress_tokens</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">tokens</span></em><span class="sig-paren">)</span><a class="headerlink" href="#lxml.html.diff.compress_tokens" title="Permalink to this definition">¶</a></dt>
+<dd><p>Combine adjacent tokens when there is no HTML between the tokens, 
+and they share an annotation</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="lxml.html.diff.copy_annotations">
+<code class="sig-prename descclassname">lxml.html.diff.</code><code class="sig-name descname">copy_annotations</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">src</span></em>, <em class="sig-param"><span class="n">dest</span></em><span class="sig-paren">)</span><a class="headerlink" href="#lxml.html.diff.copy_annotations" title="Permalink to this definition">¶</a></dt>
+<dd><p>Copy annotations from the tokens listed in src to the tokens in dest</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="lxml.html.diff.default_markup">
+<code class="sig-prename descclassname">lxml.html.diff.</code><code class="sig-name descname">default_markup</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">text</span></em>, <em class="sig-param"><span class="n">version</span></em><span class="sig-paren">)</span><a class="headerlink" href="#lxml.html.diff.default_markup" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="lxml.html.diff.end_tag">
+<code class="sig-prename descclassname">lxml.html.diff.</code><code class="sig-name descname">end_tag</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">el</span></em><span class="sig-paren">)</span><a class="headerlink" href="#lxml.html.diff.end_tag" title="Permalink to this definition">¶</a></dt>
+<dd><p>The text representation of an end tag for a tag.  Includes
+trailing whitespace when appropriate.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="lxml.html.diff.expand_tokens">
+<code class="sig-prename descclassname">lxml.html.diff.</code><code class="sig-name descname">expand_tokens</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">tokens</span></em>, <em class="sig-param"><span class="n">equal</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#lxml.html.diff.expand_tokens" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given a list of tokens, return a generator of the chunks of
+text for the data in the tokens.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="lxml.html.diff.fixup_chunks">
+<code class="sig-prename descclassname">lxml.html.diff.</code><code class="sig-name descname">fixup_chunks</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">chunks</span></em><span class="sig-paren">)</span><a class="headerlink" href="#lxml.html.diff.fixup_chunks" title="Permalink to this definition">¶</a></dt>
+<dd><p>This function takes a list of chunks and produces a list of tokens.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="lxml.html.diff.fixup_ins_del_tags">
+<code class="sig-prename descclassname">lxml.html.diff.</code><code class="sig-name descname">fixup_ins_del_tags</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">html</span></em><span class="sig-paren">)</span><a class="headerlink" href="#lxml.html.diff.fixup_ins_del_tags" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given an html string, move any &lt;ins&gt; or &lt;del&gt; tags inside of any
+block-level elements, e.g. transform &lt;ins&gt;&lt;p&gt;word&lt;/p&gt;&lt;/ins&gt; to
+&lt;p&gt;&lt;ins&gt;word&lt;/ins&gt;&lt;/p&gt;</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="lxml.html.diff.flatten_el">
+<code class="sig-prename descclassname">lxml.html.diff.</code><code class="sig-name descname">flatten_el</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">el</span></em>, <em class="sig-param"><span class="n">include_hrefs</span></em>, <em class="sig-param"><span class="n">skip_tag</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#lxml.html.diff.flatten_el" title="Permalink to this definition">¶</a></dt>
+<dd><p>Takes an lxml element el, and generates all the text chunks for
+that tag.  Each start tag is a chunk, each word is a chunk, and each
+end tag is a chunk.</p>
+<p>If skip_tag is true, then the outermost container tag is
+not returned (just its contents).</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="lxml.html.diff.html_annotate">
+<code class="sig-prename descclassname">lxml.html.diff.</code><code class="sig-name descname">html_annotate</code><span class="sig-paren">(</span><em class="sig-param">doclist</em>, <em class="sig-param">markup=&lt;cyfunction default_markup&gt;</em><span class="sig-paren">)</span><a class="headerlink" href="#lxml.html.diff.html_annotate" title="Permalink to this definition">¶</a></dt>
+<dd><p>doclist should be ordered from oldest to newest, like:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">version1</span> <span class="o">=</span> <span class="s1">&#39;Hello World&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">version2</span> <span class="o">=</span> <span class="s1">&#39;Goodbye World&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">html_annotate</span><span class="p">([(</span><span class="n">version1</span><span class="p">,</span> <span class="s1">&#39;version 1&#39;</span><span class="p">),</span>
+<span class="gp">... </span>                     <span class="p">(</span><span class="n">version2</span><span class="p">,</span> <span class="s1">&#39;version 2&#39;</span><span class="p">)]))</span>
+<span class="go">&lt;span title=&quot;version 2&quot;&gt;Goodbye&lt;/span&gt; &lt;span title=&quot;version 1&quot;&gt;World&lt;/span&gt;</span>
+</pre></div>
+</div>
+<p>The documents must be <em>fragments</em> (str/UTF8 or unicode), not
+complete documents</p>
+<p>The markup argument is a function to markup the spans of words.
+This function is called like markup(‘Hello’, ‘version 2’), and
+returns HTML.  The first argument is text and never includes any
+markup.  The default uses a span with a title:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">default_markup</span><span class="p">(</span><span class="s1">&#39;Some Text&#39;</span><span class="p">,</span> <span class="s1">&#39;by Joe&#39;</span><span class="p">))</span>
+<span class="go">&lt;span title=&quot;by Joe&quot;&gt;Some Text&lt;/span&gt;</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt id="lxml.html.diff.html_annotate_merge_annotations">
+<code class="sig-prename descclassname">lxml.html.diff.</code><code class="sig-name descname">html_annotate_merge_annotations</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">tokens_old</span></em>, <em class="sig-param"><span class="n">tokens_new</span></em><span class="sig-paren">)</span><a class="headerlink" href="#lxml.html.diff.html_annotate_merge_annotations" title="Permalink to this definition">¶</a></dt>
+<dd><p>Merge the annotations from tokens_old into tokens_new, when the
+tokens in the new document already existed in the old document.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="lxml.html.diff.htmldiff">
+<code class="sig-prename descclassname">lxml.html.diff.</code><code class="sig-name descname">htmldiff</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">old_html</span></em>, <em class="sig-param"><span class="n">new_html</span></em><span class="sig-paren">)</span><a class="headerlink" href="#lxml.html.diff.htmldiff" title="Permalink to this definition">¶</a></dt>
+<dd><p>Do a diff of the old and new document.  The documents are HTML
+<em>fragments</em> (str/UTF8 or unicode), they are not complete documents
+(i.e., no &lt;html&gt; tag).</p>
+<p>Returns HTML with &lt;ins&gt; and &lt;del&gt; tags added around the
+appropriate text.</p>
+<p>Markup is generally ignored, with the markup from new_html
+preserved, and possibly some markup from old_html (though it is
+considered acceptable to lose some of the old markup).  Only the
+words in the HTML are diffed.  The exception is &lt;img&gt; tags, which
+are treated like words, and the href attribute of &lt;a&gt; tags, which
+are noted inside the tag itself when there are changes.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="lxml.html.diff.htmldiff_tokens">
+<code class="sig-prename descclassname">lxml.html.diff.</code><code class="sig-name descname">htmldiff_tokens</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">html1_tokens</span></em>, <em class="sig-param"><span class="n">html2_tokens</span></em><span class="sig-paren">)</span><a class="headerlink" href="#lxml.html.diff.htmldiff_tokens" title="Permalink to this definition">¶</a></dt>
+<dd><p>Does a diff on the tokens themselves, returning a list of text
+chunks (not tokens).</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="lxml.html.diff.is_end_tag">
+<code class="sig-prename descclassname">lxml.html.diff.</code><code class="sig-name descname">is_end_tag</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">tok</span></em><span class="sig-paren">)</span><a class="headerlink" href="#lxml.html.diff.is_end_tag" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="lxml.html.diff.is_start_tag">
+<code class="sig-prename descclassname">lxml.html.diff.</code><code class="sig-name descname">is_start_tag</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">tok</span></em><span class="sig-paren">)</span><a class="headerlink" href="#lxml.html.diff.is_start_tag" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="lxml.html.diff.is_word">
+<code class="sig-prename descclassname">lxml.html.diff.</code><code class="sig-name descname">is_word</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">tok</span></em><span class="sig-paren">)</span><a class="headerlink" href="#lxml.html.diff.is_word" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="lxml.html.diff.locate_unbalanced_end">
+<code class="sig-prename descclassname">lxml.html.diff.</code><code class="sig-name descname">locate_unbalanced_end</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">unbalanced_end</span></em>, <em class="sig-param"><span class="n">pre_delete</span></em>, <em class="sig-param"><span class="n">post_delete</span></em><span class="sig-paren">)</span><a class="headerlink" href="#lxml.html.diff.locate_unbalanced_end" title="Permalink to this definition">¶</a></dt>
+<dd><p>like locate_unbalanced_start, except handling end tags and
+possibly moving the point earlier in the document.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="lxml.html.diff.locate_unbalanced_start">
+<code class="sig-prename descclassname">lxml.html.diff.</code><code class="sig-name descname">locate_unbalanced_start</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">unbalanced_start</span></em>, <em class="sig-param"><span class="n">pre_delete</span></em>, <em class="sig-param"><span class="n">post_delete</span></em><span class="sig-paren">)</span><a class="headerlink" href="#lxml.html.diff.locate_unbalanced_start" title="Permalink to this definition">¶</a></dt>
+<dd><p>pre_delete and post_delete implicitly point to a place in the
+document (where the two were split).  This moves that point (by
+popping items from one and pushing them onto the other).  It moves
+the point to try to find a place where unbalanced_start applies.</p>
+<p>As an example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">unbalanced_start</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;&lt;div&gt;&#39;</span><span class="p">]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">doc</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;&lt;p&gt;&#39;</span><span class="p">,</span> <span class="s1">&#39;Text&#39;</span><span class="p">,</span> <span class="s1">&#39;&lt;/p&gt;&#39;</span><span class="p">,</span> <span class="s1">&#39;&lt;div&gt;&#39;</span><span class="p">,</span> <span class="s1">&#39;More Text&#39;</span><span class="p">,</span> <span class="s1">&#39;&lt;/div&gt;&#39;</span><span class="p">]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">pre</span><span class="p">,</span> <span class="n">post</span> <span class="o">=</span> <span class="n">doc</span><span class="p">[:</span><span class="mi">3</span><span class="p">],</span> <span class="n">doc</span><span class="p">[</span><span class="mi">3</span><span class="p">:]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">pre</span><span class="p">,</span> <span class="n">post</span>
+<span class="go">([&#39;&lt;p&gt;&#39;, &#39;Text&#39;, &#39;&lt;/p&gt;&#39;], [&#39;&lt;div&gt;&#39;, &#39;More Text&#39;, &#39;&lt;/div&gt;&#39;])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">locate_unbalanced_start</span><span class="p">(</span><span class="n">unbalanced_start</span><span class="p">,</span> <span class="n">pre</span><span class="p">,</span> <span class="n">post</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">pre</span><span class="p">,</span> <span class="n">post</span>
+<span class="go">([&#39;&lt;p&gt;&#39;, &#39;Text&#39;, &#39;&lt;/p&gt;&#39;, &#39;&lt;div&gt;&#39;], [&#39;More Text&#39;, &#39;&lt;/div&gt;&#39;])</span>
+</pre></div>
+</div>
+<p>As you can see, we moved the point so that the dangling &lt;div&gt; that
+we found will be effectively replaced by the div in the original
+document.  If this doesn’t work out, we just throw away
+unbalanced_start without doing anything.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="lxml.html.diff.markup_serialize_tokens">
+<code class="sig-prename descclassname">lxml.html.diff.</code><code class="sig-name descname">markup_serialize_tokens</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">tokens</span></em>, <em class="sig-param"><span class="n">markup_func</span></em><span class="sig-paren">)</span><a class="headerlink" href="#lxml.html.diff.markup_serialize_tokens" title="Permalink to this definition">¶</a></dt>
+<dd><p>Serialize the list of tokens into a list of text chunks, calling
+markup_func around text to add annotations.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="lxml.html.diff.merge_delete">
+<code class="sig-prename descclassname">lxml.html.diff.</code><code class="sig-name descname">merge_delete</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">del_chunks</span></em>, <em class="sig-param"><span class="n">doc</span></em><span class="sig-paren">)</span><a class="headerlink" href="#lxml.html.diff.merge_delete" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adds the text chunks in del_chunks to the document doc (another
+list of text chunks) with marker to show it is a delete.
+cleanup_delete later resolves these markers into &lt;del&gt; tags.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="lxml.html.diff.merge_insert">
+<code class="sig-prename descclassname">lxml.html.diff.</code><code class="sig-name descname">merge_insert</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">ins_chunks</span></em>, <em class="sig-param"><span class="n">doc</span></em><span class="sig-paren">)</span><a class="headerlink" href="#lxml.html.diff.merge_insert" title="Permalink to this definition">¶</a></dt>
+<dd><p>doc is the already-handled document (as a list of text chunks);
+here we add &lt;ins&gt;ins_chunks&lt;/ins&gt; to the end of that.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="lxml.html.diff.parse_html">
+<code class="sig-prename descclassname">lxml.html.diff.</code><code class="sig-name descname">parse_html</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">html</span></em>, <em class="sig-param"><span class="n">cleanup</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#lxml.html.diff.parse_html" title="Permalink to this definition">¶</a></dt>
+<dd><p>Parses an HTML fragment, returning an lxml element.  Note that the HTML will be
+wrapped in a &lt;div&gt; tag that was not in the original document.</p>
+<p>If cleanup is true, make sure there’s no &lt;head&gt; or &lt;body&gt;, and get
+rid of any &lt;ins&gt; and &lt;del&gt; tags.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="lxml.html.diff.serialize_html_fragment">
+<code class="sig-prename descclassname">lxml.html.diff.</code><code class="sig-name descname">serialize_html_fragment</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">el</span></em>, <em class="sig-param"><span class="n">skip_outer</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#lxml.html.diff.serialize_html_fragment" title="Permalink to this definition">¶</a></dt>
+<dd><p>Serialize a single lxml element as HTML.  The serialized form
+includes the elements tail.</p>
+<p>If skip_outer is true, then don’t serialize the outermost tag</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="lxml.html.diff.split_delete">
+<code class="sig-prename descclassname">lxml.html.diff.</code><code class="sig-name descname">split_delete</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">chunks</span></em><span class="sig-paren">)</span><a class="headerlink" href="#lxml.html.diff.split_delete" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns (stuff_before_DEL_START, stuff_inside_DEL_START_END,
+stuff_after_DEL_END).  Returns the first case found (there may be
+more DEL_STARTs in stuff_after_DEL_END).  Raises NoDeletes if
+there’s no DEL_START found.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="lxml.html.diff.split_trailing_whitespace">
+<code class="sig-prename descclassname">lxml.html.diff.</code><code class="sig-name descname">split_trailing_whitespace</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">word</span></em><span class="sig-paren">)</span><a class="headerlink" href="#lxml.html.diff.split_trailing_whitespace" title="Permalink to this definition">¶</a></dt>
+<dd><blockquote>
+<div><p>This function takes a word, such as ‘test</p>
+</div></blockquote>
+<p>‘ and returns (‘test’,’</p>
+<p>‘)</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="lxml.html.diff.split_unbalanced">
+<code class="sig-prename descclassname">lxml.html.diff.</code><code class="sig-name descname">split_unbalanced</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">chunks</span></em><span class="sig-paren">)</span><a class="headerlink" href="#lxml.html.diff.split_unbalanced" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return (unbalanced_start, balanced, unbalanced_end), where each is
+a list of text and tag chunks.</p>
+<p>unbalanced_start is a list of all the tags that are opened, but
+not closed in this span.  Similarly, unbalanced_end is a list of
+tags that are closed but were not opened.  Extracting these might
+mean some reordering of the chunks.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="lxml.html.diff.split_words">
+<code class="sig-prename descclassname">lxml.html.diff.</code><code class="sig-name descname">split_words</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">text</span></em><span class="sig-paren">)</span><a class="headerlink" href="#lxml.html.diff.split_words" title="Permalink to this definition">¶</a></dt>
+<dd><p>Splits some text into words. Includes trailing whitespace
+on each word when appropriate.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="lxml.html.diff.start_tag">
+<code class="sig-prename descclassname">lxml.html.diff.</code><code class="sig-name descname">start_tag</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">el</span></em><span class="sig-paren">)</span><a class="headerlink" href="#lxml.html.diff.start_tag" title="Permalink to this definition">¶</a></dt>
+<dd><p>The text representation of the start tag for a tag.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="lxml.html.diff.tokenize">
+<code class="sig-prename descclassname">lxml.html.diff.</code><code class="sig-name descname">tokenize</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">html</span></em>, <em class="sig-param"><span class="n">include_hrefs</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#lxml.html.diff.tokenize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Parse the given HTML and returns token objects (words with attached tags).</p>
+<p>This parses only the content of a page; anything in the head is
+ignored, and the &lt;head&gt; and &lt;body&gt; elements are themselves
+optional.  The content is then parsed by lxml, which ensures the
+validity of the resulting parsed document (though lxml may make
+incorrect guesses when the markup is particular bad).</p>
+<p>&lt;ins&gt; and &lt;del&gt; tags are also eliminated from the document, as
+that gets confusing.</p>
+<p>If include_hrefs is true, then the href attribute of &lt;a&gt; tags is
+included as a special kind of diffable token.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="lxml.html.diff.tokenize_annotated">
+<code class="sig-prename descclassname">lxml.html.diff.</code><code class="sig-name descname">tokenize_annotated</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">doc</span></em>, <em class="sig-param"><span class="n">annotation</span></em><span class="sig-paren">)</span><a class="headerlink" href="#lxml.html.diff.tokenize_annotated" title="Permalink to this definition">¶</a></dt>
+<dd><p>Tokenize a document and add an annotation attribute to each token</p>
+</dd></dl>
+
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="lxml.html.formfill.html" class="btn btn-neutral float-right" title="lxml.html.formfill module" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="lxml.html.defs.html" class="btn btn-neutral float-left" title="lxml.html.defs module" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        
+        &copy; Copyright 2020, lxml dev team
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

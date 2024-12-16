@@ -15,7 +15,7 @@ Numeric values are stored with the least significant byte first.
 
 The module supports two versions of the data format: version 0 is the
 historical version, version 1 shares interned strings in the file, and upon
-unmarshalling.  Version 2 uses a binary format for floating point numbers.
+unmarshalling.  Version 2 uses a binary format for floating-point numbers.
 ``Py_MARSHAL_VERSION`` indicates the current file format (currently 2).
 
 
@@ -25,12 +25,16 @@ unmarshalling.  Version 2 uses a binary format for floating point numbers.
    the least-significant 32 bits of *value*; regardless of the size of the
    native :c:expr:`long` type.  *version* indicates the file format.
 
+   This function can fail, in which case it sets the error indicator.
+   Use :c:func:`PyErr_Occurred` to check for that.
 
 .. c:function:: void PyMarshal_WriteObjectToFile(PyObject *value, FILE *file, int version)
 
    Marshal a Python object, *value*, to *file*.
    *version* indicates the file format.
 
+   This function can fail, in which case it sets the error indicator.
+   Use :c:func:`PyErr_Occurred` to check for that.
 
 .. c:function:: PyObject* PyMarshal_WriteObjectToString(PyObject *value, int version)
 
@@ -43,7 +47,7 @@ The following functions allow marshalled values to be read back in.
 
 .. c:function:: long PyMarshal_ReadLongFromFile(FILE *file)
 
-   Return a C :c:type:`long` from the data stream in a :c:expr:`FILE*` opened
+   Return a C :c:expr:`long` from the data stream in a :c:expr:`FILE*` opened
    for reading.  Only a 32-bit value can be read in using this function,
    regardless of the native size of :c:expr:`long`.
 
@@ -53,7 +57,7 @@ The following functions allow marshalled values to be read back in.
 
 .. c:function:: int PyMarshal_ReadShortFromFile(FILE *file)
 
-   Return a C :c:type:`short` from the data stream in a :c:expr:`FILE*` opened
+   Return a C :c:expr:`short` from the data stream in a :c:expr:`FILE*` opened
    for reading.  Only a 16-bit value can be read in using this function,
    regardless of the native size of :c:expr:`short`.
 

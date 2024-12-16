@@ -1,0 +1,4 @@
+
+[:implementation_name == "pypy"]
+py
+cffi

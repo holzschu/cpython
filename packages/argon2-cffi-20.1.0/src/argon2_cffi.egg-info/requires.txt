@@ -1,0 +1,21 @@
+cffi>=1.0.0
+six
+
+[:python_version < "3.4"]
+enum34
+
+[dev]
+coverage[toml]>=5.0.2
+hypothesis
+pytest
+sphinx
+wheel
+pre-commit
+
+[docs]
+sphinx
+
+[tests]
+coverage[toml]>=5.0.2
+hypothesis
+pytest

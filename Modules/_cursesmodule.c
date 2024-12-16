@@ -103,9 +103,6 @@ static const char PyCursesVersion[] = "2.2";
 #ifndef Py_BUILD_CORE_BUILTIN
 #  define Py_BUILD_CORE_MODULE 1
 #endif
-#define NEEDS_PY_IDENTIFIER
-
-#define PY_SSIZE_T_CLEAN
 
 #include "Python.h"
 #include "pycore_long.h"          // _PyLong_GetZero()
@@ -131,7 +128,7 @@ static const char PyCursesVersion[] = "2.2";
 #include <langinfo.h>
 #endif
 
-#if !defined(HAVE_NCURSES_H) && (defined(sgi) || defined(__sun) || defined(SCO5))
+#if !defined(NCURSES_VERSION) && (defined(sgi) || defined(__sun) || defined(SCO5))
 #define STRICT_SYSV_CURSES       /* Don't use ncurses extensions */
 typedef chtype attr_t;           /* No attr_t type is available */
 #endif
@@ -173,11 +170,7 @@ class _curses.window "PyCursesWindowObject *" "&PyCursesWindow_Type"
 static PyObject *PyCursesError;
 
 /* Tells whether setupterm() has been called to initialise terminfo.  */
-#if !TARGET_OS_IPHONE
 static int initialised_setupterm = FALSE;
-#else 
-static int initialised_setupterm = TRUE;
-#endif
 
 /* Tells whether initscr() has been called to initialise curses.  */
 static int initialised = FALSE;
@@ -394,8 +387,7 @@ PyCurses_ConvertToString(PyCursesWindowObject *win, PyObject *obj,
 #endif
     }
     else if (PyBytes_Check(obj)) {
-        Py_INCREF(obj);
-        *bytes = obj;
+        *bytes = Py_NewRef(obj);
         /* check for embedded null bytes */
         if (PyBytes_AsStringAndSize(*bytes, &str, NULL) < 0) {
             Py_DECREF(obj);
@@ -648,21 +640,7 @@ Window_OneArgNoReturnVoidFunction(wtimeout, int, "i;delay")
 
 Window_NoArg2TupleReturnFunction(getyx, int, "ii")
 Window_NoArg2TupleReturnFunction(getbegyx, int, "ii")
-#if !TARGET_OS_IPHONE
 Window_NoArg2TupleReturnFunction(getmaxyx, int, "ii")
-#else
-static PyObject * PyCursesWindow_getmaxyx(PyCursesWindowObject *self, PyObject *Py_UNUSED(ignored))
-{
-	/* iOS version: we get window dimensions through environment variables */
-	/* getmaxyx is a macro, so no pointers (cf man page) */
-	int arg1, arg2;
-	arg1 = getenv("ROWS");
-	arg2 = getenv("COLUMNS");
-	// getmaxyx(self->win,arg1,arg2);
-	return Py_BuildValue("ii", arg1, arg2);
-}
-#endif
-
 Window_NoArg2TupleReturnFunction(getparyx, int, "ii")
 
 Window_OneArgNoReturnFunction(clearok, int, "i;True(1) or False(0)")
@@ -874,18 +852,10 @@ _curses_window_addstr_impl(PyCursesWindowObject *self, int group_left_1,
     {
         const char *str = PyBytes_AS_STRING(bytesobj);
         funcname = "addstr";
-#if !TARGET_OS_IPHONE
         if (use_xy)
             rtn = mvwaddstr(self->win,y,x,str);
         else
             rtn = waddstr(self->win,str);
-#else
-		if (use_xy)
-			fprintf(thread_stdout, "\033[%d;%dH", y, x);
-		fprintf(thread_stdout, "\033[4l"); // overwrite mode
-		rtn = fprintf(thread_stdout, "%s", str);
-		fflush(thread_stdout);		
-#endif
         Py_DECREF(bytesobj);
     }
     if (use_attr)
@@ -965,21 +935,10 @@ _curses_window_addnstr_impl(PyCursesWindowObject *self, int group_left_1,
     {
         const char *str = PyBytes_AS_STRING(bytesobj);
         funcname = "addnstr";
-#if !TARGET_OS_IPHONE
         if (use_xy)
             rtn = mvwaddnstr(self->win,y,x,str,n);
         else
             rtn = waddnstr(self->win,str,n);
-#else
-		if (use_xy)
-			fprintf(thread_stdout, "\033[%d;%dH", y, x);
-		fprintf(thread_stdout, "\033[4l"); // overwrite mode
-		if ((n > 0) && (strlen(str) > n))
-			rtn = fprintf(thread_stdout, "%.*s", n, str);
-		else
-			rtn = fprintf(thread_stdout, "%s", str);
-		fflush(thread_stdout);
-#endif
         Py_DECREF(bytesobj);
     }
     if (use_attr)
@@ -1197,8 +1156,10 @@ int py_mvwdelch(WINDOW *w, int y, int x)
 #endif
 
 #if defined(HAVE_CURSES_IS_PAD)
+// is_pad() is defined, either as a macro or as a function
 #define py_is_pad(win)      is_pad(win)
 #elif defined(WINDOW_HAS_FLAGS)
+// is_pad() is not defined, but we can inspect WINDOW structure members
 #define py_is_pad(win)      ((win) ? ((win)->_flags & _ISPAD) != 0 : FALSE)
 #endif
 
@@ -1587,17 +1548,7 @@ PyCursesWindow_GetStr(PyCursesWindowObject *self, PyObject *args)
     switch (PyTuple_Size(args)) {
     case 0:
         Py_BEGIN_ALLOW_THREADS
-#if !TARGET_OS_IPHONE
         rtn2 = wgetnstr(self->win,rtn, 1023);
-#else
-		for (int i = 0; i < 1023; i++) {
-			char c = getc(thread_stdin);
-			if ((c == '\r') || (c == '\n')) 
-				break;
-			putc(c, thread_stdout); 
-			rtn[i] = c;
-		}
-#endif
         Py_END_ALLOW_THREADS
         break;
     case 1:
@@ -1608,17 +1559,7 @@ PyCursesWindow_GetStr(PyCursesWindowObject *self, PyObject *args)
             return NULL;
         }
         Py_BEGIN_ALLOW_THREADS
-#if !TARGET_OS_IPHONE
         rtn2 = wgetnstr(self->win, rtn, Py_MIN(n, 1023));
-#else
-		for (int i = 0; i < Py_MIN(n, 1023); i++) {
-			char c = getc(thread_stdin);
-			if ((c == '\r') || (c == '\n')) 
-				break;
-			rtn2 = putc(c, thread_stdout); 
-			rtn[i] = c;
-		}
-#endif
         Py_END_ALLOW_THREADS
         break;
     case 2:
@@ -1913,19 +1854,11 @@ _curses_window_insstr_impl(PyCursesWindowObject *self, int group_left_1,
 #endif
     {
         const char *str = PyBytes_AS_STRING(bytesobj);
-#if !TARGET_OS_IPHONE
         funcname = "insstr";
         if (use_xy)
             rtn = mvwinsstr(self->win,y,x,str);
         else
             rtn = winsstr(self->win,str);
-#else
-		if (use_xy)
-			fprintf(thread_stdout, "\033[%d;%dH", y, x);
-		fprintf(thread_stdout, "\033[4h"); // insert mode
-		rtn = fprintf(thread_stdout, "%s", str);
-		fflush(thread_stdout);		
-#endif		
         Py_DECREF(bytesobj);
     }
     if (use_attr)
@@ -2007,21 +1940,10 @@ _curses_window_insnstr_impl(PyCursesWindowObject *self, int group_left_1,
     {
         const char *str = PyBytes_AS_STRING(bytesobj);
         funcname = "insnstr";
-#if !TARGET_OS_IPHONE
         if (use_xy)
             rtn = mvwinsnstr(self->win,y,x,str,n);
         else
             rtn = winsnstr(self->win,str,n);
-#else
-		if (use_xy)
-			fprintf(thread_stdout, "\033[%d;%dH", y, x);
-		fprintf(thread_stdout, "\033[4h"); // insert mode
-		if ((n > 0) && (strlen(str) > n))
-			rtn = fprintf(thread_stdout, "%.*s", n, str);
-		else
-			rtn = fprintf(thread_stdout, "%s", str);
-		fflush(thread_stdout);
-#endif		
         Py_DECREF(bytesobj);
     }
     if (use_attr)
@@ -2253,12 +2175,11 @@ _curses_window_putwin(PyCursesWindowObject *self, PyObject *file)
     while (1) {
         char buf[BUFSIZ];
         Py_ssize_t n = fread(buf, 1, BUFSIZ, fp);
-        _Py_IDENTIFIER(write);
 
         if (n <= 0)
             break;
         Py_DECREF(res);
-        res = _PyObject_CallMethodId(file, &PyId_write, "y#", buf, n);
+        res = PyObject_CallMethod(file, "write", "y#", buf, n);
         if (res == NULL)
             break;
     }
@@ -2450,7 +2371,7 @@ _curses.window.touchline
     start: int
     count: int
     [
-    changed: bool(accept={int}) = True
+    changed: bool = True
     ]
     /
 
@@ -2463,7 +2384,7 @@ as having been changed (changed=True) or unchanged (changed=False).
 static PyObject *
 _curses_window_touchline_impl(PyCursesWindowObject *self, int start,
                               int count, int group_right_1, int changed)
-/*[clinic end generated code: output=65d05b3f7438c61d input=918ad1cbdadf93ea]*/
+/*[clinic end generated code: output=65d05b3f7438c61d input=a98aa4f79b6be845]*/
 {
     if (!group_right_1) {
         return PyCursesCheckERR(touchline(self->win, start, count), "touchline");
@@ -2785,7 +2706,7 @@ NoArgTrueFalseFunctionBody(can_change_color)
 /*[clinic input]
 _curses.cbreak
 
-    flag: bool(accept={int}) = True
+    flag: bool = True
         If false, the effect is the same as calling nocbreak().
     /
 
@@ -2800,12 +2721,8 @@ Calling first raw() then cbreak() leaves the terminal in cbreak mode.
 
 static PyObject *
 _curses_cbreak_impl(PyObject *module, int flag)
-/*[clinic end generated code: output=9f9dee9664769751 input=150be619eb1f1458]*/
-#if TARGET_OS_IPHONE
-{ Py_RETURN_NONE; }
-#else
+/*[clinic end generated code: output=9f9dee9664769751 input=c7d0bddda93016c1]*/
 NoArgOrFlagNoReturnFunctionBody(cbreak, flag)
-#endif
 
 /*[clinic input]
 _curses.color_content
@@ -2948,19 +2865,12 @@ Update the physical screen to match the virtual screen.
 static PyObject *
 _curses_doupdate_impl(PyObject *module)
 /*[clinic end generated code: output=f34536975a75680c input=8da80914432a6489]*/
-#if TARGET_OS_IPHONE
-{
-	fflush(thread_stdout); 
-	Py_RETURN_NONE; 
-}
-#else
 NoArgNoReturnFunctionBody(doupdate)
-#endif
 
 /*[clinic input]
 _curses.echo
 
-    flag: bool(accept={int}) = True
+    flag: bool = True
         If false, the effect is the same as calling noecho().
     /
 
@@ -2971,7 +2881,7 @@ In echo mode, each character input is echoed to the screen as it is entered.
 
 static PyObject *
 _curses_echo_impl(PyObject *module, int flag)
-/*[clinic end generated code: output=03acb2ddfa6c8729 input=2e9e891d637eac5d]*/
+/*[clinic end generated code: output=03acb2ddfa6c8729 input=86cd4d5bb1d569c0]*/
 NoArgOrFlagNoReturnFunctionBody(echo, flag)
 
 /*[clinic input]
@@ -2983,11 +2893,7 @@ De-initialize the library, and return terminal to normal status.
 static PyObject *
 _curses_endwin_impl(PyObject *module)
 /*[clinic end generated code: output=c0150cd96d2f4128 input=e172cfa43062f3fa]*/
-#if TARGET_OS_IPHONE
-{ Py_RETURN_NONE; } 
-#else 
 NoArgNoReturnFunctionBody(endwin)
-#endif
 
 /*[clinic input]
 _curses.erasechar
@@ -3142,7 +3048,6 @@ _curses_getwin(PyObject *module, PyObject *file)
     PyObject *data;
     size_t datalen;
     WINDOW *win;
-    _Py_IDENTIFIER(read);
     PyObject *res = NULL;
 
     PyCursesInitialised;
@@ -3154,7 +3059,7 @@ _curses_getwin(PyObject *module, PyObject *file)
     if (_Py_set_inheritable(fileno(fp), 0, NULL) < 0)
         goto error;
 
-    data = _PyObject_CallMethodIdNoArgs(file, &PyId_read);
+    data = PyObject_CallMethod(file, "read", NULL);
     if (data == NULL)
         goto error;
     if (!PyBytes_Check(data)) {
@@ -3166,8 +3071,8 @@ _curses_getwin(PyObject *module, PyObject *file)
     }
     datalen = PyBytes_GET_SIZE(data);
     if (fwrite(PyBytes_AS_STRING(data), 1, datalen, fp) != datalen) {
-        Py_DECREF(data);
         PyErr_SetFromErrno(PyExc_OSError);
+        Py_DECREF(data);
         goto error;
     }
     Py_DECREF(data);
@@ -3465,9 +3370,7 @@ static PyObject *
 _curses_setupterm_impl(PyObject *module, const char *term, int fd)
 /*[clinic end generated code: output=4584e587350f2848 input=4511472766af0c12]*/
 {
-#if !TARGET_OS_IPHONE
     int err;
-#endif
 
     if (fd == -1) {
         PyObject* sys_stdout;
@@ -3488,7 +3391,6 @@ _curses_setupterm_impl(PyObject *module, const char *term, int fd)
         }
     }
 
-#if !TARGET_OS_IPHONE
     if (!initialised_setupterm && setupterm((char *)term, fd, &err) == ERR) {
         const char* s = "setupterm: unknown error";
 
@@ -3501,7 +3403,6 @@ _curses_setupterm_impl(PyObject *module, const char *term, int fd)
         PyErr_SetString(PyCursesError,s);
         return NULL;
     }
-#endif
 
     initialised_setupterm = TRUE;
 
@@ -3595,14 +3496,14 @@ _curses_set_tabsize_impl(PyObject *module, int size)
 /*[clinic input]
 _curses.intrflush
 
-    flag: bool(accept={int})
+    flag: bool
     /
 
 [clinic start generated code]*/
 
 static PyObject *
 _curses_intrflush_impl(PyObject *module, int flag)
-/*[clinic end generated code: output=c1986df35e999a0f input=fcba57bb28dfd795]*/
+/*[clinic end generated code: output=c1986df35e999a0f input=c65fe2ef973fe40a]*/
 {
     PyCursesInitialised;
 
@@ -3704,7 +3605,7 @@ NoArgReturnStringFunctionBody(longname)
 /*[clinic input]
 _curses.meta
 
-    yes: bool(accept={int})
+    yes: bool
     /
 
 Enable/disable meta keys.
@@ -3715,7 +3616,7 @@ allow only 7-bit characters.
 
 static PyObject *
 _curses_meta_impl(PyObject *module, int yes)
-/*[clinic end generated code: output=22f5abda46a605d8 input=af9892e3a74f35db]*/
+/*[clinic end generated code: output=22f5abda46a605d8 input=cfe7da79f51d0e30]*/
 {
     PyCursesInitialised;
 
@@ -3774,7 +3675,7 @@ _curses_mousemask_impl(PyObject *module, unsigned long newmask)
 #endif
 
 /*[clinic input]
-_curses.napms
+_curses.napms -> int
 
     ms: int
         Duration in milliseconds.
@@ -3783,13 +3684,16 @@ _curses.napms
 Sleep for specified time.
 [clinic start generated code]*/
 
-static PyObject *
+static int
 _curses_napms_impl(PyObject *module, int ms)
-/*[clinic end generated code: output=a40a1da2e39ea438 input=20cd3af2b6900f56]*/
+/*[clinic end generated code: output=5f292a6a724491bd input=c6d6e01f2f1df9f7]*/
 {
-    PyCursesInitialised;
+    if (initialised != TRUE) {
+        PyErr_SetString(PyCursesError, "must call initscr() first");
+        return -1;
+    }
 
-    return Py_BuildValue("i", napms(ms));
+    return napms(ms);
 }
 
 
@@ -3865,7 +3769,7 @@ _curses_newwin_impl(PyObject *module, int nlines, int ncols,
 /*[clinic input]
 _curses.nl
 
-    flag: bool(accept={int}) = True
+    flag: bool = True
         If false, the effect is the same as calling nonl().
     /
 
@@ -3877,7 +3781,7 @@ newline into return and line-feed on output.  Newline mode is initially on.
 
 static PyObject *
 _curses_nl_impl(PyObject *module, int flag)
-/*[clinic end generated code: output=b39cc0ffc9015003 input=cf36a63f7b86e28a]*/
+/*[clinic end generated code: output=b39cc0ffc9015003 input=18e3e9c6e8cfcf6f]*/
 NoArgOrFlagNoReturnFunctionBody(nl, flag)
 
 /*[clinic input]
@@ -3891,11 +3795,7 @@ Return to normal "cooked" mode with line buffering.
 static PyObject *
 _curses_nocbreak_impl(PyObject *module)
 /*[clinic end generated code: output=eabf3833a4fbf620 input=e4b65f7d734af400]*/
-#if TARGET_OS_IPHONE
-{ Py_RETURN_NONE; } 
-#else
 NoArgNoReturnFunctionBody(nocbreak)
-#endif
 
 /*[clinic input]
 _curses.noecho
@@ -4022,21 +3922,13 @@ static PyObject *
 _curses_putp_impl(PyObject *module, const char *string)
 /*[clinic end generated code: output=e98081d1b8eb5816 input=1601faa828b44cb3]*/
 {
-#if TARGET_OS_IPHONE
-	// putp calls "tputs(str, 1, putchar)" (cf. man page)
-	// 1 here is the number of lines, not the number of chars
-	while (*string)
-		fputc(*string++, thread_stdout);
-	Py_RETURN_NONE;
-#else
     return PyCursesCheckERR(putp(string), "putp");
-#endif
 }
 
 /*[clinic input]
 _curses.qiflush
 
-    flag: bool(accept={int}) = True
+    flag: bool = True
         If false, the effect is the same as calling noqiflush().
     /
 
@@ -4048,7 +3940,7 @@ will be flushed when the INTR, QUIT and SUSP characters are read.
 
 static PyObject *
 _curses_qiflush_impl(PyObject *module, int flag)
-/*[clinic end generated code: output=9167e862f760ea30 input=e9e4a389946a0dbc]*/
+/*[clinic end generated code: output=9167e862f760ea30 input=6ec8b3e2b717ec40]*/
 {
     PyCursesInitialised;
 
@@ -4069,8 +3961,6 @@ update_lines_cols(void)
 {
     PyObject *o;
     PyObject *m = PyImport_ImportModule("curses");
-    _Py_IDENTIFIER(LINES);
-    _Py_IDENTIFIER(COLS);
 
     if (!m)
         return 0;
@@ -4080,13 +3970,12 @@ update_lines_cols(void)
         Py_DECREF(m);
         return 0;
     }
-    if (_PyObject_SetAttrId(m, &PyId_LINES, o)) {
+    if (PyObject_SetAttrString(m, "LINES", o)) {
         Py_DECREF(m);
         Py_DECREF(o);
         return 0;
     }
-    /* PyId_LINES.object will be initialized here. */
-    if (PyDict_SetItem(ModDict, _PyUnicode_FromId(&PyId_LINES), o)) {
+    if (PyDict_SetItemString(ModDict, "LINES", o)) {
         Py_DECREF(m);
         Py_DECREF(o);
         return 0;
@@ -4097,12 +3986,12 @@ update_lines_cols(void)
         Py_DECREF(m);
         return 0;
     }
-    if (_PyObject_SetAttrId(m, &PyId_COLS, o)) {
+    if (PyObject_SetAttrString(m, "COLS", o)) {
         Py_DECREF(m);
         Py_DECREF(o);
         return 0;
     }
-    if (PyDict_SetItem(ModDict, _PyUnicode_FromId(&PyId_COLS), o)) {
+    if (PyDict_SetItemString(ModDict, "COLS", o)) {
         Py_DECREF(m);
         Py_DECREF(o);
         return 0;
@@ -4132,7 +4021,7 @@ _curses_update_lines_cols_impl(PyObject *module)
 /*[clinic input]
 _curses.raw
 
-    flag: bool(accept={int}) = True
+    flag: bool = True
         If false, the effect is the same as calling noraw().
     /
 
@@ -4145,12 +4034,8 @@ curses input functions one by one.
 
 static PyObject *
 _curses_raw_impl(PyObject *module, int flag)
-/*[clinic end generated code: output=a750e4b342be015b input=e36d8db27832b848]*/
-#if TARGET_OS_IPHONE
-{ Py_RETURN_NONE; } 
-#else 
+/*[clinic end generated code: output=a750e4b342be015b input=4b447701389fb4df]*/
 NoArgOrFlagNoReturnFunctionBody(raw, flag)
-#endif
 
 /*[clinic input]
 _curses.reset_prog_mode
@@ -4189,9 +4074,9 @@ NoArgNoReturnFunctionBody(resetty)
 /*[clinic input]
 _curses.resizeterm
 
-    nlines: int
+    nlines: short
         Height.
-    ncols: int
+    ncols: short
         Width.
     /
 
@@ -4202,8 +4087,8 @@ window dimensions (in particular the SIGWINCH handler).
 [clinic start generated code]*/
 
 static PyObject *
-_curses_resizeterm_impl(PyObject *module, int nlines, int ncols)
-/*[clinic end generated code: output=56d6bcc5194ad055 input=0fca02ebad5ffa82]*/
+_curses_resizeterm_impl(PyObject *module, short nlines, short ncols)
+/*[clinic end generated code: output=4de3abab50c67f02 input=414e92a63e3e9899]*/
 {
     PyObject *result;
 
@@ -4225,9 +4110,9 @@ _curses_resizeterm_impl(PyObject *module, int nlines, int ncols)
 /*[clinic input]
 _curses.resize_term
 
-    nlines: int
+    nlines: short
         Height.
-    ncols: int
+    ncols: short
         Width.
     /
 
@@ -4241,8 +4126,8 @@ without additional interaction with the application.
 [clinic start generated code]*/
 
 static PyObject *
-_curses_resize_term_impl(PyObject *module, int nlines, int ncols)
-/*[clinic end generated code: output=9e26d8b9ea311ed2 input=2197edd05b049ed4]*/
+_curses_resize_term_impl(PyObject *module, short nlines, short ncols)
+/*[clinic end generated code: output=46c6d749fa291dbd input=276afa43d8ea7091]*/
 {
     PyObject *result;
 
@@ -4465,11 +4350,7 @@ _curses_tparm_impl(PyObject *module, const char *str, int i1, int i2, int i3,
 
     PyCursesSetupTermCalled;
 
-#if !TARGET_OS_IPHONE
     result = tparm((char *)str,i1,i2,i3,i4,i5,i6,i7,i8,i9);
-#else
-	asprintf(&result, (char *)str, i1,i2,i3,i4,i5,i6,i7,i8,i9);
-#endif
     if (!result) {
         PyErr_SetString(PyCursesError, "tparm() returned NULL");
         return NULL;
@@ -4625,7 +4506,7 @@ _curses_unget_wch(PyObject *module, PyObject *ch)
 /*[clinic input]
 _curses.use_env
 
-    flag: bool(accept={int})
+    flag: bool
     /
 
 Use environment variables LINES and COLUMNS.
@@ -4642,7 +4523,7 @@ not set).
 
 static PyObject *
 _curses_use_env_impl(PyObject *module, int flag)
-/*[clinic end generated code: output=b2c445e435c0b164 input=1778eb1e9151ea37]*/
+/*[clinic end generated code: output=b2c445e435c0b164 input=06ac30948f2d78e4]*/
 {
     use_env(flag);
     Py_RETURN_NONE;
@@ -4710,7 +4591,14 @@ make_ncurses_version(PyTypeObject *type)
     if (ncurses_version == NULL) {
         return NULL;
     }
-
+    const char *str = curses_version();
+    unsigned long major = 0, minor = 0, patch = 0;
+    if (!str || sscanf(str, "%*[^0-9]%lu.%lu.%lu", &major, &minor, &patch) < 3) {
+        // Fallback to header version, which cannot be that wrong
+        major = NCURSES_VERSION_MAJOR;
+        minor = NCURSES_VERSION_MINOR;
+        patch = NCURSES_VERSION_PATCH;
+    }
 #define SetIntItem(flag) \
     PyStructSequence_SET_ITEM(ncurses_version, pos++, PyLong_FromLong(flag)); \
     if (PyErr_Occurred()) { \
@@ -4718,9 +4606,9 @@ make_ncurses_version(PyTypeObject *type)
         return NULL; \
     }
 
-    SetIntItem(NCURSES_VERSION_MAJOR)
-    SetIntItem(NCURSES_VERSION_MINOR)
-    SetIntItem(NCURSES_VERSION_PATCH)
+    SetIntItem(major)
+    SetIntItem(minor)
+    SetIntItem(patch)
 #undef SetIntItem
 
     return ncurses_version;
@@ -4867,6 +4755,9 @@ PyInit__curses(void)
     m = PyModule_Create(&_cursesmodule);
     if (m == NULL)
         return NULL;
+#ifdef Py_GIL_DISABLED
+    PyUnstable_Module_SetGIL(m, Py_MOD_GIL_NOT_USED);
+#endif
 
     /* Add some symbolic constants to the module */
     d = PyModule_GetDict(m);
