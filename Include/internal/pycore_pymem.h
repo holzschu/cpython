@@ -42,7 +42,7 @@ PyAPI_FUNC(int) _PyMem_SetDefaultAllocator(
    fills newly allocated memory with CLEANBYTE (0xCD) and newly freed memory
    with DEADBYTE (0xDD). Detect also "untouchable bytes" marked
    with FORBIDDENBYTE (0xFD). */
-static inline int _PyMem_IsPtrFreed(void *ptr)
+static inline int _PyMem_IsPtrFreed(const void *ptr)
 {
     uintptr_t value = (uintptr_t)ptr;
 #if SIZEOF_VOID_P == 8
@@ -95,7 +95,11 @@ struct _PyTraceMalloc_Config {
      .tracing = 0, \
      .max_nframe = 1}
 
+#if !TARGET_OS_IPHONE
 PyAPI_DATA(struct _PyTraceMalloc_Config) _Py_tracemalloc_config;
+#else
+PyAPI_DATA(struct _PyTraceMalloc_Config) __thread _Py_tracemalloc_config;
+#endif
 
 
 #ifdef __cplusplus

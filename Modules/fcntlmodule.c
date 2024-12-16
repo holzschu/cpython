@@ -211,10 +211,25 @@ fcntl_ioctl_impl(PyObject *module, int fd, unsigned int code,
             }
             if (buf == arg) {
                 Py_BEGIN_ALLOW_THREADS /* think array.resize() */
+#if TARGET_OS_IPHONE
+					// TODO: check again with code == TIOCGWINSZ.
+				if (code - TIOCGWINSZ == 0) {
+					((struct winsize*) arg)->ws_row = atoi(getenv("LINES"));
+					((struct winsize*) arg)->ws_col = atoi(getenv("COLUMNS"));
+					ret = 0;
+				} else
+#endif
                 ret = ioctl(fd, code, arg);
                 Py_END_ALLOW_THREADS
             }
             else {
+#if TARGET_OS_IPHONE
+				if (code - TIOCGWINSZ == 0) {
+					((struct winsize*) arg)->ws_row = atoi(getenv("LINES"));
+					((struct winsize*) arg)->ws_col = atoi(getenv("COLUMNS"));
+					ret = 0;
+				} else 
+#endif            	
                 ret = ioctl(fd, code, arg);
             }
             if (mutate_arg && (len <= IOCTL_BUFSZ)) {
@@ -246,6 +261,13 @@ fcntl_ioctl_impl(PyObject *module, int fd, unsigned int code,
             memcpy(buf, str, len);
             buf[len] = '\0';
             Py_BEGIN_ALLOW_THREADS
+#if TARGET_OS_IPHONE
+			if (code - TIOCGWINSZ == 0) {
+				((struct winsize*) buf)->ws_row = atoi(getenv("LINES"));
+				((struct winsize*) buf)->ws_col = atoi(getenv("COLUMNS"));
+				ret = 0;
+			} else 
+#endif            	            	
             ret = ioctl(fd, code, buf);
             Py_END_ALLOW_THREADS
             if (ret < 0) {

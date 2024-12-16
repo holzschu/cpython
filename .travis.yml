@@ -10,7 +10,7 @@ cache:
 
 env:
   global:
-    - OPENSSL=1.1.1f
+    - OPENSSL=1.1.1k
     - OPENSSL_DIR="$HOME/multissl/openssl/${OPENSSL}"
     - PATH="${OPENSSL_DIR}/bin:$PATH"
     - CFLAGS="-I${OPENSSL_DIR}/include"
@@ -18,6 +18,7 @@ env:
     # Set rpath with env var instead of -Wl,-rpath linker flag
     # OpenSSL ignores LDFLAGS when linking bin/openssl
     - LD_RUN_PATH="${OPENSSL_DIR}/lib"
+    - PYTHONSTRICTEXTENSIONBUILD=1
 
 branches:
   only:

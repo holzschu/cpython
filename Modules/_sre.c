@@ -15,7 +15,7 @@
  * 2001-05-14 fl   fixes for 1.5.2 compatibility
  * 2001-07-01 fl   added BIGCHARSET support (from Martin von Loewis)
  * 2001-10-18 fl   fixed group reset issue (from Matthew Mueller)
- * 2001-10-20 fl   added split primitive; reenable unicode for 1.6/2.0/2.1
+ * 2001-10-20 fl   added split primitive; re-enable unicode for 1.6/2.0/2.1
  * 2001-10-21 fl   added sub/subn primitive
  * 2001-10-24 fl   added finditer primitive (for 2.2 only)
  * 2001-12-07 fl   fixed memory leak in sub/subn (Guido van Rossum)
@@ -454,7 +454,10 @@ state_init(SRE_STATE* state, PatternObject* pattern, PyObject* string,
 
     return string;
   err:
-    PyMem_Del(state->mark);
+    /* We add an explicit cast here because MSVC has a bug when
+       compiling C code where it believes that `const void**` cannot be
+       safely casted to `void*`, see bpo-39943 for details. */
+    PyMem_Del((void*) state->mark);
     state->mark = NULL;
     if (state->buffer.buf)
         PyBuffer_Release(&state->buffer);
@@ -468,7 +471,8 @@ state_fini(SRE_STATE* state)
         PyBuffer_Release(&state->buffer);
     Py_XDECREF(state->string);
     data_stack_dealloc(state);
-    PyMem_Del(state->mark);
+    /* See above PyMem_Del for why we explicitly cast here. */
+    PyMem_Del((void*) state->mark);
     state->mark = NULL;
 }
 
@@ -2387,6 +2391,25 @@ scanner_dealloc(ScannerObject* self)
     PyObject_DEL(self);
 }
 
+static int
+scanner_begin(ScannerObject* self)
+{
+    if (self->executing) {
+        PyErr_SetString(PyExc_ValueError,
+                        "regular expression scanner already executing");
+        return 0;
+    }
+    self->executing = 1;
+    return 1;
+}
+
+static void
+scanner_end(ScannerObject* self)
+{
+    assert(self->executing);
+    self->executing = 0;
+}
+
 /*[clinic input]
 _sre.SRE_Scanner.match
 
@@ -2400,16 +2423,23 @@ _sre_SRE_Scanner_match_impl(ScannerObject *self)
     PyObject* match;
     Py_ssize_t status;
 
-    if (state->start == NULL)
+    if (!scanner_begin(self)) {
+        return NULL;
+    }
+    if (state->start == NULL) {
+        scanner_end(self);
         Py_RETURN_NONE;
+    }
 
     state_reset(state);
 
     state->ptr = state->start;
 
     status = sre_match(state, PatternObject_GetCode(self->pattern));
-    if (PyErr_Occurred())
+    if (PyErr_Occurred()) {
+        scanner_end(self);
         return NULL;
+    }
 
     match = pattern_new_match((PatternObject*) self->pattern,
                                state, status);
@@ -2421,6 +2451,7 @@ _sre_SRE_Scanner_match_impl(ScannerObject *self)
         state->start = state->ptr;
     }
 
+    scanner_end(self);
     return match;
 }
 
@@ -2438,16 +2469,23 @@ _sre_SRE_Scanner_search_impl(ScannerObject *self)
     PyObject* match;
     Py_ssize_t status;
 
-    if (state->start == NULL)
+    if (!scanner_begin(self)) {
+        return NULL;
+    }
+    if (state->start == NULL) {
+        scanner_end(self);
         Py_RETURN_NONE;
+    }
 
     state_reset(state);
 
     state->ptr = state->start;
 
     status = sre_search(state, PatternObject_GetCode(self->pattern));
-    if (PyErr_Occurred())
+    if (PyErr_Occurred()) {
+        scanner_end(self);
         return NULL;
+    }
 
     match = pattern_new_match((PatternObject*) self->pattern,
                                state, status);
@@ -2459,6 +2497,7 @@ _sre_SRE_Scanner_search_impl(ScannerObject *self)
         state->start = state->ptr;
     }
 
+    scanner_end(self);
     return match;
 }
 
@@ -2472,6 +2511,7 @@ pattern_scanner(PatternObject *self, PyObject *string, Py_ssize_t pos, Py_ssize_
     if (!scanner)
         return NULL;
     scanner->pattern = NULL;
+    scanner->executing = 0;
 
     /* create search state object */
     if (!state_init(&scanner->state, self, string, pos, endpos)) {

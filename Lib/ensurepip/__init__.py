@@ -11,15 +11,11 @@ from . import _bundled
 
 
 __all__ = ["version", "bootstrap"]
-
-
-_SETUPTOOLS_VERSION = "49.2.1"
-
-_PIP_VERSION = "20.2.3"
-
+_SETUPTOOLS_VERSION = "58.1.0"
+_PIP_VERSION = "22.0.4"
 _PROJECTS = [
     ("setuptools", _SETUPTOOLS_VERSION, "py3"),
-    ("pip", _PIP_VERSION, "py2.py3"),
+    ("pip", _PIP_VERSION, "py3"),
 ]
 
 
@@ -35,7 +31,12 @@ sys.path = {additional_paths or []} + sys.path
 sys.argv[1:] = {args}
 runpy.run_module("pip", run_name="__main__", alter_sys=True)
 """
-    return subprocess.run([sys.executable, "-c", code], check=True).returncode
+
+    cmd = [sys.executable, '-c', code]
+    if sys.flags.isolated:
+        # run code in isolated mode if currently running isolated
+        cmd.insert(1, '-I')
+    return subprocess.run(cmd, check=True).returncode
 
 
 def version():

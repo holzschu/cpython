@@ -65,7 +65,7 @@ PyTypeObject PyCThunk_Type = {
     0,                                          /* tp_setattro */
     0,                                          /* tp_as_buffer */
     Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC,                            /* tp_flags */
-    "CThunkObject",                             /* tp_doc */
+    PyDoc_STR("CThunkObject"),                  /* tp_doc */
     CThunkObject_traverse,                      /* tp_traverse */
     CThunkObject_clear,                         /* tp_clear */
     0,                                          /* tp_richcompare */
@@ -468,7 +468,7 @@ CThunkObject *_ctypes_alloc_callback(PyObject *callable,
         #pragma clang diagnostic push
         #pragma clang diagnostic ignored "-Wdeprecated-declarations"
 #endif
-#if defined(__GNUC__)
+#if defined(__GNUC__) && ((__GNUC__ > 4) || ((__GNUC__ == 4) && (__GNUC_MINOR__ > 5)))
         #pragma GCC diagnostic push
         #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 #endif
@@ -477,7 +477,7 @@ CThunkObject *_ctypes_alloc_callback(PyObject *callable,
 #if defined(__clang__) || defined(MACOSX)
         #pragma clang diagnostic pop
 #endif
-#if defined(__GNUC__)
+#if defined(__GNUC__) && ((__GNUC__ > 4) || ((__GNUC__ == 4) && (__GNUC_MINOR__ > 5)))
         #pragma GCC diagnostic pop
 #endif
 

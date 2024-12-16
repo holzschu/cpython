@@ -64,6 +64,15 @@ static void call_ll_exitfuncs(_PyRuntimeState *runtime);
 int _Py_UnhandledKeyboardInterrupt = 0;
 _PyRuntimeState _PyRuntime = _PyRuntimeState_INIT;
 static int runtime_initialized = 0;
+#if TARGET_OS_IPHONE
+pthread_t pysleep_thread = NULL;
+void set_pysleep_thread(pthread_t val) {
+	pysleep_thread = val;
+}
+pthread_t get_pysleep_thread(void) {
+	return pysleep_thread;
+}
+#endif
 
 PyStatus
 _PyRuntime_Initialize(void)
@@ -1201,6 +1210,44 @@ Py_Initialize(void)
     Py_InitializeEx(1);
 }
 
+#if TARGET_OS_IPHONE
+// Replaces Py_Initialize, but sets the name of the library being loaded to "name"
+// so dynamically loading modules will work.
+// Allows Vim (and others) to load python3_iOS, pythonA, pythonB... depending on
+// what is available.
+void
+Py_InitializeWithName(char* name)
+{
+	int install_sigs = 1;
+
+    PyStatus status;
+
+    status = _PyRuntime_Initialize();
+    if (_PyStatus_EXCEPTION(status)) {
+        Py_ExitStatusException(status);
+    }
+    _PyRuntimeState *runtime = &_PyRuntime;
+
+    if (runtime->initialized) {
+        /* bpo-33932: Calling Py_Initialize() twice does nothing. */
+        return;
+    }
+
+    PyConfig config;
+    _PyConfig_InitCompatConfig(&config);
+
+    config.install_signal_handlers = install_sigs;
+    // The only difference with Py_InitializeEx:
+    PyConfig_SetBytesArgv(&config, 1, &name);
+
+    status = Py_InitializeFromConfig(&config);
+    if (_PyStatus_EXCEPTION(status)) {
+        Py_ExitStatusException(status);
+    }
+
+    Py_InitializeEx(1);
+}
+#endif
 
 /* Flush stdout and stderr */
 
@@ -1425,22 +1472,17 @@ Py_FinalizeEx(void)
         status = -1;
     }
 
+#if TARGET_OS_IPHONE
+	// iOS: use pysleep_thread to tell pysleep() that the 
+	if (pysleep_thread != NULL) {
+		if (pysleep_thread != pthread_self()) {
+			pthread_cancel(pysleep_thread); 
+		}
+		pysleep_thread = NULL;
+	}
+#endif
     /* Disable signal handling */
     PyOS_FiniInterrupts();
-#if TARGET_OS_IPHONE
-	// iOS:
-    struct sigaction query_action;
-    if ((sigaction (SIGUSR2, NULL, &query_action) >= 0) &&
-        (query_action.sa_handler != SIG_DFL) &&
-        (query_action.sa_handler != SIG_IGN)) {
-        /* A programmer-defined signal handler is in effect. */
-        query_action.sa_handler(SIGUSR2); // close these pysleep() (if any)
-        // kill(getpid(), SIGINT); // infinite loop?
-        (void)signal(SIGUSR2, SIG_DFL);
-    }
-	// kill(getpid(), SIGUSR1); // close these pysleep() (if any)
-#endif
-
     /* Collect garbage.  This may call finalizers; it's nice to call these
      * before all modules are destroyed.
      * XXX If a __del__ or weakref callback is triggered here, and tries to
@@ -2630,6 +2672,11 @@ PyOS_getsig(int sig)
 PyOS_sighandler_t
 PyOS_setsig(int sig, PyOS_sighandler_t handler)
 {
+#if TARGET_OS_IPHONE
+	if (sig == SIGUSR2) {
+		fprintf(stderr, "PyOS_setsig(SIGUSR2), handler= %x\n", handler);
+	}
+#endif
 #ifdef HAVE_SIGACTION
     /* Some code in Modules/signalmodule.c depends on sigaction() being
      * used here if HAVE_SIGACTION is defined.  Fix that if this code

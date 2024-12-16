@@ -49,7 +49,11 @@ typedef struct _Py_Identifier {
 } _Py_Identifier;
 
 #define _Py_static_string_init(value) { .next = NULL, .string = value, .object = NULL }
+#if !TARGET_OS_IPHONE
 #define _Py_static_string(varname, value)  static _Py_Identifier varname = _Py_static_string_init(value)
+#else
+#define _Py_static_string(varname, value)  static __thread _Py_Identifier varname = _Py_static_string_init(value)
+#endif
 #define _Py_IDENTIFIER(varname) _Py_static_string(PyId_##varname, #varname)
 
 /* buffer interface */

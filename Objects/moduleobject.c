@@ -574,18 +574,48 @@ _PyModule_Clear(PyObject *m)
     // This only applies to pandas and numpy, other modules can be compiled without PEP489
     // See also import.c / PyImport_Cleanup()
     // Python 3.9: this is required for _asyncio (new). Must check for pandas and numpy.
+    // Unclear whether this is required for scipy, but it does no harm to call destructors.
+    // 01/05/21: starting tests on astropy and sklearn. If it does not crash, we keep it.
+    // 10/07/21: adding statsmodels
+    // 29/10/21: added lxml, pyfftw, pygeos, wordcloud, qutip (all cython modules).
+    // 02/11/21: pygeos, pyproj, fiona, statsmodels, rasterio, shapely
+    // 17/06/22: contourpy
     int moduleNeedsCleanup = 0;
     PyModuleObject *mod = (PyModuleObject *)m;
-    const char* utf8name = PyUnicode_AsUTF8(mod->md_name);
-    if ((strncmp(utf8name, "_asyncio", 8) == 0) || (strncmp(utf8name, "pandas.", 7) == 0) || (strncmp(utf8name, "numpy.", 6) == 0)) {
-        // iOS, debug:
-        // fprintf(thread_stderr, "Module = %x name = %s refCount = %zd ", mod, utf8name, m->ob_refcnt);
-        if (mod->md_def && mod->md_def->m_free) {
-            // fprintf(thread_stderr, "module has a free function: %x", mod->md_def->m_free);
-            moduleNeedsCleanup = 1;
-        }
-        // fprintf(thread_stderr, "\n");
-    }
+	if (mod->md_name != NULL) {
+		const char* utf8name = PyUnicode_AsUTF8(mod->md_name);
+		if ((strncmp(utf8name, "_asyncio", 8) == 0) 
+				|| (strncmp(utf8name, "lxml.", 5) == 0) 
+				|| (strncmp(utf8name, "numpy.", 6) == 0)
+				|| (strncmp(utf8name, "qutip.", 6) == 0)
+				|| (strncmp(utf8name, "scipy.", 6) == 0)
+				|| (strncmp(utf8name, "fiona.", 6) == 0)
+				|| (strncmp(utf8name, "pyproj.", 7) == 0)
+				|| (strncmp(utf8name, "pandas.", 7) == 0) 
+				|| (strncmp(utf8name, "pyfftw.", 7) == 0)
+				|| (strncmp(utf8name, "pygeos.", 7) == 0)
+				|| (strncmp(utf8name, "astropy.", 8) == 0)
+				|| (strncmp(utf8name, "shapely.", 8) == 0)
+				|| (strncmp(utf8name, "sklearn.", 8) == 0) 
+				|| (strncmp(utf8name, "rasterio.", 9) == 0)
+				|| (strncmp(utf8name, "cartoppy.", 9) == 0)
+				|| (strncmp(utf8name, "wordcloud.", 10) == 0)
+				|| (strncmp(utf8name, "statsmodels.", 12) == 0)) {
+			// scipy.spatial._distance_pybind uses pybind, not cython. 
+			// same with scipy.fft._pocketfft.pypocketfft
+			// pybind cleanup function is already called, and can't be called twice. 
+			if ((strncmp(utf8name, "scipy.spatial._distance_pybind", 30) != 0) && 
+				(strncmp(utf8name, "scipy.fft._pocketfft.pypocketfft", 32) != 0)) {
+				// iOS, debug:
+				// fprintf(thread_stderr, "Module = %x name = %s refCount = %zd ", mod, utf8name, m->ob_refcnt);
+				if (mod->md_def && mod->md_def->m_free) {
+					// fprintf(thread_stderr, "module has a free function: %x", mod->md_def->m_free);
+					moduleNeedsCleanup = 1;
+				}
+				// fprintf(thread_stderr, "\n");
+			}
+		}
+	}
 #endif
     PyObject *d = ((PyModuleObject *)m)->md_dict;
     if (d != NULL)

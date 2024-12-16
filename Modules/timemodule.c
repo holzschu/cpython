@@ -54,7 +54,7 @@
 #define _Py_tzname tzname
 #endif
 
-#if defined(__APPLE__ ) && defined(__has_builtin) 
+#if defined(__APPLE__ ) && defined(__has_builtin)
 #  if __has_builtin(__builtin_available)
 #    define HAVE_CLOCK_GETTIME_RUNTIME __builtin_available(macOS 10.12, iOS 10.0, tvOS 10.0, watchOS 3.0, *)
 #  endif
@@ -168,7 +168,7 @@ perf_counter(_Py_clock_info_t *info)
 #ifdef HAVE_CLOCK_GETTIME
 
 #ifdef __APPLE__
-/* 
+/*
  * The clock_* functions will be removed from the module
  * dict entirely when the C API is not available.
  */
@@ -1434,7 +1434,7 @@ _PyTime_GetThreadTimeWithInfo(_PyTime_t *tp, _Py_clock_info_t *info)
 
 #if defined(__APPLE__) && defined(__has_attribute) && __has_attribute(availability)
 static int
-_PyTime_GetThreadTimeWithInfo(_PyTime_t *tp, _Py_clock_info_t *info) 
+_PyTime_GetThreadTimeWithInfo(_PyTime_t *tp, _Py_clock_info_t *info)
      __attribute__((availability(macos, introduced=10.12)))
      __attribute__((availability(ios, introduced=10.0)))
      __attribute__((availability(tvos, introduced=10.0)))
@@ -1473,7 +1473,7 @@ _PyTime_GetThreadTimeWithInfo(_PyTime_t *tp, _Py_clock_info_t *info)
 
 #ifdef HAVE_THREAD_TIME
 #ifdef __APPLE__
-/* 
+/*
  * The clock_* functions will be removed from the module
  * dict entirely when the C API is not available.
  */
@@ -2038,6 +2038,10 @@ PyInit_time(void)
 /* Implement pysleep() for various platforms.
    When interrupted (or when another error occurs), return -1 and
    set an exception; else return 0. */
+#if TARGET_OS_IPHONE
+extern void set_pysleep_thread(pthread_t val);
+extern pthread_t get_pysleep_thread(void);
+#endif
 
 static int
 pysleep(_PyTime_t secs)
@@ -2060,35 +2064,28 @@ pysleep(_PyTime_t secs)
         if (_PyTime_AsTimeval(secs, &timeout, _PyTime_ROUND_CEILING) < 0)
             return -1;
 
-#if !TARGET_OS_IPHONE
         Py_BEGIN_ALLOW_THREADS
-        err = select(0, (fd_set *)0, (fd_set *)0, (fd_set *)0, &timeout);
-        Py_END_ALLOW_THREADS
-#else 
-		// This is not used anymore. TODO: remove this code.
-		// iOS: we use the signal-interruptable pselect() rather than the 
-		// select() call present in the source, so we can interrupt these
-		// waiting calls when we leave.
-		// We also check that the interpreter has not been changed.
-        // And we use SIGUSR2 because clang/llvm uses SIGUSR1...
-        sigset_t sigmask = SIGUSR2;
-		sigemptyset(&sigmask);
-		sigaddset(&sigmask, SIGUSR2);
-		
-		struct timespec timeout2;
-		timeout2.tv_sec = timeout.tv_sec;
-		timeout2.tv_nsec = 1000 * timeout.tv_usec;
-
-		Py_BEGIN_ALLOW_THREADS
+#if TARGET_OS_IPHONE
 		PyInterpreterState *before = PyInterpreterState_Main();
-
-		err = pselect(0, (fd_set *)0, (fd_set *)0, (fd_set *)0, &timeout2, &sigmask);
-		PyInterpreterState *after = PyInterpreterState_Main();
-		if (before != after) {
+		set_pysleep_thread(pthread_self());
+#endif
+        err = select(0, (fd_set *)0, (fd_set *)0, (fd_set *)0, &timeout);
+#if TARGET_OS_IPHONE
+		// iOS: sometimes, we wake up from select and the main thread has been terminated.
+		// If we try to access anything, it will crash the entire app, so we detect it here.
+		if (get_pysleep_thread() == NULL) {
+			// This test detects all / most cases. See pylifecycle.c
 			pthread_exit(NULL); 
 		}
-		Py_END_ALLOW_THREADS
+		PyInterpreterState *after = PyInterpreterState_Main();
+		if (before != after) {
+			// Safety check. Not working with iOS14.4 SDK, but second line of defense.
+			pthread_exit(NULL); 
+		}
+		// All is well, normal operation, reset the pysleep_thread variable:
+		set_pysleep_thread(NULL);
 #endif
+        Py_END_ALLOW_THREADS
 
         if (err == 0)
             break;

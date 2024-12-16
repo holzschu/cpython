@@ -457,7 +457,7 @@ The :mod:`test.support` module defines the following functions:
 .. function:: unlink(filename)
 
    Call :func:`os.unlink` on *filename*.  On Windows platforms, this is
-   wrapped with a wait loop that checks for the existence fo the file.
+   wrapped with a wait loop that checks for the existence of the file.
 
 
 .. function:: rmdir(filename)
@@ -925,8 +925,8 @@ The :mod:`test.support` module defines the following functions:
 
 .. decorator:: requires_mac_version(*min_version)
 
-   Decorator for the minimum version when running test on Mac OS X.  If the
-   MAC OS X version is less than the minimum, raise :exc:`unittest.SkipTest`.
+   Decorator for the minimum version when running test on macOS.  If the
+   macOS version is less than the minimum, raise :exc:`unittest.SkipTest`.
 
 
 .. decorator:: requires_IEEE_754
@@ -1145,7 +1145,7 @@ The :mod:`test.support` module defines the following functions:
    Context manager catching :class:`threading.Thread` exception using
    :func:`threading.excepthook`.
 
-   Attributes set when an exception is catched:
+   Attributes set when an exception is caught:
 
    * ``exc_type``
    * ``exc_value``
@@ -1300,6 +1300,16 @@ The :mod:`test.support` module defines the following functions:
                                    extra=extra, blacklist=blacklist)
 
    .. versionadded:: 3.6
+
+
+.. function:: adjust_int_max_str_digits(max_digits)
+
+   This function returns a context manager that will change the global
+   :func:`sys.set_int_max_str_digits` setting for the duration of the
+   context to allow execution of test code that needs a different limit
+   on the number of digits when converting between an integer and string.
+
+   .. versionadded:: 3.9.14
 
 
 The :mod:`test.support` module defines the following classes:

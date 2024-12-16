@@ -192,6 +192,33 @@ class MiscTest(AbstractTkTest, unittest.TestCase):
         with self.assertRaises(tkinter.TclError):
             root.clipboard_get()
 
+    def test_winfo_rgb(self):
+
+        def assertApprox(col1, col2):
+            # A small amount of flexibility is required (bpo-45496)
+            # 33 is ~0.05% of 65535, which is a reasonable margin
+            for col1_channel, col2_channel in zip(col1, col2):
+                self.assertAlmostEqual(col1_channel, col2_channel, delta=33)
+
+        root = self.root
+        rgb = root.winfo_rgb
+
+        # Color name.
+        self.assertEqual(rgb('red'), (65535, 0, 0))
+        self.assertEqual(rgb('dark slate blue'), (18504, 15677, 35723))
+        # #RGB - extends each 4-bit hex value to be 16-bit.
+        self.assertEqual(rgb('#F0F'), (0xFFFF, 0x0000, 0xFFFF))
+        # #RRGGBB - extends each 8-bit hex value to be 16-bit.
+        assertApprox(rgb('#4a3c8c'), (0x4a4a, 0x3c3c, 0x8c8c))
+        # #RRRRGGGGBBBB
+        assertApprox(rgb('#dede14143939'), (0xdede, 0x1414, 0x3939))
+        # Invalid string.
+        with self.assertRaises(tkinter.TclError):
+            rgb('#123456789a')
+        # RGB triplet is invalid input.
+        with self.assertRaises(tkinter.TclError):
+            rgb((111, 78, 55))
+
     def test_event_repr_defaults(self):
         e = tkinter.Event()
         e.serial = 12345
@@ -319,7 +346,5 @@ class DefaultRootTest(AbstractDefaultRootTest, unittest.TestCase):
         self.assertRaises(RuntimeError, tkinter.mainloop)
 
 
-tests_gui = (MiscTest, DefaultRootTest)
-
 if __name__ == "__main__":
-    support.run_unittest(*tests_gui)
+    unittest.main()

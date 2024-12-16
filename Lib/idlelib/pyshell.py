@@ -21,13 +21,13 @@ if sys.platform == 'win32':
     except (ImportError, AttributeError, OSError):
         pass
 
-import tkinter.messagebox as tkMessageBox
+from tkinter import messagebox
 if TkVersion < 8.5:
     root = Tk()  # otherwise create root in main
     root.withdraw()
     from idlelib.run import fix_scaling
     fix_scaling(root)
-    tkMessageBox.showerror("Idle Cannot Start",
+    messagebox.showerror("Idle Cannot Start",
             "Idle requires tcl/tk 8.5+, not %s." % TkVersion,
             parent=root)
     raise SystemExit(1)
@@ -59,6 +59,13 @@ from idlelib.undo import UndoDelegator
 
 HOST = '127.0.0.1' # python execution server on localhost loopback
 PORT = 0  # someday pass in host, port for remote debug capability
+
+try:  # In case IDLE started with -n.
+    eof = 'Ctrl-D (end-of-file)'
+    exit.eof = eof
+    quit.eof = eof
+except NameError: # In case python started with -S.
+    pass
 
 # Override warnings module to write to warning_stream.  Initialize to send IDLE
 # internal warnings to the console.  ScriptBinding.check_syntax() will
@@ -261,7 +268,7 @@ class PyShellEditorWindow(EditorWindow):
         except OSError as err:
             if not getattr(self.root, "breakpoint_error_displayed", False):
                 self.root.breakpoint_error_displayed = True
-                tkMessageBox.showerror(title='IDLE Error',
+                messagebox.showerror(title='IDLE Error',
                     message='Unable to update breakpoint list:\n%s'
                         % str(err),
                     parent=self.text)
@@ -771,7 +778,7 @@ class ModifiedInterpreter(InteractiveInterpreter):
                 exec(code, self.locals)
         except SystemExit:
             if not self.tkconsole.closing:
-                if tkMessageBox.askyesno(
+                if messagebox.askyesno(
                     "Exit?",
                     "Do you want to exit altogether?",
                     default="yes",
@@ -805,7 +812,7 @@ class ModifiedInterpreter(InteractiveInterpreter):
         return self.tkconsole.stderr.write(s)
 
     def display_port_binding_error(self):
-        tkMessageBox.showerror(
+        messagebox.showerror(
             "Port Binding Error",
             "IDLE can't bind to a TCP/IP port, which is necessary to "
             "communicate with its Python execution server.  This might be "
@@ -816,7 +823,7 @@ class ModifiedInterpreter(InteractiveInterpreter):
             parent=self.tkconsole.text)
 
     def display_no_subprocess_error(self):
-        tkMessageBox.showerror(
+        messagebox.showerror(
             "Subprocess Connection Error",
             "IDLE's subprocess didn't make connection.\n"
             "See the 'Startup failure' section of the IDLE doc, online at\n"
@@ -824,7 +831,7 @@ class ModifiedInterpreter(InteractiveInterpreter):
             parent=self.tkconsole.text)
 
     def display_executing_dialog(self):
-        tkMessageBox.showerror(
+        messagebox.showerror(
             "Already executing",
             "The Python Shell window is already executing a command; "
             "please wait until it is finished.",
@@ -945,7 +952,7 @@ class PyShell(OutputWindow):
 
     def toggle_debugger(self, event=None):
         if self.executing:
-            tkMessageBox.showerror("Don't debug now",
+            messagebox.showerror("Don't debug now",
                 "You can only toggle the debugger when idle",
                 parent=self.text)
             self.set_debugger_indicator()
@@ -989,6 +996,10 @@ class PyShell(OutputWindow):
         self.showprompt()
         self.set_debugger_indicator()
 
+    def debug_menu_postcommand(self):
+        state = 'disabled' if self.executing else 'normal'
+        self.update_menu_state('debug', '*tack*iewer', state)
+
     def beginexecuting(self):
         "Helper for ModifiedInterpreter"
         self.resetoutput()
@@ -1003,7 +1014,7 @@ class PyShell(OutputWindow):
     def close(self):
         "Extend EditorWindow.close()"
         if self.executing:
-            response = tkMessageBox.askokcancel(
+            response = messagebox.askokcancel(
                 "Kill?",
                 "Your program is still running!\n Do you want to kill it?",
                 default="ok",
@@ -1254,7 +1265,7 @@ class PyShell(OutputWindow):
         try:
             sys.last_traceback
         except:
-            tkMessageBox.showerror("No stack trace",
+            messagebox.showerror("No stack trace",
                 "There is no stack trace yet.\n"
                 "(sys.last_traceback is not defined)",
                 parent=self.text)

@@ -77,6 +77,7 @@ __all__ = [
     "lognormvariate",
     "normalvariate",
     "paretovariate",
+    "randbytes",
     "randint",
     "random",
     "randrange",
@@ -151,8 +152,7 @@ class Random(_random.Random):
         elif version == 2 and isinstance(a, (str, bytes, bytearray)):
             if isinstance(a, str):
                 a = a.encode()
-            a += _sha512(a).digest()
-            a = int.from_bytes(a, 'big')
+            a = int.from_bytes(a + _sha512(a).digest(), 'big')
 
         elif not isinstance(a, (type(None), int, float, str, bytes, bytearray)):
             _warn('Seeding based on hashing is deprecated\n'
@@ -441,7 +441,7 @@ class Random(_random.Random):
                 raise TypeError('Counts must be integers')
             if total <= 0:
                 raise ValueError('Total of counts must be greater than zero')
-            selections = sample(range(total), k=k)
+            selections = self.sample(range(total), k=k)
             bisect = _bisect
             return [population[bisect(cum_counts, s)] for s in selections]
         randbelow = self._randbelow
@@ -484,7 +484,15 @@ class Random(_random.Random):
                 floor = _floor
                 n += 0.0    # convert to float for a small speed improvement
                 return [population[floor(random() * n)] for i in _repeat(None, k)]
-            cum_weights = list(_accumulate(weights))
+            try:
+                cum_weights = list(_accumulate(weights))
+            except TypeError:
+                if not isinstance(weights, int):
+                    raise
+                k = weights
+                raise TypeError(
+                    f'The number of choices must be a keyword argument: {k=}'
+                ) from None
         elif weights is not None:
             raise TypeError('Cannot specify both weights and cumulative weights')
         if len(cum_weights) != n:

@@ -860,7 +860,7 @@ static PyObject *
 tee_fromiterable(PyObject *iterable)
 {
     teeobject *to;
-    PyObject *it = NULL;
+    PyObject *it;
 
     it = PyObject_GetIter(iterable);
     if (it == NULL)
@@ -870,21 +870,22 @@ tee_fromiterable(PyObject *iterable)
         goto done;
     }
 
-    to = PyObject_GC_New(teeobject, &tee_type);
-    if (to == NULL)
-        goto done;
-    to->dataobj = (teedataobject *)teedataobject_newinternal(it);
-    if (!to->dataobj) {
-        PyObject_GC_Del(to);
+    PyObject *dataobj = teedataobject_newinternal(it);
+    if (!dataobj) {
         to = NULL;
         goto done;
     }
-
+    to = PyObject_GC_New(teeobject, &tee_type);
+    if (to == NULL) {
+        Py_DECREF(dataobj);
+        goto done;
+    }
+    to->dataobj = (teedataobject *)dataobj;
     to->index = 0;
     to->weakreflist = NULL;
     PyObject_GC_Track(to);
 done:
-    Py_XDECREF(it);
+    Py_DECREF(it);
     return (PyObject *)to;
 }
 
@@ -3310,14 +3311,14 @@ itertools.combinations_with_replacement.__new__
     r: Py_ssize_t
 Return successive r-length combinations of elements in the iterable allowing individual elements to have successive repeats.
 
-combinations_with_replacement('ABC', 2) --> AA AB AC BB BC CC"
+combinations_with_replacement('ABC', 2) --> ('A','A'), ('A','B'), ('A','C'), ('B','B'), ('B','C'), ('C','C')
 [clinic start generated code]*/
 
 static PyObject *
 itertools_combinations_with_replacement_impl(PyTypeObject *type,
                                              PyObject *iterable,
                                              Py_ssize_t r)
-/*[clinic end generated code: output=48b26856d4e659ca input=dc2a8c7ba785fad7]*/
+/*[clinic end generated code: output=48b26856d4e659ca input=1dc58e82a0878fdc]*/
 {
     cwrobject *co;
     Py_ssize_t n;

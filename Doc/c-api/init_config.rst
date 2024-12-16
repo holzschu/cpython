@@ -730,9 +730,12 @@ Function to initialize Python:
 The caller is responsible to handle exceptions (error or exit) using
 :c:func:`PyStatus_Exception` and :c:func:`Py_ExitStatusException`.
 
-If ``PyImport_FrozenModules``, ``PyImport_AppendInittab()`` or
-``PyImport_ExtendInittab()`` are used, they must be set or called after Python
-preinitialization and before the Python initialization.
+If :c:func:`PyImport_FrozenModules`, :c:func:`PyImport_AppendInittab` or
+:c:func:`PyImport_ExtendInittab` are used, they must be set or called after
+Python preinitialization and before the Python initialization. If Python is
+initialized multiple times, :c:func:`PyImport_AppendInittab` or
+:c:func:`PyImport_ExtendInittab` must be called before each Python
+initialization.
 
 Example setting the program name::
 
@@ -820,7 +823,7 @@ Isolated Configuration
 isolate Python from the system. For example, to embed Python into an
 application.
 
-This configuration ignores global configuration variables, environments
+This configuration ignores global configuration variables, environment
 variables, command line arguments (:c:member:`PyConfig.argv` is not parsed)
 and user site directory. The C standard streams (ex: ``stdout``) and the
 LC_CTYPE locale are left unchanged. Signal handlers are not installed.
@@ -997,7 +1000,7 @@ Multi-Phase Initialization Private Provisional API
 --------------------------------------------------
 
 This section is a private provisional API introducing multi-phase
-initialization, the core feature of the :pep:`432`:
+initialization, the core feature of :pep:`432`:
 
 * "Core" initialization phase, "bare minimum Python":
 

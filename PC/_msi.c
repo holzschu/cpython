@@ -292,7 +292,7 @@ msierror(int status)
     int code;
     char buf[2000];
     char *res = buf;
-    DWORD size = sizeof(buf);
+    DWORD size = Py_ARRAY_LENGTH(buf);
     MSIHANDLE err = MsiGetLastErrorRecord();
 
     if (err == 0) {
@@ -386,7 +386,7 @@ record_getstring(msiobj* record, PyObject* args)
     unsigned int status;
     WCHAR buf[2000];
     WCHAR *res = buf;
-    DWORD size = sizeof(buf);
+    DWORD size = Py_ARRAY_LENGTH(buf);
     PyObject* string;
 
     if (!PyArg_ParseTuple(args, "I:GetString", &field))
@@ -625,7 +625,10 @@ summary_setproperty(msiobj* si, PyObject *args)
         return NULL;
 
     if (PyUnicode_Check(data)) {
+_Py_COMP_DIAG_PUSH
+_Py_COMP_DIAG_IGNORE_DEPR_DECLS
         const WCHAR *value = _PyUnicode_AsUnicode(data);
+_Py_COMP_DIAG_POP
         if (value == NULL) {
             return NULL;
         }

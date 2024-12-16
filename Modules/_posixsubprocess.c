@@ -428,6 +428,9 @@ _close_open_fds_maybe_unsafe(long start_fd, PyObject* py_fds_to_keep)
  * This restriction is documented at
  * http://www.opengroup.org/onlinepubs/009695399/functions/fork.html.
  */
+#if TARGET_OS_IPHONE
+extern int chdir_nolock(const char* path); // defined in ios_system.m
+#endif
 static void
 child_exec(char *const exec_array[],
            char *const argv[],
@@ -510,10 +513,13 @@ child_exec(char *const exec_array[],
      * _close_open_fds takes care when it is not already non-inheritable. */
 
 #if TARGET_OS_IPHONE
-    const char *currentDir = getcwd(NULL, 0);
-#endif
+    // We're already locked (between fork() and exec(), so we should not lock again.
+    if (cwd)
+        POSIX_CALL(chdir_nolock(cwd));
+#else
     if (cwd)
         POSIX_CALL(chdir(cwd));
+#endif
 
     if (child_umask >= 0)
         umask(child_umask);  /* umask() always succeeds. */
@@ -588,7 +594,6 @@ child_exec(char *const exec_array[],
 #if TARGET_OS_IPHONE
     // Don't chdir back yet, we need to finish executing the command.
     // Will have to add it to python script, after the wait().
-    // POSIX_CALL(chdir(currentDir));
     if (saved_errno == 0) return; // We're not supposed to return from execv, but on iOS we do
 #endif
     /* Report the first exec error, not the last. */
@@ -597,10 +602,6 @@ child_exec(char *const exec_array[],
 
 error:
     saved_errno = errno;
-#if TARGET_OS_IPHONE
-    // Move back to previous directory:
-    chdir(currentDir);
-#endif
     /* Report the posix error to our parent process. */
     /* We ignore all write() return values as the total size of our writes is
        less than PIPEBUF and we cannot do anything about an error anyways.

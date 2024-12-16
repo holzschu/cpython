@@ -34,20 +34,23 @@ class or one of its subclasses, and not from :exc:`BaseException`.  More
 information on defining exceptions is available in the Python Tutorial under
 :ref:`tut-userexceptions`.
 
-When raising (or re-raising) an exception in an :keyword:`except` or
-:keyword:`finally` clause
-:attr:`__context__` is automatically set to the last exception caught; if the
-new exception is not handled the traceback that is eventually displayed will
-include the originating exception(s) and the final exception.
 
-When raising a new exception (rather than using a bare ``raise`` to re-raise
-the exception currently being handled), the implicit exception context can be
-supplemented with an explicit cause by using :keyword:`from` with
+Exception context
+-----------------
+
+When raising a new exception while another exception
+is already being handled, the new exception's
+:attr:`__context__` attribute is automatically set to the handled
+exception.  An exception may be handled when an :keyword:`except` or
+:keyword:`finally` clause, or a :keyword:`with` statement, is used.
+
+This implicit exception context can be
+supplemented with an explicit cause by using :keyword:`!from` with
 :keyword:`raise`::
 
    raise new_exc from original_exc
 
-The expression following :keyword:`from` must be an exception or ``None``. It
+The expression following :keyword:`from<raise>` must be an exception or ``None``. It
 will be set as :attr:`__cause__` on the raised exception. Setting
 :attr:`__cause__` also implicitly sets the :attr:`__suppress_context__`
 attribute to ``True``, so that using ``raise new_exc from None``
@@ -65,6 +68,25 @@ is :const:`None` and :attr:`__suppress_context__` is false.
 In either case, the exception itself is always shown after any chained
 exceptions so that the final line of the traceback always shows the last
 exception that was raised.
+
+
+Inheriting from built-in exceptions
+-----------------------------------
+
+User code can create subclasses that inherit from an exception type.
+It's recommended to only subclass one exception type at a time to avoid
+any possible conflicts between how the bases handle the ``args``
+attribute, as well as due to possible memory layout incompatibilities.
+
+.. impl-detail::
+
+   Most built-in exceptions are implemented in C for efficiency, see:
+   :source:`Objects/exceptions.c`.  Some have custom memory layouts
+   which makes it impossible to create a subclass that inherits from
+   multiple exception types. The memory layout of a type is an implementation
+   detail and might change between Python versions, leading to new
+   conflicts in the future.  Therefore, it's recommended to avoid
+   subclassing multiple exception types altogether.
 
 
 Base classes
@@ -211,6 +233,15 @@ The following exceptions are the exceptions that are usually raised.
    regularly. The exception inherits from :exc:`BaseException` so as to not be
    accidentally caught by code that catches :exc:`Exception` and thus prevent
    the interpreter from exiting.
+
+   .. note::
+
+      Catching a :exc:`KeyboardInterrupt` requires special consideration.
+      Because it can be raised at unpredictable points, it may, in some
+      circumstances, leave the running program in an inconsistent state. It is
+      generally best to allow :exc:`KeyboardInterrupt` to end the program as
+      quickly as possible or avoid raising it entirely. (See
+      :ref:`handlers-and-exceptions`.)
 
 
 .. exception:: MemoryError
@@ -390,16 +421,39 @@ The following exceptions are the exceptions that are usually raised.
 
    .. versionadded:: 3.5
 
-.. exception:: SyntaxError
+.. exception:: SyntaxError(message, details)
 
    Raised when the parser encounters a syntax error.  This may occur in an
-   :keyword:`import` statement, in a call to the built-in functions :func:`exec`
+   :keyword:`import` statement, in a call to the built-in functions
+   :func:`compile`, :func:`exec`,
    or :func:`eval`, or when reading the initial script or standard input
    (also interactively).
 
-   Instances of this class have attributes :attr:`filename`, :attr:`lineno`,
-   :attr:`offset` and :attr:`text` for easier access to the details.  :func:`str`
-   of the exception instance returns only the message.
+   The :func:`str` of the exception instance returns only the error message.
+   Details is a tuple whose members are also available as separate attributes.
+
+   .. attribute:: filename
+
+      The name of the file the syntax error occurred in.
+
+   .. attribute:: lineno
+
+      Which line number in the file the error occurred in. This is
+      1-indexed: the first line in the file has a ``lineno`` of 1.
+
+   .. attribute:: offset
+
+      The column in the line where the error occurred. This is
+      1-indexed: the first character in the line has an ``offset`` of 1.
+
+   .. attribute:: text
+
+      The source code text involved in the error.
+
+   For errors in f-string fields, the message is prefixed by "f-string: "
+   and the offsets are offsets in a text constructed from the replacement
+   expression.  For example, compiling f'Bad {a b} field' results in this
+   args attribute: ('f-string: ...', ('', 1, 4, '(a b)\n')).
 
 
 .. exception:: IndentationError
@@ -559,8 +613,8 @@ depending on the system error code.
 
    Raised when an operation would block on an object (e.g. socket) set
    for non-blocking operation.
-   Corresponds to :c:data:`errno` ``EAGAIN``, ``EALREADY``,
-   ``EWOULDBLOCK`` and ``EINPROGRESS``.
+   Corresponds to :c:data:`errno` :py:data:`~errno.EAGAIN`, :py:data:`~errno.EALREADY`,
+   :py:data:`~errno.EWOULDBLOCK` and :py:data:`~errno.EINPROGRESS`.
 
    In addition to those of :exc:`OSError`, :exc:`BlockingIOError` can have
    one more attribute:
@@ -574,7 +628,7 @@ depending on the system error code.
 .. exception:: ChildProcessError
 
    Raised when an operation on a child process failed.
-   Corresponds to :c:data:`errno` ``ECHILD``.
+   Corresponds to :c:data:`errno` :py:data:`~errno.ECHILD`.
 
 .. exception:: ConnectionError
 
@@ -588,35 +642,35 @@ depending on the system error code.
    A subclass of :exc:`ConnectionError`, raised when trying to write on a
    pipe while the other end has been closed, or trying to write on a socket
    which has been shutdown for writing.
-   Corresponds to :c:data:`errno` ``EPIPE`` and ``ESHUTDOWN``.
+   Corresponds to :c:data:`errno` :py:data:`~errno.EPIPE` and :py:data:`~errno.ESHUTDOWN`.
 
 .. exception:: ConnectionAbortedError
 
    A subclass of :exc:`ConnectionError`, raised when a connection attempt
    is aborted by the peer.
-   Corresponds to :c:data:`errno` ``ECONNABORTED``.
+   Corresponds to :c:data:`errno` :py:data:`~errno.ECONNABORTED`.
 
 .. exception:: ConnectionRefusedError
 
    A subclass of :exc:`ConnectionError`, raised when a connection attempt
    is refused by the peer.
-   Corresponds to :c:data:`errno` ``ECONNREFUSED``.
+   Corresponds to :c:data:`errno` :py:data:`~errno.ECONNREFUSED`.
 
 .. exception:: ConnectionResetError
 
    A subclass of :exc:`ConnectionError`, raised when a connection is
    reset by the peer.
-   Corresponds to :c:data:`errno` ``ECONNRESET``.
+   Corresponds to :c:data:`errno` :py:data:`~errno.ECONNRESET`.
 
 .. exception:: FileExistsError
 
    Raised when trying to create a file or directory which already exists.
-   Corresponds to :c:data:`errno` ``EEXIST``.
+   Corresponds to :c:data:`errno` :py:data:`~errno.EEXIST`.
 
 .. exception:: FileNotFoundError
 
    Raised when a file or directory is requested but doesn't exist.
-   Corresponds to :c:data:`errno` ``ENOENT``.
+   Corresponds to :c:data:`errno` :py:data:`~errno.ENOENT`.
 
 .. exception:: InterruptedError
 
@@ -632,29 +686,31 @@ depending on the system error code.
 
    Raised when a file operation (such as :func:`os.remove`) is requested
    on a directory.
-   Corresponds to :c:data:`errno` ``EISDIR``.
+   Corresponds to :c:data:`errno` :py:data:`~errno.EISDIR`.
 
 .. exception:: NotADirectoryError
 
-   Raised when a directory operation (such as :func:`os.listdir`) is requested
-   on something which is not a directory.
-   Corresponds to :c:data:`errno` ``ENOTDIR``.
+   Raised when a directory operation (such as :func:`os.listdir`) is requested on
+   something which is not a directory.  On most POSIX platforms, it may also be
+   raised if an operation attempts to open or traverse a non-directory file as if
+   it were a directory.
+   Corresponds to :c:data:`errno` :py:data:`~errno.ENOTDIR`.
 
 .. exception:: PermissionError
 
    Raised when trying to run an operation without the adequate access
    rights - for example filesystem permissions.
-   Corresponds to :c:data:`errno` ``EACCES`` and ``EPERM``.
+   Corresponds to :c:data:`errno` :py:data:`~errno.EACCES` and :py:data:`~errno.EPERM`.
 
 .. exception:: ProcessLookupError
 
    Raised when a given process doesn't exist.
-   Corresponds to :c:data:`errno` ``ESRCH``.
+   Corresponds to :c:data:`errno` :py:data:`~errno.ESRCH`.
 
 .. exception:: TimeoutError
 
    Raised when a system function timed out at the system level.
-   Corresponds to :c:data:`errno` ``ETIMEDOUT``.
+   Corresponds to :c:data:`errno` :py:data:`~errno.ETIMEDOUT`.
 
 .. versionadded:: 3.3
    All the above :exc:`OSError` subclasses were added.
@@ -692,6 +748,8 @@ The following exceptions are used as warning categories; see the
    (:pep:`565`). Enabling the :ref:`Python Development Mode <devmode>` shows
    this warning.
 
+   The deprecation policy is described in :pep:`387`.
+
 
 .. exception:: PendingDeprecationWarning
 
@@ -705,6 +763,8 @@ The following exceptions are used as warning categories; see the
 
    Ignored by the default warning filters. Enabling the :ref:`Python
    Development Mode <devmode>` shows this warning.
+
+   The deprecation policy is described in :pep:`387`.
 
 
 .. exception:: SyntaxWarning

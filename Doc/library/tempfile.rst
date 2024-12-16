@@ -62,6 +62,9 @@ The module defines the following user-callable items:
    The :py:data:`os.O_TMPFILE` flag is used if it is available and works
    (Linux-specific, requires Linux kernel 3.11 or later).
 
+   On platforms that are neither Posix nor Cygwin, TemporaryFile is an alias
+   for NamedTemporaryFile.
+
    .. audit-event:: tempfile.mkstemp fullpath tempfile.TemporaryFile
 
    .. versionchanged:: 3.5
@@ -81,7 +84,7 @@ The module defines the following user-callable items:
    file-like object.  Whether the name can be
    used to open the file a second time, while the named temporary file is
    still open, varies across platforms (it can be so used on Unix; it cannot
-   on Windows NT or later).  If *delete* is true (the default), the file is
+   on Windows).  If *delete* is true (the default), the file is
    deleted as soon as it is closed.
    The returned object is always a file-like object whose :attr:`!file`
    attribute is the underlying true file object. This file-like object can
@@ -315,6 +318,7 @@ Here are some examples of typical usage of the :mod:`tempfile` module::
     >>>
     # directory and contents have been removed
 
+.. _tempfile-mktemp-deprecated:
 
 Deprecated functions and variables
 ----------------------------------

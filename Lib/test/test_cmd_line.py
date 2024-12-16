@@ -136,6 +136,17 @@ class CmdLineTest(unittest.TestCase):
         self.assertTrue(data.find(b'1 loop') != -1)
         self.assertTrue(data.find(b'__main__.Timer') != -1)
 
+    def test_relativedir_bug46421(self):
+        # Test `python -m unittest` with a relative directory beginning with ./
+        # Note: We have to switch to the project's top module's directory, as per
+        # the python unittest wiki. We will switch back when we are done.
+        defaultwd = os.getcwd()
+        projectlibpath = os.path.dirname(__file__).removesuffix("test")
+        with support.change_cwd(projectlibpath):
+            # Testing with and without ./
+            assert_python_ok('-m', 'unittest', "test/test_longexp.py")
+            assert_python_ok('-m', 'unittest', "./test/test_longexp.py")
+
     def test_run_code(self):
         # Test expected operation of the '-c' switch
         # Switch needs an argument
@@ -191,38 +202,72 @@ class CmdLineTest(unittest.TestCase):
         if not stdout.startswith(pattern):
             raise AssertionError("%a doesn't start with %a" % (stdout, pattern))
 
+    @unittest.skipIf(sys.platform == 'win32',
+                     'Windows has a native unicode API')
+    def test_invalid_utf8_arg(self):
+        # bpo-35883: Py_DecodeLocale() must escape b'\xfd\xbf\xbf\xbb\xba\xba'
+        # byte sequence with surrogateescape rather than decoding it as the
+        # U+7fffbeba character which is outside the [U+0000; U+10ffff] range of
+        # Python Unicode characters.
+        #
+        # Test with default config, in the C locale, in the Python UTF-8 Mode.
+        code = 'import sys, os; s=os.fsencode(sys.argv[1]); print(ascii(s))'
+        base_cmd = [sys.executable, '-c', code]
+
+        def run_default(arg):
+            cmd = [sys.executable, '-c', code, arg]
+            return subprocess.run(cmd, stdout=subprocess.PIPE, text=True)
+
+        def run_c_locale(arg):
+            cmd = [sys.executable, '-c', code, arg]
+            env = dict(os.environ)
+            env['LC_ALL'] = 'C'
+            return subprocess.run(cmd, stdout=subprocess.PIPE,
+                                  text=True, env=env)
+
+        def run_utf8_mode(arg):
+            cmd = [sys.executable, '-X', 'utf8', '-c', code, arg]
+            return subprocess.run(cmd, stdout=subprocess.PIPE, text=True)
+
+        valid_utf8 = 'e:\xe9, euro:\u20ac, non-bmp:\U0010ffff'.encode('utf-8')
+        # invalid UTF-8 byte sequences with a valid UTF-8 sequence
+        # in the middle.
+        invalid_utf8 = (
+            b'\xff'                      # invalid byte
+            b'\xc3\xff'                  # invalid byte sequence
+            b'\xc3\xa9'                  # valid utf-8: U+00E9 character
+            b'\xed\xa0\x80'              # lone surrogate character (invalid)
+            b'\xfd\xbf\xbf\xbb\xba\xba'  # character outside [U+0000; U+10ffff]
+        )
+        test_args = [valid_utf8, invalid_utf8]
+
+        for run_cmd in (run_default, run_c_locale, run_utf8_mode):
+            with self.subTest(run_cmd=run_cmd):
+                for arg in test_args:
+                    proc = run_cmd(arg)
+                    self.assertEqual(proc.stdout.rstrip(), ascii(arg))
+
     @unittest.skipUnless((sys.platform == 'darwin' or
                 support.is_android), 'test specific to Mac OS X and Android')
     def test_osx_android_utf8(self):
-        def check_output(text):
-            decoded = text.decode('utf-8', 'surrogateescape')
-            expected = ascii(decoded).encode('ascii') + b'\n'
-
-            env = os.environ.copy()
-            # C locale gives ASCII locale encoding, but Python uses UTF-8
-            # to parse the command line arguments on Mac OS X and Android.
-            env['LC_ALL'] = 'C'
-
-            p = subprocess.Popen(
-                (sys.executable, "-c", "import sys; print(ascii(sys.argv[1]))", text),
-                stdout=subprocess.PIPE,
-                env=env)
-            stdout, stderr = p.communicate()
-            self.assertEqual(stdout, expected)
-            self.assertEqual(p.returncode, 0)
-
-        # test valid utf-8
         text = 'e:\xe9, euro:\u20ac, non-bmp:\U0010ffff'.encode('utf-8')
-        check_output(text)
+        code = "import sys; print(ascii(sys.argv[1]))"
 
-        # test invalid utf-8
-        text = (
-            b'\xff'         # invalid byte
-            b'\xc3\xa9'     # valid utf-8 character
-            b'\xc3\xff'     # invalid byte sequence
-            b'\xed\xa0\x80' # lone surrogate character (invalid)
-        )
-        check_output(text)
+        decoded = text.decode('utf-8', 'surrogateescape')
+        expected = ascii(decoded).encode('ascii') + b'\n'
+
+        env = os.environ.copy()
+        # C locale gives ASCII locale encoding, but Python uses UTF-8
+        # to parse the command line arguments on Mac OS X and Android.
+        env['LC_ALL'] = 'C'
+
+        p = subprocess.Popen(
+            (sys.executable, "-c", code, text),
+            stdout=subprocess.PIPE,
+            env=env)
+        stdout, stderr = p.communicate()
+        self.assertEqual(stdout, expected)
+        self.assertEqual(p.returncode, 0)
 
     def test_non_interactive_output_buffering(self):
         code = textwrap.dedent("""
@@ -770,6 +815,41 @@ class CmdLineTest(unittest.TestCase):
         self.assertTrue(proc.stderr.startswith(err_msg), proc.stderr)
         self.assertNotEqual(proc.returncode, 0)
 
+    def test_int_max_str_digits(self):
+        code = "import sys; print(sys.flags.int_max_str_digits, sys.get_int_max_str_digits())"
+
+        assert_python_failure('-X', 'int_max_str_digits', '-c', code)
+        assert_python_failure('-X', 'int_max_str_digits=foo', '-c', code)
+        assert_python_failure('-X', 'int_max_str_digits=100', '-c', code)
+        assert_python_failure('-X', 'int_max_str_digits', '-c', code,
+                              PYTHONINTMAXSTRDIGITS='4000')
+
+        assert_python_failure('-c', code, PYTHONINTMAXSTRDIGITS='foo')
+        assert_python_failure('-c', code, PYTHONINTMAXSTRDIGITS='100')
+
+        def res2int(res):
+            out = res.out.strip().decode("utf-8")
+            return tuple(int(i) for i in out.split())
+
+        res = assert_python_ok('-c', code)
+        self.assertEqual(res2int(res), (-1, sys.get_int_max_str_digits()))
+        res = assert_python_ok('-X', 'int_max_str_digits=0', '-c', code)
+        self.assertEqual(res2int(res), (0, 0))
+        res = assert_python_ok('-X', 'int_max_str_digits=4000', '-c', code)
+        self.assertEqual(res2int(res), (4000, 4000))
+        res = assert_python_ok('-X', 'int_max_str_digits=100000', '-c', code)
+        self.assertEqual(res2int(res), (100000, 100000))
+
+        res = assert_python_ok('-c', code, PYTHONINTMAXSTRDIGITS='0')
+        self.assertEqual(res2int(res), (0, 0))
+        res = assert_python_ok('-c', code, PYTHONINTMAXSTRDIGITS='4000')
+        self.assertEqual(res2int(res), (4000, 4000))
+        res = assert_python_ok(
+            '-X', 'int_max_str_digits=6000', '-c', code,
+            PYTHONINTMAXSTRDIGITS='4000'
+        )
+        self.assertEqual(res2int(res), (6000, 6000))
+
 
 @unittest.skipIf(interpreter_requires_environment(),
                  'Cannot run -I tests when PYTHON env vars are required.')
@@ -807,9 +887,9 @@ class IgnoreEnvironmentTest(unittest.TestCase):
         )
 
 
-def test_main():
-    support.run_unittest(CmdLineTest, IgnoreEnvironmentTest)
+def tearDownModule():
     support.reap_children()
 
+
 if __name__ == "__main__":
-    test_main()
+    unittest.main()

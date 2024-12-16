@@ -1,0 +1,8 @@
+{
+  "exposeAppInBrowser": true,
+  "disabledExtensions": {
+    "@jupyterlab/debugger-extension": true,
+    "@retrolab/tree-extension:new-console": true,
+    "@retrolab/tree-extension:new-terminal": true
+  }
+}

@@ -22,6 +22,9 @@
 /* Use path starting with "./" avoids a search along the PATH */
 #define PROGRAM_NAME L"./_testembed"
 
+#define INIT_LOOPS 16
+
+
 static void _testembed_Py_Initialize(void)
 {
     Py_SetProgramName(PROGRAM_NAME);
@@ -58,9 +61,8 @@ static int test_repeated_init_and_subinterpreters(void)
 {
     PyThreadState *mainstate, *substate;
     PyGILState_STATE gilstate;
-    int i, j;
 
-    for (i=0; i<15; i++) {
+    for (int i=1; i <= INIT_LOOPS; i++) {
         printf("--- Pass %d ---\n", i);
         _testembed_Py_Initialize();
         mainstate = PyThreadState_Get();
@@ -71,7 +73,7 @@ static int test_repeated_init_and_subinterpreters(void)
         print_subinterp();
         PyThreadState_Swap(NULL);
 
-        for (j=0; j<3; j++) {
+        for (int j=0; j<3; j++) {
             substate = Py_NewInterpreter();
             print_subinterp();
             Py_EndInterpreter(substate);
@@ -85,6 +87,20 @@ static int test_repeated_init_and_subinterpreters(void)
         Py_Finalize();
     }
     return 0;
+}
+
+#define EMBEDDED_EXT_NAME "embedded_ext"
+
+static PyModuleDef embedded_ext = {
+    PyModuleDef_HEAD_INIT,
+    .m_name = EMBEDDED_EXT_NAME,
+    .m_size = 0,
+};
+
+static PyObject*
+PyInit_embedded_ext(void)
+{
+    return PyModule_Create(&embedded_ext);
 }
 
 /*****************************************************
@@ -1654,15 +1670,26 @@ static int test_run_main(void)
 }
 
 
+static int test_run_main_loop(void)
+{
+    // bpo-40413: Calling Py_InitializeFromConfig()+Py_RunMain() multiple
+    // times must not crash.
+    for (int i=0; i<5; i++) {
+        int exitcode = test_run_main();
+        if (exitcode != 0) {
+            return exitcode;
+        }
+    }
+    return 0;
+}
+
+
 static int test_get_argc_argv(void)
 {
     PyConfig config;
     PyConfig_InitPythonConfig(&config);
 
-    wchar_t *argv[] = {L"python3", L"-c",
-                       (L"import sys; "
-                        L"print(f'Py_RunMain(): sys.argv={sys.argv}')"),
-                       L"arg2"};
+    wchar_t *argv[] = {L"python3", L"-c", L"pass", L"arg2"};
     config_set_argv(&config, Py_ARRAY_LENGTH(argv), argv);
     config_set_string(&config, &config.program_name, L"./python3");
 
@@ -1694,6 +1721,39 @@ static int test_get_argc_argv(void)
 }
 
 
+static int test_repeated_init_and_inittab(void)
+{
+    // bpo-44441: Py_RunMain() must reset PyImport_Inittab at exit.
+    // It must be possible to call PyImport_AppendInittab() or
+    // PyImport_ExtendInittab() before each Python initialization.
+    for (int i=1; i <= INIT_LOOPS; i++) {
+        printf("--- Pass %d ---\n", i);
+
+        // Call PyImport_AppendInittab() at each iteration
+        if (PyImport_AppendInittab(EMBEDDED_EXT_NAME,
+                                   &PyInit_embedded_ext) != 0) {
+            fprintf(stderr, "PyImport_AppendInittab() failed\n");
+            return 1;
+        }
+
+        // Initialize Python
+        wchar_t* argv[] = {PROGRAM_NAME, L"-c", L"pass"};
+        PyConfig config;
+        PyConfig_InitPythonConfig(&config);
+        config.isolated = 1;
+        config_set_argv(&config, Py_ARRAY_LENGTH(argv), argv);
+        init_from_config_clear(&config);
+
+        // Py_RunMain() calls _PyImport_Fini2() which resets PyImport_Inittab
+        int exitcode = Py_RunMain();
+        if (exitcode != 0) {
+            return exitcode;
+        }
+    }
+    return 0;
+}
+
+
 /* *********************************************************
  * List of test cases and the function that implements it.
  *
@@ -1713,8 +1773,10 @@ struct TestCase
 };
 
 static struct TestCase TestCases[] = {
+    // Python initialization
     {"test_forced_io_encoding", test_forced_io_encoding},
     {"test_repeated_init_and_subinterpreters", test_repeated_init_and_subinterpreters},
+    {"test_repeated_init_and_inittab", test_repeated_init_and_inittab},
     {"test_pre_initialization_api", test_pre_initialization_api},
     {"test_pre_initialization_sys_options", test_pre_initialization_sys_options},
     {"test_bpo20891", test_bpo20891},
@@ -1751,8 +1813,10 @@ static struct TestCase TestCases[] = {
     {"test_init_setpythonhome", test_init_setpythonhome},
     {"test_init_warnoptions", test_init_warnoptions},
     {"test_run_main", test_run_main},
+    {"test_run_main_loop", test_run_main_loop},
     {"test_get_argc_argv", test_get_argc_argv},
 
+    // Audit
     {"test_open_code_hook", test_open_code_hook},
     {"test_audit", test_audit},
     {"test_audit_subinterpreter", test_audit_subinterpreter},

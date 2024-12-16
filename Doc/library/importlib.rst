@@ -481,7 +481,7 @@ ABC hierarchy::
 
 .. class:: ResourceReader
 
-    *Superseded by TraversableReader*
+    *Superseded by TraversableResources*
 
     An :term:`abstract base class` to provide the ability to read
     *resources*.
@@ -612,7 +612,7 @@ ABC hierarchy::
 
     .. method:: is_package(fullname)
 
-        An abstract method to return a true value if the module is a package, a
+        An optional method to return a true value if the module is a package, a
         false value otherwise. :exc:`ImportError` is raised if the
         :term:`loader` cannot find the module.
 
@@ -805,8 +805,50 @@ ABC hierarchy::
 
     .. versionadded:: 3.9
 
+    .. abstractmethod:: name()
 
-.. class:: TraversableReader
+       The base name of this object without any parent references.
+
+    .. abstractmethod:: iterdir()
+
+       Yield Traversable objects in self.
+
+    .. abstractmethod:: is_dir()
+
+       Return True if self is a directory.
+
+    .. abstractmethod:: is_file()
+
+       Return True if self is a file.
+
+    .. abstractmethod:: joinpath(child)
+
+       Return Traversable child in self.
+
+    .. abstractmethod:: __truediv__(child)
+
+       Return Traversable child in self.
+
+    .. abstractmethod:: open(mode='r', *args, **kwargs)
+
+       *mode* may be 'r' or 'rb' to open as text or binary. Return a handle
+       suitable for reading (same as :attr:`pathlib.Path.open`).
+
+       When opening as text, accepts encoding parameters such as those
+       accepted by :attr:`io.TextIOWrapper`.
+
+    .. method:: read_bytes()
+
+       Read contents of self as bytes.
+
+    .. method:: read_text(encoding=None)
+
+       Read contents of self as text.
+
+    Note: In Python 3.11 and later, this class is found in ``importlib.resources.abc``.
+
+
+.. class:: TraversableResources
 
     An abstract base class for resource readers capable of serving
     the ``files`` interface. Subclasses ResourceReader and provides
@@ -815,6 +857,8 @@ ABC hierarchy::
     also supplies ResourceReader.
 
     .. versionadded:: 3.9
+
+    Note: In Python 3.11 and later, this class is found in ``importlib.resources.abc``.
 
 
 :mod:`importlib.resources` -- Resources
@@ -878,13 +922,29 @@ The following functions are available.
 
 .. function:: files(package)
 
-    Returns an :class:`importlib.resources.abc.Traversable` object
+    Returns an :class:`importlib.abc.Traversable` object
     representing the resource container for the package (think directory)
     and its resources (think files). A Traversable may contain other
     containers (think subdirectories).
 
     *package* is either a name or a module object which conforms to the
     ``Package`` requirements.
+
+    .. versionadded:: 3.9
+
+.. function:: as_file(traversable)
+
+    Given a :class:`importlib.abc.Traversable` object representing
+    a file, typically from :func:`importlib.resources.files`, return
+    a context manager for use in a :keyword:`with` statement.
+    The context manager provides a :class:`pathlib.Path` object.
+
+    Exiting the context manager cleans up any temporary file created when the
+    resource was extracted from e.g. a zip file.
+
+    Use ``as_file`` when the Traversable methods
+    (``read_text``, etc) are insufficient and an actual file on
+    the file system is required.
 
     .. versionadded:: 3.9
 
@@ -1473,7 +1533,7 @@ an :term:`importer`.
 
    If  **name** has no leading dots, then **name** is simply returned. This
    allows for usage such as
-   ``importlib.util.resolve_name('sys', __package__)`` without doing a
+   ``importlib.util.resolve_name('sys', __spec__.parent)`` without doing a
    check to see if the **package** argument is needed.
 
    :exc:`ImportError` is raised if **name** is a relative module name but

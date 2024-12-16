@@ -88,6 +88,10 @@ support weak references but can add support through subclassing::
 Extension types can easily be made to support weak references; see
 :ref:`weakref-support`.
 
+When ``__slots__`` are defined for a given type, weak reference support is
+disabled unless a ``'__weakref__'`` string is also present in the sequence of
+strings in the ``__slots__`` declaration.
+See :ref:`__slots__ documentation <slots>` for details.
 
 .. class:: ref(object[, callback])
 
@@ -382,7 +386,7 @@ the referent is accessed::
 
    class ExtendedRef(weakref.ref):
        def __init__(self, ob, callback=None, /, **annotations):
-           super(ExtendedRef, self).__init__(ob, callback)
+           super().__init__(ob, callback)
            self.__counter = 0
            for k, v in annotations.items():
                setattr(self, k, v)
@@ -391,7 +395,7 @@ the referent is accessed::
            """Return a pair containing the referent and the number of
            times the reference has been called.
            """
-           ob = super(ExtendedRef, self).__call__()
+           ob = super().__call__()
            if ob is not None:
                self.__counter += 1
                ob = (ob, self.__counter)

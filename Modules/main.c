@@ -91,7 +91,7 @@ static inline int config_run_code(const PyConfig *config)
 static int
 stdin_is_interactive(const PyConfig *config)
 {
-#if !TARGET_OS_IPHGONE
+#if !TARGET_OS_IPHONE
     return (isatty(fileno(stdin)) || config->interactive);
 #else
     return (ios_isatty(fileno(stdin)) || config->interactive);

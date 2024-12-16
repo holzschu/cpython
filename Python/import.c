@@ -304,6 +304,9 @@ _PyImport_Fini2(void)
     PyMemAllocatorEx old_alloc;
     _PyMem_SetDefaultAllocator(PYMEM_DOMAIN_RAW, &old_alloc);
 
+    // Reset PyImport_Inittab
+    PyImport_Inittab = _PyImport_Inittab;
+
     /* Free memory allocated by PyImport_ExtendInittab() */
     PyMem_RawFree(inittab_copy);
     inittab_copy = NULL;
@@ -635,6 +638,10 @@ _PyImport_Cleanup(PyThreadState *tstate)
                 // fprintf(stderr, "We have a module = %x name = %s refCount = %zd\n", mod, utf8name, mod->ob_refcnt);
                 // if (mod->md_def && mod->md_def->m_free) mod->md_def->m_free(mod);
             }
+            if (strncmp(utf8name, "scipy.", 6) == 0) {
+                // fprintf(stderr, "We have a module = %x name = %s refCount = %zd\n", mod, utf8name, mod->ob_refcnt);
+                // if (mod->md_def && mod->md_def->m_free) mod->md_def->m_free(mod);
+            }
 #endif
         }
         Py_DECREF(weaklist);
@@ -738,7 +745,9 @@ _PyImport_FixupExtensionObject(PyObject *mod, PyObject *name,
         return -1;
     }
 
-    if (_Py_IsMainInterpreter(tstate)) {
+    // bpo-44050: Extensions and def->m_base.m_copy can be updated
+    // when the extension module doesn't support sub-interpreters.
+    if (_Py_IsMainInterpreter(tstate) || def->m_size == -1) {
         if (def->m_size == -1) {
             if (def->m_base.m_copy) {
                 /* Somebody already imported the module,
@@ -1944,7 +1953,7 @@ PyImport_ImportModuleLevelObject(PyObject *name, PyObject *globals,
     }
 
     if (mod != NULL && mod != Py_None) {
-        if (import_ensure_initialized(tstate, mod, name) < 0) {
+        if (import_ensure_initialized(tstate, mod, abs_name) < 0) {
             goto error;
         }
     }
@@ -2375,13 +2384,236 @@ _imp_create_dynamic_impl(PyObject *module, PyObject *spec, PyObject *file)
     // PyObject_Print(file, stderr, 0);
     // fprintf(stderr, " \n");
     char newPathString[MAXPATHLEN];
-    char prefixCopy[MAXPATHLEN]; 
+    wchar_t prefixCopy[MAXPATHLEN]; 
     int argc;
     wchar_t **argv_orig;
     Py_GetArgcArgv(&argc, &argv_orig);
-    const char* nameC = PyUnicode_AsUTF8(name);
-    wchar_t pythonName[12];
-    wcscpy(pythonName, argv_orig[0]);
+    char nameC[MAXPATHLEN];
+	strcpy(nameC, PyUnicode_AsUTF8(name));
+	// New special case to reduce number of modules: all numpy modules are merged into one:
+	if ((strcmp(nameC, "numpy.core._operand_flag_tests") == 0) || 
+			(strcmp(nameC, "numpy.core._multiarray_umath") == 0) || 
+			(strcmp(nameC, "numpy.core._multiarray_tests") == 0) || 
+			(strcmp(nameC, "numpy.core._simd") == 0) || 
+			(strcmp(nameC, "numpy.linalg.lapack_lite") == 0) || 
+			(strcmp(nameC, "numpy.linalg._umath_linalg") == 0) || 
+			(strcmp(nameC, "numpy.fft._pocketfft_internal") == 0) || 
+			(strcmp(nameC, "numpy.random.bit_generator") == 0) || 
+			(strcmp(nameC, "numpy.random.mtrand") == 0) || 
+			(strcmp(nameC, "numpy.random._generator") == 0) || 
+			(strcmp(nameC, "numpy.random._pcg64") == 0) || 
+			(strcmp(nameC, "numpy.random._sfc64") == 0) || 
+			(strcmp(nameC, "numpy.random._mt19937") == 0) || 
+			(strcmp(nameC, "numpy.random._philox") == 0) || 
+			(strcmp(nameC, "numpy.random._bounded_integers") == 0) || 
+			(strcmp(nameC, "numpy.random._common") == 0)) {
+		strcpy(nameC, "numpy_all"); // The module name is "numpy_all", to avoid confusion with numpy itself
+	} else if ((strcmp(nameC, "pandas.io.sas._sas") == 0) ||
+			(strcmp(nameC, "pandas._libs.index") == 0) ||
+			(strcmp(nameC, "pandas._libs.join") == 0) ||
+			(strcmp(nameC, "pandas._libs.parsers") == 0) ||
+			(strcmp(nameC, "pandas._libs.reduction") == 0) ||
+			(strcmp(nameC, "pandas._libs.tslib") == 0) ||
+			(strcmp(nameC, "pandas._libs.sparse") == 0) ||
+			(strcmp(nameC, "pandas._libs.properties") == 0) ||
+			(strcmp(nameC, "pandas._libs.internals") == 0) ||
+			(strcmp(nameC, "pandas._libs.reshape") == 0) ||
+			(strcmp(nameC, "pandas._libs.ops") == 0) ||
+			(strcmp(nameC, "pandas._libs.indexing") == 0) ||
+			(strcmp(nameC, "pandas._libs.hashing") == 0) ||
+			(strcmp(nameC, "pandas._libs.lib") == 0) ||
+			(strcmp(nameC, "pandas._libs.hashtable") == 0) ||
+			(strcmp(nameC, "pandas._libs.algos") == 0) ||
+			(strcmp(nameC, "pandas._libs.json") == 0) ||
+			(strcmp(nameC, "pandas._libs.arrays") == 0) ||
+			(strcmp(nameC, "pandas._libs.window.indexers") == 0) ||
+			(strcmp(nameC, "pandas._libs.window.aggregations") == 0) ||
+			(strcmp(nameC, "pandas._libs.writers") == 0) ||
+			(strcmp(nameC, "pandas._libs.ops_dispatch") == 0) ||
+			(strcmp(nameC, "pandas._libs.groupby") == 0) ||
+			(strcmp(nameC, "pandas._libs.interval") == 0) ||
+			(strcmp(nameC, "pandas._libs.tslibs.dtypes") == 0) ||
+			(strcmp(nameC, "pandas._libs.tslibs.period") == 0) ||
+			(strcmp(nameC, "pandas._libs.tslibs.conversion") == 0) ||
+			(strcmp(nameC, "pandas._libs.tslibs.ccalendar") == 0) ||
+			(strcmp(nameC, "pandas._libs.tslibs.timedeltas") == 0) ||
+			(strcmp(nameC, "pandas._libs.tslibs.strptime") == 0) ||
+			(strcmp(nameC, "pandas._libs.tslibs.vectorized") == 0) ||
+			(strcmp(nameC, "pandas._libs.tslibs.nattype") == 0) ||
+			(strcmp(nameC, "pandas._libs.tslibs.base") == 0) ||
+			(strcmp(nameC, "pandas._libs.tslibs.timezones") == 0) ||
+			(strcmp(nameC, "pandas._libs.tslibs.timestamps") == 0) ||
+			(strcmp(nameC, "pandas._libs.tslibs.offsets") == 0) ||
+			(strcmp(nameC, "pandas._libs.tslibs.fields") == 0) ||
+			(strcmp(nameC, "pandas._libs.tslibs.np_datetime") == 0) ||
+			(strcmp(nameC, "pandas._libs.tslibs.parsing") == 0) ||
+			(strcmp(nameC, "pandas._libs.tslibs.tzconversion") == 0) ||
+			(strcmp(nameC, "pandas._libs.testing") == 0) ||
+			(strcmp(nameC, "pandas._libs.missing") == 0)) {
+		strcpy(nameC, "pandas_all"); // The module name is "pandas_all", to avoid confusion with pandas itself
+	} else if ((strcmp(nameC, "astropy.compiler_version") == 0) ||
+			(strcmp(nameC, "astropy.timeseries.periodograms.bls._impl") == 0) ||
+			(strcmp(nameC, "astropy.timeseries.periodograms.lombscargle.implementations.cython_impl") == 0) ||
+			(strcmp(nameC, "astropy.wcs._wcs") == 0) ||
+			(strcmp(nameC, "astropy.io.ascii.cparser") == 0) ||
+			(strcmp(nameC, "astropy.io.fits.compression") == 0) ||
+			(strcmp(nameC, "astropy.io.fits._utils") == 0) ||
+			(strcmp(nameC, "astropy.io.votable.tablewriter") == 0) ||
+			(strcmp(nameC, "astropy.utils._compiler") == 0) ||
+			(strcmp(nameC, "astropy.utils.xml._iterparser") == 0) ||
+			(strcmp(nameC, "astropy.time._parse_times") == 0) ||
+			(strcmp(nameC, "astropy.table._np_utils") == 0) ||
+			(strcmp(nameC, "astropy.table._column_mixins") == 0) ||
+			(strcmp(nameC, "astropy.cosmology.flrw.scalar_inv_efuncs") == 0) ||
+			(strcmp(nameC, "astropy.convolution._convolve") == 0) ||
+			(strcmp(nameC, "astropy.stats._fast_sigma_clip") == 0) || 
+			(strcmp(nameC, "astropy.stats._stats") == 0)) {
+		strcpy(nameC, "astropy_all");
+	} else if ((strcmp(nameC, "qutip.cy.checks") == 0) ||
+			(strcmp(nameC, "qutip.cy.piqs") == 0) ||
+			(strcmp(nameC, "qutip.cy.ptrace") == 0) ||
+			(strcmp(nameC, "qutip.cy.cqobjevo") == 0) ||
+			(strcmp(nameC, "qutip.cy.mcsolve") == 0) ||
+			(strcmp(nameC, "qutip.cy.spmatfuncs") == 0) ||
+			(strcmp(nameC, "qutip.cy.spconvert") == 0) ||
+			(strcmp(nameC, "qutip.cy.brtools") == 0) ||
+			(strcmp(nameC, "qutip.cy.stochastic") == 0) ||
+			(strcmp(nameC, "qutip.cy.heom") == 0) ||
+			(strcmp(nameC, "qutip.cy.br_tensor") == 0) ||
+			(strcmp(nameC, "qutip.cy.interpolate") == 0) ||
+			(strcmp(nameC, "qutip.cy.brtools_checks") == 0) ||
+			(strcmp(nameC, "qutip.cy.sparse_utils") == 0) ||
+			(strcmp(nameC, "qutip.cy.inter") == 0) ||
+			(strcmp(nameC, "qutip.cy.cqobjevo_factor") == 0) ||
+			(strcmp(nameC, "qutip.cy.graph_utils") == 0) ||
+			(strcmp(nameC, "qutip.cy.math") == 0) ||
+			(strcmp(nameC, "qutip.cy.spmath") == 0) ||
+			(strcmp(nameC, "qutip.control.cy_grape") == 0)) {
+		strcpy(nameC, "qutip_all");
+	} else if ((strcmp(nameC, "scipy._lib._uarray._uarray") == 0) ||
+			(strcmp(nameC, "scipy._lib._test_ccallback") == 0) ||
+			(strcmp(nameC, "scipy._lib._ccallback_c") == 0) ||
+			(strcmp(nameC, "scipy._lib._test_deprecation_call") == 0) ||
+			(strcmp(nameC, "scipy._lib._fpumode") == 0) ||
+			(strcmp(nameC, "scipy._lib.messagestream") == 0) ||
+			(strcmp(nameC, "scipy._lib._test_deprecation_def") == 0) ||
+			(strcmp(nameC, "scipy.cluster._hierarchy") == 0) ||
+			(strcmp(nameC, "scipy.cluster._optimal_leaf_ordering") == 0) ||
+			(strcmp(nameC, "scipy.cluster._vq") == 0) ||
+			(strcmp(nameC, "scipy.fft._pocketfft.pypocketfft") == 0) ||
+			(strcmp(nameC, "scipy.fftpack.convolve") == 0) ||
+			(strcmp(nameC, "scipy.integrate._test_multivariate") == 0) ||
+			(strcmp(nameC, "scipy.interpolate._fitpack") == 0) ||
+			(strcmp(nameC, "scipy.interpolate._bspl") == 0) ||
+			(strcmp(nameC, "scipy.interpolate.interpnd") == 0) ||
+			(strcmp(nameC, "scipy.interpolate._ppoly") == 0) ||
+			(strcmp(nameC, "scipy.io.matlab.mio_utils") == 0) ||
+			(strcmp(nameC, "scipy.io.matlab.streams") == 0) ||
+			(strcmp(nameC, "scipy.io.matlab.mio5_utils") == 0) ||
+			(strcmp(nameC, "scipy.linalg._solve_toeplitz") == 0) ||
+			(strcmp(nameC, "scipy.linalg._matfuncs_sqrtm_triu") == 0) ||
+			(strcmp(nameC, "scipy.linalg._decomp_update") == 0) ||
+			(strcmp(nameC, "scipy.ndimage._ni_label") == 0) ||
+			(strcmp(nameC, "scipy.ndimage._nd_image") == 0) ||
+			(strcmp(nameC, "scipy.ndimage._ctest") == 0) ||
+			(strcmp(nameC, "scipy.ndimage._cytest") == 0) ||
+			(strcmp(nameC, "scipy.optimize.moduleTNC") == 0) ||
+			(strcmp(nameC, "scipy.optimize._lsap_module") == 0) ||
+			(strcmp(nameC, "scipy.optimize._bglu_dense") == 0) ||
+			(strcmp(nameC, "scipy.optimize._highs._highs_constants") == 0) ||
+			(strcmp(nameC, "scipy.optimize._highs._highs_wrapper") == 0) ||
+			(strcmp(nameC, "scipy.optimize._lsq.givens_elimination") == 0) ||
+			(strcmp(nameC, "scipy.optimize.cython_optimize._zeros") == 0) ||
+			(strcmp(nameC, "scipy.optimize._group_columns") == 0) ||
+			(strcmp(nameC, "scipy.signal._spectral") == 0) ||
+			(strcmp(nameC, "scipy.signal._sosfilt") == 0) ||
+			(strcmp(nameC, "scipy.signal.spline") == 0) ||
+			(strcmp(nameC, "scipy.signal._peak_finding_utils") == 0) ||
+			(strcmp(nameC, "scipy.signal.sigtools") == 0) ||
+			(strcmp(nameC, "scipy.signal._max_len_seq_inner") == 0) ||
+			(strcmp(nameC, "scipy.signal._upfirdn_apply") == 0) ||
+			(strcmp(nameC, "scipy.sparse.csgraph._min_spanning_tree") == 0) ||
+			(strcmp(nameC, "scipy.sparse.csgraph._traversal") == 0) ||
+			(strcmp(nameC, "scipy.sparse.csgraph._tools") == 0) ||
+			(strcmp(nameC, "scipy.sparse.csgraph._matching") == 0) ||
+			(strcmp(nameC, "scipy.sparse.csgraph._reordering") == 0) ||
+			(strcmp(nameC, "scipy.sparse.csgraph._flow") == 0) ||
+			(strcmp(nameC, "scipy.sparse.csgraph._shortest_path") == 0) ||
+			(strcmp(nameC, "scipy.sparse._sparsetools") == 0) ||
+			(strcmp(nameC, "scipy.sparse._csparsetools") == 0) ||
+			(strcmp(nameC, "scipy.spatial.ckdtree") == 0) ||
+			(strcmp(nameC, "scipy.spatial._hausdorff") == 0) ||
+			(strcmp(nameC, "scipy.spatial._voronoi") == 0) ||
+			(strcmp(nameC, "scipy.spatial._distance_wrap") == 0) ||
+			(strcmp(nameC, "scipy.spatial._distance_pybind") == 0) ||
+			(strcmp(nameC, "scipy.spatial.transform.rotation") == 0) ||
+			(strcmp(nameC, "scipy.special.cython_special") == 0) ||
+			(strcmp(nameC, "scipy.special._comb") == 0) ||
+			(strcmp(nameC, "scipy.special._test_round") == 0) ||
+			(strcmp(nameC, "scipy.special.specfun") == 0) ||
+			(strcmp(nameC, "scipy.stats._qmc_cy") == 0) ||
+			(strcmp(nameC, "scipy.stats._boost.binom_ufunc") == 0) ||
+			(strcmp(nameC, "scipy.stats._boost.nbinom_ufunc") == 0) ||
+			(strcmp(nameC, "scipy.stats._boost.beta_ufunc") == 0) ||
+			(strcmp(nameC, "scipy.stats._sobol") == 0) ||
+			(strcmp(nameC, "scipy.stats.biasedurn") == 0) ||
+			(strcmp(nameC, "scipy.stats._stats") == 0)) {
+		strcpy(nameC, "scipy_all");
+	} else if ((strcmp(nameC, "PIL._imagingft") == 0) ||
+			(strcmp(nameC, "PIL._imagingmath") == 0) ||
+			(strcmp(nameC, "PIL._imagingtk") == 0) ||
+			(strcmp(nameC, "PIL._imagingmorph") == 0) ||
+			(strcmp(nameC, "PIL._imaging") == 0)) {
+		strcpy(nameC, "PIL_all");
+	} else if ((strcmp(nameC, "lxml.etree") == 0) ||
+			(strcmp(nameC, "lxml.objectify") == 0) ||
+			(strcmp(nameC, "lxml.sax") == 0) ||
+			(strcmp(nameC, "lxml.html.diff") == 0) ||
+			(strcmp(nameC, "lxml.html.clean") == 0) ||
+			(strcmp(nameC, "lxml._elementpath") == 0) ||
+			(strcmp(nameC, "lxml.builder") == 0)) {
+		strcpy(nameC, "lxml_all");
+    } else if ((strcmp(nameC, "fiona.schema") == 0) ||
+			(strcmp(nameC, "fiona.ogrext") == 0) ||
+			(strcmp(nameC, "fiona._crs") == 0) ||
+			(strcmp(nameC, "fiona._err") == 0) ||
+			(strcmp(nameC, "fiona._transform") == 0) ||
+			(strcmp(nameC, "fiona._shim") == 0) ||
+			(strcmp(nameC, "fiona._geometry") == 0) ||
+			(strcmp(nameC, "fiona._env") == 0)) {
+        strcpy(nameC, "fiona_all");
+    } else if ((strcmp(nameC, "pyproj._transformer") == 0) ||
+			(strcmp(nameC, "pyproj._datadir") == 0) ||
+			(strcmp(nameC, "pyproj.list") == 0) ||
+			(strcmp(nameC, "pyproj._compat") == 0) ||
+			(strcmp(nameC, "pyproj._crs") == 0) ||
+			(strcmp(nameC, "pyproj._network") == 0) ||
+			(strcmp(nameC, "pyproj._geod") == 0) ||
+			(strcmp(nameC, "pyproj.database") == 0) ||
+			(strcmp(nameC, "pyproj._sync") == 0)) {
+		strcpy(nameC, "pyproj_all");
+	} else if ((strcmp(nameC, "rasterio._fill") == 0) ||
+			(strcmp(nameC, "rasterio.crs") == 0) ||
+			(strcmp(nameC, "rasterio._err") == 0) ||
+			(strcmp(nameC, "rasterio._warp") == 0) ||
+			(strcmp(nameC, "rasterio._transform") == 0) ||
+			(strcmp(nameC, "rasterio._example") == 0) ||
+			(strcmp(nameC, "rasterio._io") == 0) ||
+			(strcmp(nameC, "rasterio._base") == 0) ||
+			(strcmp(nameC, "rasterio.shutil") == 0) ||
+			(strcmp(nameC, "rasterio._env") == 0) ||
+			(strcmp(nameC, "rasterio._version") == 0) ||
+			(strcmp(nameC, "rasterio._filepath") == 0) ||
+			(strcmp(nameC, "rasterio._features") == 0)) {
+		strcpy(nameC, "rasterio_all");
+	}
+	wchar_t pythonName[12];
+	if (argc > 0) {
+		wcscpy(pythonName, argv_orig[0]);
+	} else {
+		fprintf(stderr, "Warning: argv is empty\n");
+        wcscpy(pythonName, L"python3_ios");
+	}
     if ((wcscmp(pythonName, L"python3") == 0) || (wcscmp(pythonName, L"python") == 0)) {
         wcscpy(pythonName, L"python3_ios");
     }
@@ -2393,6 +2625,7 @@ _imp_create_dynamic_impl(PyObject *module, PyObject *spec, PyObject *file)
     	*library = L'\0'; // terminate prefix before /Library, to get the APPDIR
 		sprintf(newPathString, "%S/Frameworks/%S-%s.framework/%S-%s", prefixCopy, pythonName, nameC, pythonName, nameC);
 	} else {
+		// If it did not work, we call getenv("APPDIR")
 		sprintf(newPathString, "%s/Frameworks/%S-%s.framework/%S-%s", getenv("APPDIR"), pythonName, nameC, pythonName, nameC);
 	}
     // fprintf(stderr, "New path: %s\n", newPathString);

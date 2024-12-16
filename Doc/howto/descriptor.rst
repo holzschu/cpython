@@ -115,9 +115,9 @@ different, updated answers each time::
     20
     >>> g.size                              # The games directory has three files
     3
-    >>> open('games/newfile').close()       # Add a fourth file to the directory
+    >>> os.remove('games/chess')            # Delete a game
     >>> g.size                              # File count is automatically updated
-    4
+    2
 
 Besides showing how descriptors can run computations, this example also
 reveals the purpose of the parameters to :meth:`__get__`.  The *self*
@@ -281,7 +281,9 @@ The new class now logs access to both *name* and *age*:
     INFO:root:Updating 'name' to 'Catherine C'
     INFO:root:Updating 'age' to 20
 
-The two *Person* instances contain only the private names::
+The two *Person* instances contain only the private names:
+
+.. doctest::
 
     >>> vars(pete)
     {'_name': 'Peter P', '_age': 10}
@@ -497,7 +499,7 @@ Definition and introduction
 
 In general, a descriptor is an attribute value that has one of the methods in
 the descriptor protocol.  Those methods are :meth:`__get__`, :meth:`__set__`,
-and :meth:`__delete__`.  If any of those methods are defined for an the
+and :meth:`__delete__`.  If any of those methods are defined for an
 attribute, it is said to be a :term:`descriptor`.
 
 The default behavior for attribute access is to get, set, or delete the
@@ -694,10 +696,14 @@ a pure Python equivalent:
     >>> b.g == b['g'] == ('getattr_hook', b, 'g')
     True
 
+Note, there is no :meth:`__getattr__` hook in the :meth:`__getattribute__`
+code.  That is why calling :meth:`__getattribute__` directly or with
+``super().__getattribute__`` will bypass :meth:`__getattr__` entirely.
 
-Interestingly, attribute lookup doesn't call :meth:`object.__getattribute__`
-directly.  Instead, both the dot operator and the :func:`getattr` function
-perform attribute lookup by way of a helper function:
+Instead, it is the dot operator and the :func:`getattr` function that are
+responsible for invoking :meth:`__getattr__` whenever :meth:`__getattribute__`
+raises an :exc:`AttributeError`.  Their logic is encapsulated in a helper
+function:
 
 .. testcode::
 
@@ -710,11 +716,37 @@ perform attribute lookup by way of a helper function:
                 raise
         return type(obj).__getattr__(obj, name)             # __getattr__
 
-So if :meth:`__getattr__` exists, it is called whenever :meth:`__getattribute__`
-raises :exc:`AttributeError` (either directly or in one of the descriptor calls).
+.. doctest::
+    :hide:
 
-Also, if a user calls :meth:`object.__getattribute__` directly, the
-:meth:`__getattr__` hook is bypassed entirely.
+
+    >>> class ClassWithGetAttr:
+    ...     x = 123
+    ...     def __getattr__(self, attr):
+    ...         return attr.upper()
+    ...
+    >>> cw = ClassWithGetAttr()
+    >>> cw.y = 456
+    >>> getattr_hook(cw, 'x')
+    123
+    >>> getattr_hook(cw, 'y')
+    456
+    >>> getattr_hook(cw, 'z')
+    'Z'
+
+    >>> class ClassWithoutGetAttr:
+    ...     x = 123
+    ...
+    >>> cwo = ClassWithoutGetAttr()
+    >>> cwo.y = 456
+    >>> getattr_hook(cwo, 'x')
+    123
+    >>> getattr_hook(cwo, 'y')
+    456
+    >>> getattr_hook(cwo, 'z')
+    Traceback (most recent call last):
+        ...
+    AttributeError: 'ClassWithoutGetAttr' object has no attribute 'z'
 
 
 Invocation from a class
@@ -919,6 +951,20 @@ The documentation shows a typical use to define a managed attribute ``x``:
         def delx(self): del self.__x
         x = property(getx, setx, delx, "I'm the 'x' property.")
 
+.. doctest::
+    :hide:
+
+    >>> C.x.__doc__
+    "I'm the 'x' property."
+    >>> c.x = 2.71828
+    >>> c.x
+    2.71828
+    >>> del c.x
+    >>> c.x
+    Traceback (most recent call last):
+      ...
+    AttributeError: 'C' object has no attribute '_C__x'
+
 To see how :func:`property` is implemented in terms of the descriptor protocol,
 here is a pure Python equivalent:
 
@@ -1054,7 +1100,7 @@ roughly equivalent to:
 .. testcode::
 
     class MethodType:
-        "Emulate Py_MethodType in Objects/classobject.c"
+        "Emulate PyMethod_Type in Objects/classobject.c"
 
         def __init__(self, func, obj):
             self.__func__ = func
@@ -1129,8 +1175,8 @@ If you have ever wondered where *self* comes from in regular methods or where
 *cls* comes from in class methods, this is it!
 
 
-Static methods
---------------
+Kinds of methods
+----------------
 
 Non-data descriptors provide a simple mechanism for variations on the usual
 patterns of binding functions into methods.
@@ -1152,6 +1198,10 @@ This chart summarizes the binding and its two most useful variants:
       +-----------------+----------------------+------------------+
       | classmethod     | f(type(obj), \*args) | f(cls, \*args)   |
       +-----------------+----------------------+------------------+
+
+
+Static methods
+--------------
 
 Static methods return the underlying function without changes.  Calling either
 ``c.f`` or ``C.f`` is the equivalent of a direct lookup into
@@ -1179,19 +1229,19 @@ example calls are unexciting:
     class E:
         @staticmethod
         def f(x):
-            print(x)
+            return x * 10
 
 .. doctest::
 
     >>> E.f(3)
-    3
+    30
     >>> E().f(3)
-    3
+    30
 
 Using the non-data descriptor protocol, a pure Python version of
 :func:`staticmethod` would look like this:
 
-.. doctest::
+.. testcode::
 
     class StaticMethod:
         "Emulate PyStaticMethod_Type() in Objects/funcobject.c"
@@ -1201,6 +1251,22 @@ Using the non-data descriptor protocol, a pure Python version of
 
         def __get__(self, obj, objtype=None):
             return self.f
+
+.. testcode::
+    :hide:
+
+    class E_sim:
+        @StaticMethod
+        def f(x):
+            return x * 10
+
+.. doctest::
+    :hide:
+
+    >>> E_sim.f(3)
+    30
+    >>> E_sim().f(3)
+    30
 
 
 Class methods
@@ -1265,7 +1331,7 @@ Using the non-data descriptor protocol, a pure Python version of
         def __get__(self, obj, cls=None):
             if cls is None:
                 cls = type(obj)
-            if hasattr(obj, '__get__'):
+            if hasattr(type(self.f), '__get__'):
                 return self.f.__get__(cls)
             return MethodType(self.f, cls)
 
@@ -1278,6 +1344,12 @@ Using the non-data descriptor protocol, a pure Python version of
         def cm(cls, x, y):
             return (cls, x, y)
 
+        @ClassMethod
+        @property
+        def __doc__(cls):
+            return f'A doc for {cls.__name__!r}'
+
+
 .. doctest::
     :hide:
 
@@ -1289,9 +1361,15 @@ Using the non-data descriptor protocol, a pure Python version of
     >>> t.cm(11, 22)
     (<class 'T'>, 11, 22)
 
-The code path for ``hasattr(obj, '__get__')`` was added in Python 3.9 and
-makes it possible for :func:`classmethod` to support chained decorators.
-For example, a classmethod and property could be chained together:
+    # Check the alternate path for chained descriptors
+    >>> T.__doc__
+    "A doc for 'T'"
+
+
+The code path for ``hasattr(type(self.f), '__get__')`` was added in
+Python 3.9 and makes it possible for :func:`classmethod` to support
+chained decorators.  For example, a classmethod and property could be
+chained together:
 
 .. testcode::
 

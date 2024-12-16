@@ -84,7 +84,11 @@ static void* _PyObject_Realloc(void *ctx, void *ptr, size_t size);
 /* bpo-35053: Declare tracemalloc configuration here rather than
    Modules/_tracemalloc.c because _tracemalloc can be compiled as dynamic
    library, whereas _Py_NewReference() requires it. */
+#if !TARGET_OS_IPHONE
 struct _PyTraceMalloc_Config _Py_tracemalloc_config = _PyTraceMalloc_Config_INIT;
+#else
+struct _PyTraceMalloc_Config __thread _Py_tracemalloc_config = _PyTraceMalloc_Config_INIT;
+#endif
 
 
 static void *
@@ -836,7 +840,7 @@ static int running_on_valgrind = -1;
 
 /*
  * Alignment of addresses returned to the user. 8-bytes alignment works
- * on most current architectures (with 32-bit or 64-bit address busses).
+ * on most current architectures (with 32-bit or 64-bit address buses).
  * The alignment value is also used for grouping small requests in size
  * classes spaced ALIGNMENT bytes apart.
  *

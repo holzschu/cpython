@@ -492,58 +492,47 @@ is_literal_char(unsigned char c)
 static PyObject *
 PyCArg_repr(PyCArgObject *self)
 {
-    char buffer[256];
     switch(self->tag) {
     case 'b':
     case 'B':
-        sprintf(buffer, "<cparam '%c' (%d)>",
+        return PyUnicode_FromFormat("<cparam '%c' (%d)>",
             self->tag, self->value.b);
-        break;
     case 'h':
     case 'H':
-        sprintf(buffer, "<cparam '%c' (%d)>",
+        return PyUnicode_FromFormat("<cparam '%c' (%d)>",
             self->tag, self->value.h);
-        break;
     case 'i':
     case 'I':
-        sprintf(buffer, "<cparam '%c' (%d)>",
+        return PyUnicode_FromFormat("<cparam '%c' (%d)>",
             self->tag, self->value.i);
-        break;
     case 'l':
     case 'L':
-        sprintf(buffer, "<cparam '%c' (%ld)>",
+        return PyUnicode_FromFormat("<cparam '%c' (%ld)>",
             self->tag, self->value.l);
-        break;
 
     case 'q':
     case 'Q':
-        sprintf(buffer,
-#ifdef MS_WIN32
-            "<cparam '%c' (%I64d)>",
-#else
-            "<cparam '%c' (%lld)>",
-#endif
+        return PyUnicode_FromFormat("<cparam '%c' (%lld)>",
             self->tag, self->value.q);
-        break;
     case 'd':
-        sprintf(buffer, "<cparam '%c' (%f)>",
-            self->tag, self->value.d);
-        break;
-    case 'f':
-        sprintf(buffer, "<cparam '%c' (%f)>",
-            self->tag, self->value.f);
-        break;
-
+    case 'f': {
+        PyObject *f = PyFloat_FromDouble((self->tag == 'f') ? self->value.f : self->value.d);
+        if (f == NULL) {
+            return NULL;
+        }
+        PyObject *result = PyUnicode_FromFormat("<cparam '%c' (%R)>", self->tag, f);
+        Py_DECREF(f);
+        return result;
+    }
     case 'c':
         if (is_literal_char((unsigned char)self->value.c)) {
-            sprintf(buffer, "<cparam '%c' ('%c')>",
+            return PyUnicode_FromFormat("<cparam '%c' ('%c')>",
                 self->tag, self->value.c);
         }
         else {
-            sprintf(buffer, "<cparam '%c' ('\\x%02x')>",
+            return PyUnicode_FromFormat("<cparam '%c' ('\\x%02x')>",
                 self->tag, (unsigned char)self->value.c);
         }
-        break;
 
 /* Hm, are these 'z' and 'Z' codes useful at all?
    Shouldn't they be replaced by the functionality of c_string
@@ -552,22 +541,20 @@ PyCArg_repr(PyCArgObject *self)
     case 'z':
     case 'Z':
     case 'P':
-        sprintf(buffer, "<cparam '%c' (%p)>",
+        return PyUnicode_FromFormat("<cparam '%c' (%p)>",
             self->tag, self->value.p);
         break;
 
     default:
         if (is_literal_char((unsigned char)self->tag)) {
-            sprintf(buffer, "<cparam '%c' at %p>",
+            return PyUnicode_FromFormat("<cparam '%c' at %p>",
                 (unsigned char)self->tag, (void *)self);
         }
         else {
-            sprintf(buffer, "<cparam 0x%02x at %p>",
+            return PyUnicode_FromFormat("<cparam 0x%02x at %p>",
                 (unsigned char)self->tag, (void *)self);
         }
-        break;
     }
-    return PyUnicode_FromString(buffer);
 }
 
 static PyMemberDef PyCArgType_members[] = {
@@ -892,7 +879,7 @@ static int _call_function_pointer(int flags,
 #      define HAVE_FFI_PREP_CIF_VAR_RUNTIME false
 #   endif
 
-    /* Even on Apple-arm64 the calling convention for variadic functions conincides
+    /* Even on Apple-arm64 the calling convention for variadic functions coincides
      * with the standard calling convention in the case that the function called
      * only with its fixed arguments.   Thus, we do not need a special flag to be
      * set on variadic functions.   We treat a function as variadic if it is called
@@ -1370,11 +1357,11 @@ _parse_voidp(PyObject *obj, void **address)
 
 #ifdef MS_WIN32
 
-static const char format_error_doc[] =
+PyDoc_STRVAR(format_error_doc,
 "FormatError([integer]) -> string\n\
 \n\
 Convert a win32 error code into a string. If the error code is not\n\
-given, the return value of a call to GetLastError() is used.\n";
+given, the return value of a call to GetLastError() is used.\n");
 static PyObject *format_error(PyObject *self, PyObject *args)
 {
     PyObject *result;
@@ -1394,13 +1381,13 @@ static PyObject *format_error(PyObject *self, PyObject *args)
     return result;
 }
 
-static const char load_library_doc[] =
+PyDoc_STRVAR(load_library_doc,
 "LoadLibrary(name, load_flags) -> handle\n\
 \n\
 Load an executable (usually a DLL), and return a handle to it.\n\
 The handle may be used to locate exported functions in this\n\
 module. load_flags are as defined for LoadLibraryEx in the\n\
-Windows API.\n";
+Windows API.\n");
 static PyObject *load_library(PyObject *self, PyObject *args)
 {
     const WCHAR *name;
@@ -1412,7 +1399,10 @@ static PyObject *load_library(PyObject *self, PyObject *args)
     if (!PyArg_ParseTuple(args, "U|i:LoadLibrary", &nameobj, &load_flags))
         return NULL;
 
+_Py_COMP_DIAG_PUSH
+_Py_COMP_DIAG_IGNORE_DEPR_DECLS
     name = _PyUnicode_AsUnicode(nameobj);
+_Py_COMP_DIAG_POP
     if (!name)
         return NULL;
 
@@ -1445,10 +1435,10 @@ static PyObject *load_library(PyObject *self, PyObject *args)
 #endif
 }
 
-static const char free_library_doc[] =
+PyDoc_STRVAR(free_library_doc,
 "FreeLibrary(handle) -> void\n\
 \n\
-Free the handle of an executable previously loaded by LoadLibrary.\n";
+Free the handle of an executable previously loaded by LoadLibrary.\n");
 static PyObject *free_library(PyObject *self, PyObject *args)
 {
     void *hMod;
@@ -1468,8 +1458,8 @@ static PyObject *free_library(PyObject *self, PyObject *args)
     Py_RETURN_NONE;
 }
 
-static const char copy_com_pointer_doc[] =
-"CopyComPointer(src, dst) -> HRESULT value\n";
+PyDoc_STRVAR(copy_com_pointer_doc,
+"CopyComPointer(src, dst) -> HRESULT value\n");
 
 static PyObject *
 copy_com_pointer(PyObject *self, PyObject *args)
@@ -1504,25 +1494,50 @@ copy_com_pointer(PyObject *self, PyObject *args)
 #if TARGET_OS_IPHONE
     extern void Py_GetArgcArgv(int *argc, wchar_t ***argv);
 #endif
+
+#ifdef __APPLE__
 #ifdef HAVE_DYLD_SHARED_CACHE_CONTAINS_PATH
+#define HAVE_DYLD_SHARED_CACHE_CONTAINS_PATH_RUNTIME \
+    __builtin_available(macOS 11.0, iOS 14.0, tvOS 14.0, watchOS 7.0, *)
+#else
+// Support the deprecated case of compiling on an older macOS version
+static void *libsystem_b_handle;
+static bool (*_dyld_shared_cache_contains_path)(const char *path);
+
+__attribute__((constructor)) void load_dyld_shared_cache_contains_path(void) {
+    libsystem_b_handle = dlopen("/usr/lib/libSystem.B.dylib", RTLD_LAZY);
+    if (libsystem_b_handle != NULL) {
+        _dyld_shared_cache_contains_path = dlsym(libsystem_b_handle, "_dyld_shared_cache_contains_path");
+    }
+}
+
+__attribute__((destructor)) void unload_dyld_shared_cache_contains_path(void) {
+    if (libsystem_b_handle != NULL) {
+        dlclose(libsystem_b_handle);
+    }
+}
+#define HAVE_DYLD_SHARED_CACHE_CONTAINS_PATH_RUNTIME \
+    _dyld_shared_cache_contains_path != NULL
+#endif
+
 static PyObject *py_dyld_shared_cache_contains_path(PyObject *self, PyObject *args)
 {
      PyObject *name, *name2;
      char *name_str;
 
-     if (__builtin_available(macOS 11.0, iOS 14.0, tvOS 14.0, watchOS 7.0, *)) {
+     if (HAVE_DYLD_SHARED_CACHE_CONTAINS_PATH_RUNTIME) {
          int r;
 
          if (!PyArg_ParseTuple(args, "O", &name))
              return NULL;
-    
+
          if (name == Py_None)
              Py_RETURN_FALSE;
-    
+
          if (PyUnicode_FSConverter(name, &name2) == 0)
              return NULL;
          name_str = PyBytes_AS_STRING(name2);
-    
+
          r = _dyld_shared_cache_contains_path(name_str);
          Py_DECREF(name2);
 
@@ -1567,7 +1582,7 @@ static PyObject *py_dl_open(PyObject *self, PyObject *args)
     // iOS: create the name of the framework from the name of the library.
     if ((name_str != NULL) && (name_str[0] != '/')) {
         char newPathString[MAXPATHLEN];
-		char prefixCopy[MAXPATHLEN]; 
+		wchar_t prefixCopy[MAXPATHLEN]; 
         int argc;
         wchar_t **argv_orig;
         Py_GetArgcArgv(&argc, &argv_orig);
@@ -1577,6 +1592,225 @@ static PyObject *py_dl_open(PyObject *self, PyObject *args)
             wcscpy(pythonName, L"python3_ios");
         }
         newPathString[0] = 0;
+		char nameC[MAXPATHLEN];
+		strcpy(nameC, name_str);
+		// New special case to reduce number of modules: all numpy modules are merged into one:
+		if ((strcmp(nameC, "numpy.core._operand_flag_tests") == 0) || 
+				(strcmp(nameC, "numpy.core._multiarray_umath") == 0) || 
+				(strcmp(nameC, "numpy.core._multiarray_tests") == 0) || 
+				(strcmp(nameC, "numpy.core._simd") == 0) || 
+				(strcmp(nameC, "numpy.linalg.lapack_lite") == 0) || 
+				(strcmp(nameC, "numpy.linalg._umath_linalg") == 0) || 
+				(strcmp(nameC, "numpy.fft._pocketfft_internal") == 0) || 
+				(strcmp(nameC, "numpy.random.bit_generator") == 0) || 
+				(strcmp(nameC, "numpy.random.mtrand") == 0) || 
+				(strcmp(nameC, "numpy.random._generator") == 0) || 
+				(strcmp(nameC, "numpy.random._pcg64") == 0) || 
+				(strcmp(nameC, "numpy.random._sfc64") == 0) || 
+				(strcmp(nameC, "numpy.random._mt19937") == 0) || 
+				(strcmp(nameC, "numpy.random._philox") == 0) || 
+				(strcmp(nameC, "numpy.random._bounded_integers") == 0) || 
+				(strcmp(nameC, "numpy.random._common") == 0)) {
+			strcpy(nameC, "numpy_all"); // The module name is "numpy_all", to avoid confusion with numpy itself
+		} else if ((strcmp(nameC, "pandas.io.sas._sas") == 0) ||
+				(strcmp(nameC, "pandas._libs.index") == 0) ||
+				(strcmp(nameC, "pandas._libs.join") == 0) ||
+				(strcmp(nameC, "pandas._libs.parsers") == 0) ||
+				(strcmp(nameC, "pandas._libs.reduction") == 0) ||
+				(strcmp(nameC, "pandas._libs.tslib") == 0) ||
+				(strcmp(nameC, "pandas._libs.sparse") == 0) ||
+				(strcmp(nameC, "pandas._libs.properties") == 0) ||
+				(strcmp(nameC, "pandas._libs.internals") == 0) ||
+				(strcmp(nameC, "pandas._libs.reshape") == 0) ||
+				(strcmp(nameC, "pandas._libs.ops") == 0) ||
+				(strcmp(nameC, "pandas._libs.indexing") == 0) ||
+				(strcmp(nameC, "pandas._libs.hashing") == 0) ||
+				(strcmp(nameC, "pandas._libs.lib") == 0) ||
+				(strcmp(nameC, "pandas._libs.hashtable") == 0) ||
+				(strcmp(nameC, "pandas._libs.algos") == 0) ||
+				(strcmp(nameC, "pandas._libs.json") == 0) ||
+				(strcmp(nameC, "pandas._libs.arrays") == 0) ||
+				(strcmp(nameC, "pandas._libs.window.indexers") == 0) ||
+				(strcmp(nameC, "pandas._libs.window.aggregations") == 0) ||
+				(strcmp(nameC, "pandas._libs.writers") == 0) ||
+				(strcmp(nameC, "pandas._libs.ops_dispatch") == 0) ||
+				(strcmp(nameC, "pandas._libs.groupby") == 0) ||
+				(strcmp(nameC, "pandas._libs.interval") == 0) ||
+				(strcmp(nameC, "pandas._libs.tslibs.dtypes") == 0) ||
+				(strcmp(nameC, "pandas._libs.tslibs.period") == 0) ||
+				(strcmp(nameC, "pandas._libs.tslibs.conversion") == 0) ||
+				(strcmp(nameC, "pandas._libs.tslibs.ccalendar") == 0) ||
+				(strcmp(nameC, "pandas._libs.tslibs.timedeltas") == 0) ||
+				(strcmp(nameC, "pandas._libs.tslibs.strptime") == 0) ||
+				(strcmp(nameC, "pandas._libs.tslibs.vectorized") == 0) ||
+				(strcmp(nameC, "pandas._libs.tslibs.nattype") == 0) ||
+				(strcmp(nameC, "pandas._libs.tslibs.base") == 0) ||
+				(strcmp(nameC, "pandas._libs.tslibs.timezones") == 0) ||
+				(strcmp(nameC, "pandas._libs.tslibs.timestamps") == 0) ||
+				(strcmp(nameC, "pandas._libs.tslibs.offsets") == 0) ||
+				(strcmp(nameC, "pandas._libs.tslibs.fields") == 0) ||
+				(strcmp(nameC, "pandas._libs.tslibs.np_datetime") == 0) ||
+				(strcmp(nameC, "pandas._libs.tslibs.parsing") == 0) ||
+				(strcmp(nameC, "pandas._libs.tslibs.tzconversion") == 0) ||
+				(strcmp(nameC, "pandas._libs.testing") == 0) ||
+				(strcmp(nameC, "pandas._libs.missing") == 0)) {
+			strcpy(nameC, "pandas_all"); // The module name is "pandas_all", to avoid confusion with pandas itself
+		} else if ((strcmp(nameC, "astropy.compiler_version") == 0) ||
+				(strcmp(nameC, "astropy.timeseries.periodograms.bls._impl") == 0) ||
+				(strcmp(nameC, "astropy.timeseries.periodograms.lombscargle.implementations.cython_impl") == 0) ||
+				(strcmp(nameC, "astropy.wcs._wcs") == 0) ||
+				(strcmp(nameC, "astropy.io.ascii.cparser") == 0) ||
+				(strcmp(nameC, "astropy.io.fits.compression") == 0) ||
+				(strcmp(nameC, "astropy.io.fits._utils") == 0) ||
+				(strcmp(nameC, "astropy.io.votable.tablewriter") == 0) ||
+				(strcmp(nameC, "astropy.utils._compiler") == 0) ||
+				(strcmp(nameC, "astropy.utils.xml._iterparser") == 0) ||
+				(strcmp(nameC, "astropy.time._parse_times") == 0) ||
+				(strcmp(nameC, "astropy.table._np_utils") == 0) ||
+				(strcmp(nameC, "astropy.table._column_mixins") == 0) ||
+				(strcmp(nameC, "astropy.cosmology.flrw.scalar_inv_efuncs") == 0) ||
+				(strcmp(nameC, "astropy.convolution._convolve") == 0) ||
+				(strcmp(nameC, "astropy.stats._fast_sigma_clip") == 0) || 
+				(strcmp(nameC, "astropy.stats._stats") == 0)) {
+			strcpy(nameC, "astropy_all");
+		} else if ((strcmp(nameC, "qutip.cy.checks") == 0) ||
+				(strcmp(nameC, "qutip.cy.piqs") == 0) ||
+				(strcmp(nameC, "qutip.cy.ptrace") == 0) ||
+				(strcmp(nameC, "qutip.cy.cqobjevo") == 0) ||
+				(strcmp(nameC, "qutip.cy.mcsolve") == 0) ||
+				(strcmp(nameC, "qutip.cy.spmatfuncs") == 0) ||
+				(strcmp(nameC, "qutip.cy.spconvert") == 0) ||
+				(strcmp(nameC, "qutip.cy.brtools") == 0) ||
+				(strcmp(nameC, "qutip.cy.stochastic") == 0) ||
+				(strcmp(nameC, "qutip.cy.heom") == 0) ||
+				(strcmp(nameC, "qutip.cy.br_tensor") == 0) ||
+				(strcmp(nameC, "qutip.cy.interpolate") == 0) ||
+				(strcmp(nameC, "qutip.cy.brtools_checks") == 0) ||
+				(strcmp(nameC, "qutip.cy.sparse_utils") == 0) ||
+				(strcmp(nameC, "qutip.cy.inter") == 0) ||
+				(strcmp(nameC, "qutip.cy.cqobjevo_factor") == 0) ||
+				(strcmp(nameC, "qutip.cy.graph_utils") == 0) ||
+				(strcmp(nameC, "qutip.cy.math") == 0) ||
+				(strcmp(nameC, "qutip.cy.spmath") == 0) ||
+				(strcmp(nameC, "qutip.control.cy_grape") == 0)) {
+			strcpy(nameC, "qutip_all");
+		} else if ((strcmp(nameC, "scipy._lib._uarray._uarray") == 0) ||
+				(strcmp(nameC, "scipy._lib._test_ccallback") == 0) ||
+				(strcmp(nameC, "scipy._lib._ccallback_c") == 0) ||
+				(strcmp(nameC, "scipy._lib._test_deprecation_call") == 0) ||
+				(strcmp(nameC, "scipy._lib._fpumode") == 0) ||
+				(strcmp(nameC, "scipy._lib.messagestream") == 0) ||
+				(strcmp(nameC, "scipy._lib._test_deprecation_def") == 0) ||
+				(strcmp(nameC, "scipy.cluster._hierarchy") == 0) ||
+				(strcmp(nameC, "scipy.cluster._optimal_leaf_ordering") == 0) ||
+				(strcmp(nameC, "scipy.cluster._vq") == 0) ||
+				(strcmp(nameC, "scipy.fft._pocketfft.pypocketfft") == 0) ||
+				(strcmp(nameC, "scipy.fftpack.convolve") == 0) ||
+				(strcmp(nameC, "scipy.integrate._test_multivariate") == 0) ||
+				(strcmp(nameC, "scipy.interpolate._fitpack") == 0) ||
+				(strcmp(nameC, "scipy.interpolate._bspl") == 0) ||
+				(strcmp(nameC, "scipy.interpolate.interpnd") == 0) ||
+				(strcmp(nameC, "scipy.interpolate._ppoly") == 0) ||
+				(strcmp(nameC, "scipy.io.matlab.mio_utils") == 0) ||
+				(strcmp(nameC, "scipy.io.matlab.streams") == 0) ||
+				(strcmp(nameC, "scipy.io.matlab.mio5_utils") == 0) ||
+				(strcmp(nameC, "scipy.linalg._solve_toeplitz") == 0) ||
+				(strcmp(nameC, "scipy.linalg._matfuncs_sqrtm_triu") == 0) ||
+				(strcmp(nameC, "scipy.linalg._decomp_update") == 0) ||
+				(strcmp(nameC, "scipy.ndimage._ni_label") == 0) ||
+				(strcmp(nameC, "scipy.ndimage._nd_image") == 0) ||
+				(strcmp(nameC, "scipy.ndimage._ctest") == 0) ||
+				(strcmp(nameC, "scipy.ndimage._cytest") == 0) ||
+				(strcmp(nameC, "scipy.optimize.moduleTNC") == 0) ||
+				(strcmp(nameC, "scipy.optimize._lsap_module") == 0) ||
+				(strcmp(nameC, "scipy.optimize._bglu_dense") == 0) ||
+				(strcmp(nameC, "scipy.optimize._highs._highs_constants") == 0) ||
+				(strcmp(nameC, "scipy.optimize._highs._highs_wrapper") == 0) ||
+				(strcmp(nameC, "scipy.optimize._lsq.givens_elimination") == 0) ||
+				(strcmp(nameC, "scipy.optimize.cython_optimize._zeros") == 0) ||
+				(strcmp(nameC, "scipy.optimize._group_columns") == 0) ||
+				(strcmp(nameC, "scipy.signal._spectral") == 0) ||
+				(strcmp(nameC, "scipy.signal._sosfilt") == 0) ||
+				(strcmp(nameC, "scipy.signal.spline") == 0) ||
+				(strcmp(nameC, "scipy.signal._peak_finding_utils") == 0) ||
+				(strcmp(nameC, "scipy.signal.sigtools") == 0) ||
+				(strcmp(nameC, "scipy.signal._max_len_seq_inner") == 0) ||
+				(strcmp(nameC, "scipy.signal._upfirdn_apply") == 0) ||
+				(strcmp(nameC, "scipy.sparse.csgraph._min_spanning_tree") == 0) ||
+				(strcmp(nameC, "scipy.sparse.csgraph._traversal") == 0) ||
+				(strcmp(nameC, "scipy.sparse.csgraph._tools") == 0) ||
+				(strcmp(nameC, "scipy.sparse.csgraph._matching") == 0) ||
+				(strcmp(nameC, "scipy.sparse.csgraph._reordering") == 0) ||
+				(strcmp(nameC, "scipy.sparse.csgraph._flow") == 0) ||
+				(strcmp(nameC, "scipy.sparse.csgraph._shortest_path") == 0) ||
+				(strcmp(nameC, "scipy.sparse._sparsetools") == 0) ||
+				(strcmp(nameC, "scipy.sparse._csparsetools") == 0) ||
+				(strcmp(nameC, "scipy.spatial.ckdtree") == 0) ||
+				(strcmp(nameC, "scipy.spatial._hausdorff") == 0) ||
+				(strcmp(nameC, "scipy.spatial._voronoi") == 0) ||
+				(strcmp(nameC, "scipy.spatial._distance_wrap") == 0) ||
+				(strcmp(nameC, "scipy.spatial._distance_pybind") == 0) ||
+				(strcmp(nameC, "scipy.spatial.transform.rotation") == 0) ||
+				(strcmp(nameC, "scipy.special.cython_special") == 0) ||
+				(strcmp(nameC, "scipy.special._comb") == 0) ||
+				(strcmp(nameC, "scipy.special._test_round") == 0) ||
+				(strcmp(nameC, "scipy.special.specfun") == 0) ||
+				(strcmp(nameC, "scipy.stats._qmc_cy") == 0) ||
+				(strcmp(nameC, "scipy.stats._boost.binom_ufunc") == 0) ||
+				(strcmp(nameC, "scipy.stats._boost.nbinom_ufunc") == 0) ||
+				(strcmp(nameC, "scipy.stats._boost.beta_ufunc") == 0) ||
+				(strcmp(nameC, "scipy.stats._sobol") == 0) ||
+				(strcmp(nameC, "scipy.stats.biasedurn") == 0) ||
+				(strcmp(nameC, "scipy.stats._stats") == 0)) {
+			strcpy(nameC, "scipy_all");
+		} else if ((strcmp(nameC, "PIL._imagingft") == 0) ||
+				(strcmp(nameC, "PIL._imagingmath") == 0) ||
+				(strcmp(nameC, "PIL._imagingtk") == 0) ||
+				(strcmp(nameC, "PIL._imagingmorph") == 0) ||
+				(strcmp(nameC, "PIL._imaging") == 0)) {
+			strcpy(nameC, "PIL_all");
+		} else if ((strcmp(nameC, "lxml.etree") == 0) ||
+				(strcmp(nameC, "lxml.objectify") == 0) ||
+				(strcmp(nameC, "lxml.sax") == 0) ||
+				(strcmp(nameC, "lxml.html.diff") == 0) ||
+				(strcmp(nameC, "lxml.html.clean") == 0) ||
+				(strcmp(nameC, "lxml._elementpath") == 0) ||
+				(strcmp(nameC, "lxml.builder") == 0)) {
+			strcpy(nameC, "lxml_all");
+		} else if ((strcmp(nameC, "fiona.schema") == 0) ||
+				(strcmp(nameC, "fiona.ogrext") == 0) ||
+				(strcmp(nameC, "fiona._crs") == 0) ||
+				(strcmp(nameC, "fiona._err") == 0) ||
+				(strcmp(nameC, "fiona._transform") == 0) ||
+				(strcmp(nameC, "fiona._shim") == 0) ||
+				(strcmp(nameC, "fiona._geometry") == 0) ||
+				(strcmp(nameC, "fiona._env") == 0)) {
+			strcpy(nameC, "fiona_all");
+		} else if ((strcmp(nameC, "pyproj._transformer") == 0) ||
+				(strcmp(nameC, "pyproj._datadir") == 0) ||
+				(strcmp(nameC, "pyproj.list") == 0) ||
+				(strcmp(nameC, "pyproj._compat") == 0) ||
+				(strcmp(nameC, "pyproj._crs") == 0) ||
+				(strcmp(nameC, "pyproj._network") == 0) ||
+				(strcmp(nameC, "pyproj._geod") == 0) ||
+				(strcmp(nameC, "pyproj.database") == 0) ||
+				(strcmp(nameC, "pyproj._sync") == 0)) {
+			strcpy(nameC, "pyproj_all");
+		} else if ((strcmp(nameC, "rasterio._fill") == 0) ||
+				(strcmp(nameC, "rasterio.crs") == 0) ||
+				(strcmp(nameC, "rasterio._err") == 0) ||
+				(strcmp(nameC, "rasterio._warp") == 0) ||
+				(strcmp(nameC, "rasterio._transform") == 0) ||
+				(strcmp(nameC, "rasterio._example") == 0) ||
+				(strcmp(nameC, "rasterio._io") == 0) ||
+				(strcmp(nameC, "rasterio._base") == 0) ||
+				(strcmp(nameC, "rasterio.shutil") == 0) ||
+				(strcmp(nameC, "rasterio._env") == 0) ||
+				(strcmp(nameC, "rasterio._version") == 0) ||
+				(strcmp(nameC, "rasterio._filepath") == 0) ||
+				(strcmp(nameC, "rasterio._features") == 0)) {
+			strcpy(nameC, "rasterio_all");
+		}
 		// The goal here is to avoid repeted calls to getenv("APPDIR") by using sys.prefix 
 		// that contains almost the same information.
 		wchar_t *prefix = Py_GetPrefix(); // sys.prefix = $APPDIR + "/Library"
@@ -1585,12 +1819,12 @@ static PyObject *py_dl_open(PyObject *self, PyObject *args)
 			wchar_t *library = wcsstr(prefixCopy, L"/Library");
 			if ((library != NULL) && (library != prefixCopy)) {
 				*library = L'\0'; // terminate prefix before /Library, to get the APPDIR
-				sprintf(newPathString, "%S/Frameworks/%S-%s.framework/%S-%s", prefixCopy, pythonName, name_str, pythonName, name_str);
+				sprintf(newPathString, "%S/Frameworks/%S-%s.framework/%S-%s", prefixCopy, pythonName, nameC, pythonName, nameC);
 			}
 		}
 		if (strlen(newPathString) == 0) {
 			// Backup solution if something failed above:
-			sprintf(newPathString, "%s/Frameworks/%S-%s.framework/%S-%s",  getenv("APPDIR"), pythonName, name_str, pythonName, name_str);
+			sprintf(newPathString, "%s/Frameworks/%S-%s.framework/%S-%s",  getenv("APPDIR"), pythonName, nameC, pythonName, nameC);
 		}
         handle = ctypes_dlopen(newPathString, mode);
     } else {
@@ -1724,10 +1958,10 @@ call_cdeclfunction(PyObject *self, PyObject *args)
 /*****************************************************************
  * functions
  */
-static const char sizeof_doc[] =
+PyDoc_STRVAR(sizeof_doc,
 "sizeof(C type) -> integer\n"
 "sizeof(C instance) -> integer\n"
-"Return the size in bytes of a C instance";
+"Return the size in bytes of a C instance");
 
 static PyObject *
 sizeof_func(PyObject *self, PyObject *obj)
@@ -1745,10 +1979,10 @@ sizeof_func(PyObject *self, PyObject *obj)
     return NULL;
 }
 
-static const char alignment_doc[] =
+PyDoc_STRVAR(alignment_doc,
 "alignment(C type) -> integer\n"
 "alignment(C instance) -> integer\n"
-"Return the alignment requirements of a C instance";
+"Return the alignment requirements of a C instance");
 
 static PyObject *
 align_func(PyObject *self, PyObject *obj)
@@ -1768,10 +2002,10 @@ align_func(PyObject *self, PyObject *obj)
     return NULL;
 }
 
-static const char byref_doc[] =
+PyDoc_STRVAR(byref_doc,
 "byref(C instance[, offset=0]) -> byref-object\n"
 "Return a pointer lookalike to a C instance, only usable\n"
-"as function argument";
+"as function argument");
 
 /*
  * We must return something which can be converted to a parameter,
@@ -1812,9 +2046,9 @@ byref(PyObject *self, PyObject *args)
     return (PyObject *)parg;
 }
 
-static const char addressof_doc[] =
+PyDoc_STRVAR(addressof_doc,
 "addressof(C instance) -> integer\n"
-"Return the address of the C instance internal buffer";
+"Return the address of the C instance internal buffer");
 
 static PyObject *
 addressof(PyObject *self, PyObject *obj)
@@ -2096,7 +2330,7 @@ PyMethodDef _ctypes_module_methods[] = {
     {"dlclose", py_dl_close, METH_VARARGS, "dlclose a library"},
     {"dlsym", py_dl_sym, METH_VARARGS, "find symbol in shared library"},
 #endif
-#ifdef HAVE_DYLD_SHARED_CACHE_CONTAINS_PATH
+#ifdef __APPLE__
      {"_dyld_shared_cache_contains_path", py_dyld_shared_cache_contains_path, METH_VARARGS, "check if path is in the shared cache"},
 #endif
     {"alignment", align_func, METH_O, alignment_doc},

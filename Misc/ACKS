@@ -138,6 +138,7 @@ Michał Bednarski
 Ian Beer
 Stefan Behnel
 Reimer Behrends
+Maxime Bélanger
 Ben Bell
 Thomas Bellman
 Alexander “Саша” Belopolsky
@@ -355,6 +356,7 @@ Mircea Cosbuc
 David Costanzo
 Scott Cotton
 Greg Couch
+FX Coudert
 David Cournapeau
 Julien Courteau
 Steve Cousins
@@ -380,7 +382,7 @@ Brian Curtin
 Jason Curtis
 Hakan Celik
 Paul Dagnelie
-Florian Dahlitz 
+Florian Dahlitz
 Lisandro Dalcin
 Darren Dale
 Andrew Dalke
@@ -388,6 +390,7 @@ Lars Damerow
 Evan Dandrea
 Eric Daniel
 Scott David Daniels
+Lawrence D'Anna
 Ben Darnell
 Kushal Das
 Jonathan Dasteel
@@ -415,6 +418,7 @@ Caleb Deveraux
 Catherine Devlin
 Scott Dial
 Alon Diamant
+Lital Natan
 Toby Dickenson
 Mark Dickinson
 Jack Diederich
@@ -662,6 +666,7 @@ Anders Hammarquist
 Mark Hammond
 Harald Hanche-Olsen
 Manus Hand
+Andreas Hangauer
 Milton L. Hankins
 Carl Bordum Hansen
 Stephen Hansen
@@ -684,6 +689,7 @@ Michael Haubenwallner
 Janko Hauser
 Flavian Hautbois
 Rycharde Hawkes
+Yahor Harunovich
 Ben Hayden
 Jochen Hayek
 Tim Heaney
@@ -712,6 +718,7 @@ Kevan Heydon
 Wouter van Heyst
 Kelsey Hightower
 Jason Hildebrand
+Ryan Hileman
 Aaron Hill
 Joel Hillacre
 Richie Hindle
@@ -720,6 +727,7 @@ David Hobley
 Tim Hochberg
 Benjamin Hodgson
 Joerg-Cyril Hoehle
+Douwe Hoekstra
 Gregor Hoffleit
 Chris Hoffman
 Tim Hoffmann
@@ -761,6 +769,7 @@ Christian Hudon
 Benoît Hudson
 Lawrence Hudson
 Michael Hudson
+Roberto Hueso Gomez
 Jim Hugunin
 Greg Humphreys
 Chris Hunt
@@ -774,6 +783,7 @@ Fredrik Håård
 Florian Höch
 Oleg Höfling
 Robert Hölzl
+Stefan Hölzl
 Catalin Iacob
 Mihai Ibanescu
 Ali Ikinci
@@ -1023,6 +1033,7 @@ Robert Li
 Xuanji Li
 Zekun Li
 Zheao Li
+Eli Libman
 Dan Lidral-Porter
 Robert van Liere
 Ross Light
@@ -1087,6 +1098,7 @@ Vincent Marchetti
 David Marek
 Doug Marien
 Sven Marnach
+John Marshall
 Alex Martelli
 Dennis Mårtensson
 Anthony Martin
@@ -1258,6 +1270,7 @@ Ethan Onstott
 Piet van Oostrum
 Tomas Oppelstrup
 Jason Orendorff
+Yan "yyyyyyyan" Orestes
 Bastien Orivel
 orlnub123
 Douglas Orr
@@ -1271,6 +1284,7 @@ Peter Otten
 Michael Otteneder
 Richard Oudkerk
 Russel Owen
+Noah Oxer
 Joonas Paalasmaa
 Martin Packman
 Shriphani Palakodety
@@ -1363,6 +1377,7 @@ Matheus Vieira Portela
 Davin Potts
 Guillaume Pratte
 Florian Preinstorfer
+Alex Prengère
 Amrit Prem
 Paul Prescod
 Donovan Preston
@@ -1429,6 +1444,7 @@ Vlad Riscutia
 Wes Rishel
 Daniel Riti
 Juan M. Bello Rivas
+Llandy Riveron Del Risco
 Mohd Sanad Zaki Rizvi
 Davide Rizzo
 Anthony Roach
@@ -1444,6 +1460,7 @@ Mark Roddy
 Kevin Rodgers
 Sean Rodman
 Giampaolo Rodola
+Dustin Rodrigues
 Mauro S. M. Rodrigues
 Elson Rodriguez
 Adi Roiban
@@ -1484,6 +1501,7 @@ Mark Russell
 Rusty Russell
 Nick Russo
 James Rutherford
+Eli Rykoff
 Chris Ryland
 Bernt Røskar Brenna
 Constantina S.
@@ -1626,6 +1644,7 @@ Evgeny Sologubov
 Cody Somerville
 Anthony Sottile
 Edoardo Spadolini
+Tom Sparrow
 Geoffrey Spear
 Clay Spence
 Stefan Sperling
@@ -1646,6 +1665,7 @@ Anthony Starks
 David Steele
 Oliver Steele
 Greg Stein
+Itai Steinherz
 Marek Stepniowski
 Baruch Sterin
 Chris Stern
@@ -1819,9 +1839,11 @@ Wojtek Walczak
 Charles Waldman
 Richard Walker
 Larry Wall
+Jacob Walls
 Kevin Walzer
 Rodrigo Steinmuller Wanderley
 Dingyuan Wang
+Jiahua Wang
 Ke Wang
 Liang-Bo Wang
 Greg Ward
@@ -1833,6 +1855,7 @@ Bob Watson
 Colin Watson
 David Watson
 Aaron Watters
+Alex Waygood
 Henrik Weber
 Leon Weber
 Steve Weber
@@ -1928,6 +1951,7 @@ Masazumi Yoshikawa
 Arnaud Ysmal
 Bernard Yue
 Moshe Zadka
+Bader Zaidan
 Elias Zamaria
 Milan Zamazal
 Artur Zaprzala

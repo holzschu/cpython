@@ -33,17 +33,23 @@ import unittest
 import numbers
 import locale
 from test.support import (run_unittest, run_doctest, is_resource_enabled,
-                          requires_IEEE_754, requires_docstrings)
-from test.support import (import_fresh_module, TestFailed,
-                          run_with_locale, cpython_only)
+                          requires_IEEE_754, requires_docstrings,
+                          import_fresh_module, TestFailed,
+                          run_with_locale, cpython_only,
+                          darwin_malloc_err_warning,
+                          check_sanitizer)
 import random
 import inspect
 import threading
 
 
+if sys.platform == 'darwin':
+    darwin_malloc_err_warning('test_decimal')
+
+
 C = import_fresh_module('decimal', fresh=['_decimal'])
 P = import_fresh_module('decimal', blocked=['_decimal'])
-orig_sys_decimal = sys.modules['decimal']
+import decimal as orig_sys_decimal
 
 # fractions module must import the correct decimal module.
 cfractions = import_fresh_module('fractions', fresh=['fractions'])
@@ -2446,6 +2452,15 @@ class CUsabilityTest(UsabilityTest):
 class PyUsabilityTest(UsabilityTest):
     decimal = P
 
+    def setUp(self):
+        super().setUp()
+        self._previous_int_limit = sys.get_int_max_str_digits()
+        sys.set_int_max_str_digits(7000)
+
+    def tearDown(self):
+        sys.set_int_max_str_digits(self._previous_int_limit)
+        super().tearDown()
+
 class PythonAPItests(unittest.TestCase):
 
     def test_abc(self):
@@ -4503,6 +4518,15 @@ class CCoverage(Coverage):
 class PyCoverage(Coverage):
     decimal = P
 
+    def setUp(self):
+        super().setUp()
+        self._previous_int_limit = sys.get_int_max_str_digits()
+        sys.set_int_max_str_digits(7000)
+
+    def tearDown(self):
+        sys.set_int_max_str_digits(self._previous_int_limit)
+        super().tearDown()
+
 class PyFunctionality(unittest.TestCase):
     """Extra functionality in decimal.py"""
 
@@ -5481,6 +5505,9 @@ class CWhitebox(unittest.TestCase):
     # Issue 41540:
     @unittest.skipIf(sys.platform.startswith("aix"),
                      "AIX: default ulimit: test is flaky because of extreme over-allocation")
+    @unittest.skipIf(check_sanitizer(address=True, memory=True),
+                     "ASAN/MSAN sanitizer defaults to crashing "
+                     "instead of returning NULL for malloc failure.")
     def test_maxcontext_exact_arith(self):
 
         # Make sure that exact operations do not raise MemoryError due

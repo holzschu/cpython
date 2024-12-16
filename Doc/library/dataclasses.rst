@@ -17,7 +17,7 @@ adding generated :term:`special method`\s such as :meth:`__init__` and
 in :pep:`557`.
 
 The member variables to use in these generated methods are defined
-using :pep:`526` type annotations.  For example this code::
+using :pep:`526` type annotations.  For example, this code::
 
   from dataclasses import dataclass
 
@@ -31,9 +31,9 @@ using :pep:`526` type annotations.  For example this code::
       def total_cost(self) -> float:
           return self.unit_price * self.quantity_on_hand
 
-Will add, among other things, a :meth:`__init__` that looks like::
+will add, among other things, a :meth:`__init__` that looks like::
 
-  def __init__(self, name: str, unit_price: float, quantity_on_hand: int=0):
+  def __init__(self, name: str, unit_price: float, quantity_on_hand: int = 0):
       self.name = name
       self.unit_price = unit_price
       self.quantity_on_hand = quantity_on_hand
@@ -52,7 +52,7 @@ Module-level decorators, classes, and functions
    :term:`special method`\s to classes, as described below.
 
    The :func:`dataclass` decorator examines the class to find
-   ``field``\s.  A ``field`` is defined as class variable that has a
+   ``field``\s.  A ``field`` is defined as a class variable that has a
    :term:`type annotation <variable annotation>`.  With two
    exceptions described below, nothing in :func:`dataclass`
    examines the type specified in the variable annotation.
@@ -62,8 +62,8 @@ Module-level decorators, classes, and functions
 
    The :func:`dataclass` decorator will add various "dunder" methods to
    the class, described below.  If any of the added methods already
-   exist on the class, the behavior depends on the parameter, as documented
-   below. The decorator returns the same class that is called on; no new
+   exist in the class, the behavior depends on the parameter, as documented
+   below. The decorator returns the same class that it is called on; no new
    class is created.
 
    If :func:`dataclass` is used just as a simple decorator with no parameters,
@@ -136,7 +136,7 @@ Module-level decorators, classes, and functions
      attribute ``__hash__ = None`` has a specific meaning to Python, as
      described in the :meth:`__hash__` documentation.
 
-     If :meth:`__hash__` is not explicit defined, or if it is set to ``None``,
+     If :meth:`__hash__` is not explicitly defined, or if it is set to ``None``,
      then :func:`dataclass` *may* add an implicit :meth:`__hash__` method.
      Although not recommended, you can force :func:`dataclass` to create a
      :meth:`__hash__` method with ``unsafe_hash=True``. This might be the case
@@ -175,7 +175,7 @@ Module-level decorators, classes, and functions
      def __init__(self, a: int, b: int = 0):
 
    :exc:`TypeError` will be raised if a field without a default value
-   follows a field with a default value.  This is true either when this
+   follows a field with a default value.  This is true whether this
    occurs in a single class, or as a result of class inheritance.
 
 .. function:: field(*, default=MISSING, default_factory=MISSING, repr=True, hash=None, init=True, compare=True, metadata=None)
@@ -287,12 +287,15 @@ Module-level decorators, classes, and functions
    Raises :exc:`TypeError` if not passed a dataclass or instance of one.
    Does not return pseudo-fields which are ``ClassVar`` or ``InitVar``.
 
-.. function:: asdict(instance, *, dict_factory=dict)
+.. function:: asdict(obj, *, dict_factory=dict)
 
-   Converts the dataclass ``instance`` to a dict (by using the
+   Converts the dataclass ``obj`` to a dict (by using the
    factory function ``dict_factory``).  Each dataclass is converted
    to a dict of its fields, as ``name: value`` pairs.  dataclasses, dicts,
-   lists, and tuples are recursed into.  For example::
+   lists, and tuples are recursed into.  Other objects are copied with
+   :func:`copy.deepcopy`.
+
+   Example of using :func:`asdict` on nested dataclasses::
 
      @dataclass
      class Point:
@@ -309,21 +312,32 @@ Module-level decorators, classes, and functions
      c = C([Point(0, 0), Point(10, 4)])
      assert asdict(c) == {'mylist': [{'x': 0, 'y': 0}, {'x': 10, 'y': 4}]}
 
-   Raises :exc:`TypeError` if ``instance`` is not a dataclass instance.
+   To create a shallow copy, the following workaround may be used::
 
-.. function:: astuple(instance, *, tuple_factory=tuple)
+     dict((field.name, getattr(obj, field.name)) for field in fields(obj))
 
-   Converts the dataclass ``instance`` to a tuple (by using the
+   :func:`asdict` raises :exc:`TypeError` if ``obj`` is not a dataclass
+   instance.
+
+.. function:: astuple(obj, *, tuple_factory=tuple)
+
+   Converts the dataclass ``obj`` to a tuple (by using the
    factory function ``tuple_factory``).  Each dataclass is converted
    to a tuple of its field values.  dataclasses, dicts, lists, and
-   tuples are recursed into.
+   tuples are recursed into. Other objects are copied with
+   :func:`copy.deepcopy`.
 
    Continuing from the previous example::
 
      assert astuple(p) == (10, 20)
      assert astuple(c) == ([(0, 0), (10, 4)],)
 
-   Raises :exc:`TypeError` if ``instance`` is not a dataclass instance.
+   To create a shallow copy, the following workaround may be used::
+
+     tuple(getattr(obj, field.name) for field in dataclasses.fields(obj))
+
+   :func:`astuple` raises :exc:`TypeError` if ``obj`` is not a dataclass
+   instance.
 
 .. function:: make_dataclass(cls_name, fields, *, bases=(), namespace=None, init=True, repr=True, eq=True, order=False, unsafe_hash=False, frozen=False)
 
@@ -359,10 +373,10 @@ Module-level decorators, classes, and functions
          def add_one(self):
              return self.x + 1
 
-.. function:: replace(instance, /, **changes)
+.. function:: replace(obj, /, **changes)
 
-   Creates a new object of the same type of ``instance``, replacing
-   fields with values from ``changes``.  If ``instance`` is not a Data
+   Creates a new object of the same type as ``obj``, replacing
+   fields with values from ``changes``.  If ``obj`` is not a Data
    Class, raises :exc:`TypeError`.  If values in ``changes`` do not
    specify fields, raises :exc:`TypeError`.
 
@@ -387,7 +401,7 @@ Module-level decorators, classes, and functions
    ``replace()`` (or similarly named) method which handles instance
    copying.
 
-.. function:: is_dataclass(class_or_instance)
+.. function:: is_dataclass(obj)
 
    Return ``True`` if its parameter is a dataclass or an instance of one,
    otherwise return ``False``.
@@ -421,6 +435,27 @@ depend on one or more other fields.  For example::
 
         def __post_init__(self):
             self.c = self.a + self.b
+
+The :meth:`__init__` method generated by :func:`dataclass` does not call base
+class :meth:`__init__` methods. If the base class has an :meth:`__init__` method
+that has to be called, it is common to call this method in a
+:meth:`__post_init__` method::
+
+    @dataclass
+    class Rectangle:
+        height: float
+        width: float
+
+    @dataclass
+    class Square(Rectangle):
+        side: float
+
+        def __post_init__(self):
+            super().__init__(self.side, self.side)
+
+Note, however, that in general the dataclass-generated :meth:`__init__` methods
+don't need to be called, since the derived dataclass will take care of
+initializing all fields of any base class that is a dataclass itself.
 
 See the section below on init-only variables for ways to pass
 parameters to :meth:`__post_init__`.  Also see the warning about how
@@ -592,4 +627,4 @@ Exceptions
 
    Raised when an implicitly defined :meth:`__setattr__` or
    :meth:`__delattr__` is called on a dataclass which was defined with
-   ``frozen=True``.
+   ``frozen=True``. It is a subclass of :exc:`AttributeError`.

@@ -309,6 +309,11 @@ subs_tvars(PyObject *obj, PyObject *params, PyObject **argitems)
     return obj;
 }
 
+PyDoc_STRVAR(genericalias_doc,
+"Represent a PEP 585 generic type\n"
+"\n"
+"E.g. for t = list[int], t.__origin__ is list and t.__args__ is (int,).");
+
 static PyObject *
 ga_getitem(PyObject *self, PyObject *item)
 {
@@ -421,6 +426,8 @@ static const char* const attr_exceptions[] = {
     "__mro_entries__",
     "__reduce_ex__",  // needed so we don't look up object.__reduce_ex__
     "__reduce__",
+    "__copy__",
+    "__deepcopy__",
     NULL,
 };
 
@@ -580,7 +587,7 @@ static PyGetSetDef ga_properties[] = {
 };
 
 /* A helper function to create GenericAlias' args tuple and set its attributes.
- * Returns 1 on success, 0 on failure. 
+ * Returns 1 on success, 0 on failure.
  */
 static inline int
 setup_ga(gaobject *alias, PyObject *origin, PyObject *args) {
@@ -618,7 +625,7 @@ ga_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
         return NULL;
     }
     if (!setup_ga(self, origin, arguments)) {
-        type->tp_free((PyObject *)self);
+        Py_DECREF(self);
         return NULL;
     }
     return (PyObject *)self;
@@ -626,14 +633,11 @@ ga_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 
 // TODO:
 // - argument clinic?
-// - __doc__?
 // - cache?
 PyTypeObject Py_GenericAliasType = {
     PyVarObject_HEAD_INIT(&PyType_Type, 0)
     .tp_name = "types.GenericAlias",
-    .tp_doc = "Represent a PEP 585 generic type\n"
-              "\n"
-              "E.g. for t = list[int], t.__origin__ is list and t.__args__ is (int,).",
+    .tp_doc = genericalias_doc,
     .tp_basicsize = sizeof(gaobject),
     .tp_dealloc = ga_dealloc,
     .tp_repr = ga_repr,
@@ -656,14 +660,14 @@ PyTypeObject Py_GenericAliasType = {
 PyObject *
 Py_GenericAlias(PyObject *origin, PyObject *args)
 {
-    gaobject *alias = PyObject_GC_New(gaobject, &Py_GenericAliasType);
+    gaobject *alias = (gaobject*) PyType_GenericAlloc(
+            (PyTypeObject *)&Py_GenericAliasType, 0);
     if (alias == NULL) {
         return NULL;
     }
     if (!setup_ga(alias, origin, args)) {
-        PyObject_GC_Del((PyObject *)alias);
+        Py_DECREF(alias);
         return NULL;
     }
-    _PyObject_GC_TRACK(alias);
     return (PyObject *)alias;
 }

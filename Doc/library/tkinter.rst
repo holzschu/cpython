@@ -11,9 +11,8 @@
 --------------
 
 The :mod:`tkinter` package ("Tk interface") is the standard Python interface to
-the Tk GUI toolkit.  Both Tk and :mod:`tkinter` are available on most Unix
-platforms, as well as on Windows systems.  (Tk itself is not part of Python; it
-is maintained at ActiveState.)
+the Tcl/Tk GUI toolkit.  Both Tk and :mod:`tkinter` are available on most Unix
+platforms, including macOS, as well as on Windows systems.
 
 Running ``python -m tkinter`` from the command line should open a window
 demonstrating a simple Tk interface, letting you know that :mod:`tkinter` is
@@ -22,81 +21,114 @@ installed, so you can read the Tcl/Tk documentation specific to that version.
 
 .. seealso::
 
-   Tkinter documentation:
+   * `TkDocs <http://tkdocs.com/>`_
+      Extensive tutorial on creating user interfaces with Tkinter.  Explains key concepts,
+      and illustrates recommended approaches using the modern API.
 
-   `Python Tkinter Resources <https://wiki.python.org/moin/TkInter>`_
-      The Python Tkinter Topic Guide provides a great deal of information on using Tk
-      from Python and links to other sources of information on Tk.
+   * `Tkinter 8.5 reference: a GUI for Python <https://www.tkdocs.com/shipman/>`_
+      Reference documentation for Tkinter 8.5 detailing available classes, methods, and options.
 
-   `TKDocs <http://www.tkdocs.com/>`_
-      Extensive tutorial plus friendlier widget pages for some of the widgets.
+   Tcl/Tk Resources:
 
-   `Tkinter 8.5 reference: a GUI for Python <https://www.tkdocs.com/shipman/>`_
-      On-line reference material.
+   * `Tk commands <https://www.tcl.tk/man/tcl8.6/TkCmd/contents.htm>`_
+      Comprehensive reference to each of the underlying Tcl/Tk commands used by Tkinter.
 
-   `Tkinter docs from effbot <http://effbot.org/tkinterbook/>`_
-      Online reference for tkinter supported by effbot.org.
+   * `Tcl/Tk Home Page <https://www.tcl.tk>`_
+      Additional documentation, and links to Tcl/Tk core development.
 
-   `Programming Python <http://learning-python.com/about-pp4e.html>`_
-      Book by Mark Lutz, has excellent coverage of Tkinter.
+   Books:
 
-   `Modern Tkinter for Busy Python Developers <https://www.amazon.com/Modern-Tkinter-Python-Developers-ebook/dp/B0071QDNLO/>`_
-      Book by Mark Roseman about building attractive and modern graphical user interfaces with Python and Tkinter.
+   * `Modern Tkinter for Busy Python Developers <https://tkdocs.com/book.html>`_
+      By Mark Roseman. (ISBN 978-1999149567)
 
-   `Python and Tkinter Programming <https://www.manning.com/books/python-and-tkinter-programming>`_
-      Book by John Grayson (ISBN 1-884777-81-3).
+   * `Python and Tkinter Programming <https://www.packtpub.com/product/python-gui-programming-with-tkinter/9781788835886>`_
+      By Alan Moore. (ISBN 978-1788835886)
 
-   Tcl/Tk documentation:
+   * `Programming Python <http://learning-python.com/about-pp4e.html>`_
+      By Mark Lutz; has excellent coverage of Tkinter. (ISBN 978-0596158101)
 
-   `Tk commands <https://www.tcl.tk/man/tcl8.6/TkCmd/contents.htm>`_
-      Most commands are available as :mod:`tkinter` or :mod:`tkinter.ttk` classes.
-      Change '8.6' to match the version of your Tcl/Tk installation.
-
-   `Tcl/Tk recent man pages <https://www.tcl.tk/doc/>`_
-      Recent Tcl/Tk manuals on www.tcl.tk.
-
-   `ActiveState Tcl Home Page <https://tcl.tk>`_
-      The Tk/Tcl development is largely taking place at ActiveState.
-
-   `Tcl and the Tk Toolkit <https://www.amazon.com/exec/obidos/ASIN/020163337X>`_
-      Book by John Ousterhout, the inventor of Tcl.
-
-   `Practical Programming in Tcl and Tk <http://www.beedub.com/book/>`_
-      Brent Welch's encyclopedic book.
+   * `Tcl and the Tk Toolkit (2nd edition)  <https://www.amazon.com/exec/obidos/ASIN/032133633X>`_
+      By John Ousterhout, inventor of Tcl/Tk, and Ken Jones; does not cover Tkinter. (ISBN 978-0321336330)
 
 
 Tkinter Modules
 ---------------
 
-Most of the time, :mod:`tkinter` is all you really need, but a number of
-additional modules are available as well.  The Tk interface is located in a
-binary module named :mod:`_tkinter`. This module contains the low-level
-interface to Tk, and should never be used directly by application programmers.
-It is usually a shared library (or DLL), but might in some cases be statically
-linked with the Python interpreter.
+Support for Tkinter is spread across several modules. Most applications will need the
+main :mod:`tkinter` module, as well as the :mod:`tkinter.ttk` module, which provides
+the modern themed widget set and API::
 
-In addition to the Tk interface module, :mod:`tkinter` includes a number of
-Python modules, :mod:`tkinter.constants` being one of the most important.
-Importing :mod:`tkinter` will automatically import :mod:`tkinter.constants`,
-so, usually, to use Tkinter all you need is a simple import statement::
-
-   import tkinter
-
-Or, more often::
 
    from tkinter import *
+   from tkinter import ttk
 
 
-.. class:: Tk(screenName=None, baseName=None, className='Tk', useTk=1)
+.. class:: Tk(screenName=None, baseName=None, className='Tk', useTk=True, sync=False, use=None)
 
-   The :class:`Tk` class is instantiated without arguments. This creates a toplevel
-   widget of Tk which usually is the main window of an application. Each instance
-   has its own associated Tcl interpreter.
+   Construct a toplevel Tk widget, which is usually the main window of an
+   application, and initialize a Tcl interpreter for this widget.  Each
+   instance has its own associated Tcl interpreter.
 
-   .. FIXME: The following keyword arguments are currently recognized:
+   The :class:`Tk` class is typically instantiated using all default values.
+   However, the following keyword arguments are currently recognized:
+
+   *screenName*
+      When given (as a string), sets the :envvar:`DISPLAY` environment
+      variable. (X11 only)
+   *baseName*
+      Name of the profile file.  By default, *baseName* is derived from the
+      program name (``sys.argv[0]``).
+   *className*
+      Name of the widget class.  Used as a profile file and also as the name
+      with which Tcl is invoked (*argv0* in *interp*).
+   *useTk*
+      If ``True``, initialize the Tk subsystem.  The :func:`tkinter.Tcl() <Tcl>`
+      function sets this to ``False``.
+   *sync*
+      If ``True``, execute all X server commands synchronously, so that errors
+      are reported immediately.  Can be used for debugging. (X11 only)
+   *use*
+      Specifies the *id* of the window in which to embed the application,
+      instead of it being created as an independent toplevel window. *id* must
+      be specified in the same way as the value for the -use option for
+      toplevel widgets (that is, it has a form like that returned by
+      :meth:`winfo_id`).
+
+      Note that on some platforms this will only work correctly if *id* refers
+      to a Tk frame or toplevel that has its -container option enabled.
+
+   :class:`Tk` reads and interprets profile files, named
+   :file:`.{className}.tcl` and :file:`.{baseName}.tcl`, into the Tcl
+   interpreter and calls :func:`exec` on the contents of
+   :file:`.{className}.py` and :file:`.{baseName}.py`.  The path for the
+   profile files is the :envvar:`HOME` environment variable or, if that
+   isn't defined, then :attr:`os.curdir`.
+
+   .. attribute:: tk
+
+      The Tk application object created by instantiating :class:`Tk`.  This
+      provides access to the Tcl interpreter.  Each widget that is attached
+      the same instance of :class:`Tk` has the same value for its :attr:`tk`
+      attribute.
+
+   .. attribute:: master
+
+      The widget object that contains this widget.  For :class:`Tk`, the
+      *master* is :const:`None` because it is the main window.  The terms
+      *master* and *parent* are similar and sometimes used interchangeably
+      as argument names; however, calling :meth:`winfo_parent` returns a
+      string of the widget name whereas :attr:`master` returns the object.
+      *parent*/*child* reflects the tree-like relationship while
+      *master*/*slave* reflects the container structure.
+
+   .. attribute:: children
+
+      The immediate descendants of this widget as a :class:`dict` with the
+      child widget names as the keys and the child instance objects as the
+      values.
 
 
-.. function:: Tcl(screenName=None, baseName=None, className='Tk', useTk=0)
+.. function:: Tcl(screenName=None, baseName=None, className='Tk', useTk=False)
 
    The :func:`Tcl` function is a factory function which creates an object much like
    that created by the :class:`Tk` class, except that it does not initialize the Tk
@@ -107,7 +139,10 @@ Or, more often::
    subsystem initialized) by calling its :meth:`loadtk` method.
 
 
-Other modules that provide Tk support include:
+The modules that provide Tk support include:
+
+:mod:`tkinter`
+   Main Tkinter module.
 
 :mod:`tkinter.colorchooser`
    Dialog to let the user choose a color.
@@ -130,9 +165,35 @@ Other modules that provide Tk support include:
 :mod:`tkinter.simpledialog`
    Basic dialogs and convenience functions.
 
+:mod:`tkinter.ttk`
+   Themed widget set introduced in Tk 8.5, providing modern alternatives
+   for many of the classic widgets in the main :mod:`tkinter` module.
+
+Additional modules:
+
+:mod:`_tkinter`
+   A binary module that contains the low-level interface to Tcl/Tk.
+   It is automatically imported by the main :mod:`tkinter` module,
+   and should never be used directly by application programmers.
+   It is usually a shared library (or DLL), but might in some cases be
+   statically linked with the Python interpreter.
+
+:mod:`idlelib`
+   Python's Integrated Development and Learning Environment (IDLE). Based
+   on :mod:`tkinter`.
+
+:mod:`tkinter.constants`
+   Symbolic constants that can be used in place of strings when passing
+   various parameters to Tkinter calls. Automatically imported by the
+   main :mod:`tkinter` module.
+
 :mod:`tkinter.dnd`
-   Drag-and-drop support for :mod:`tkinter`. This is experimental and should
-   become deprecated when it is replaced  with the Tk DND.
+   (experimental) Drag-and-drop support for :mod:`tkinter`. This will
+   become deprecated when it is replaced with the Tk DND.
+
+:mod:`tkinter.tix`
+   (deprecated) An older third-party Tcl/Tk package that adds several new
+   widgets. Better alternatives for most can be found in :mod:`tkinter.ttk`.
 
 :mod:`turtle`
    Turtle graphics in a Tk window.
@@ -639,8 +700,8 @@ callback
 
 color
    Colors can be given as the names of X colors in the rgb.txt file, or as strings
-   representing RGB values in 4 bit: ``"#RGB"``, 8 bit: ``"#RRGGBB"``, 12 bit"
-   ``"#RRRGGGBBB"``, or 16 bit ``"#RRRRGGGGBBBB"`` ranges, where R,G,B here
+   representing RGB values in 4 bit: ``"#RGB"``, 8 bit: ``"#RRGGBB"``, 12 bit:
+   ``"#RRRGGGBBB"``, or 16 bit: ``"#RRRRGGGGBBBB"`` ranges, where R,G,B here
    represent any legal hex digit.  See page 160 of Ousterhout's book for details.
 
 cursor

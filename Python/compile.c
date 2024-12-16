@@ -2324,9 +2324,8 @@ compiler_class(struct compiler *c, stmt_ty s)
     /* ultimately generate code for:
          <name> = __build_class__(<func>, <name>, *<bases>, **<keywords>)
        where:
-         <func> is a function/closure created from the class body;
-            it has a single argument (__locals__) where the dict
-            (or MutableSequence) representing the locals is passed
+         <func> is a zero arg function/closure created from the class body.
+            It mutates its locals to build the class namespace.
          <name> is the class name
          <bases> is the positional arguments and *varargs argument
          <keywords> is the keyword arguments and **kwds argument
@@ -2821,6 +2820,12 @@ compiler_async_for(struct compiler *c, stmt_ty s)
 
     /* Except block for __anext__ */
     compiler_use_next_block(c, except);
+
+    /* We don't want to trace the END_ASYNC_FOR, so make sure
+     * that it has the same lineno as the following instruction. */
+    if (asdl_seq_LEN(s->v.For.orelse)) {
+        SET_LOC(c, (stmt_ty)asdl_seq_GET(s->v.For.orelse, 0));
+    }
     ADDOP(c, END_ASYNC_FOR);
 
     /* `else` block */

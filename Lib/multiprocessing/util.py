@@ -120,7 +120,7 @@ def is_abstract_socket_namespace(address):
         return address[0] == 0
     elif isinstance(address, str):
         return address[0] == "\0"
-    raise TypeError('address type of {address!r} unrecognized')
+    raise TypeError(f'address type of {address!r} unrecognized')
 
 
 abstract_sockets_supported = _platform_supports_abstract_sockets()
@@ -448,6 +448,12 @@ def spawnv_passfds(path, args, passfds):
     import _posixsubprocess
     passfds = tuple(sorted(map(int, passfds)))
     errpipe_read, errpipe_write = os.pipe()
+    # iOS: just return fork_exec, don't close the threads.
+    if (sys.platform == 'darwin' and os.uname().machine.startswith('iP')):
+        return _posixsubprocess.fork_exec(
+            args, [os.fsencode(path)], True, passfds, None, None,
+            -1, -1, -1, -1, -1, -1, errpipe_read, errpipe_write,
+            False, False, None, None, None, -1, None)
     try:
         return _posixsubprocess.fork_exec(
             args, [os.fsencode(path)], True, passfds, None, None,
