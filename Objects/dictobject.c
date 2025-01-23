@@ -2389,11 +2389,6 @@ PyDict_GetItemWithError(PyObject *op, PyObject *key)
     Py_hash_t hash;
     PyDictObject*mp = (PyDictObject *)op;
     PyObject *value;
-#if TARGET_OS_IPHONE
-	if (op == NULL) {
-		return NULL;
-	}
-#endif
 
     if (!PyDict_Check(op)) {
         PyErr_BadInternalCall();

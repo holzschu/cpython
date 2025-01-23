@@ -73,15 +73,6 @@ elif os.name == "posix" and sys.platform in {"darwin", "ios", "tvos", "watchos"}
         possible = ['lib%s.dylib' % name,
                     '%s.dylib' % name,
                     '%s.framework/%s' % (name, name)]
-        # iOS addition: also search for pythonA-math.framework/pythonA-math and lib.framework/lib
-        if (os.uname().machine.startswith('iP')):
-            pythonName = sys.orig_argv[0]
-            if (pythonName == "python3") or (pythonName == "python"):
-                pythonName = "python3_ios"
-            home, tail = os.path.split(sys.prefix)
-            possible.append('%s/Frameworks/%s-%s.framework/%s-%s' % (home, pythonName, name, pythonName, name))
-            possible.append('%s/Frameworks/%s.framework/%s' % (home, name, name))
-            possible.append('%s/Frameworks/lib%s.framework/lib%s' % (home, name, name))
         for name in possible:
             try:
                 return _dyld_find(name)

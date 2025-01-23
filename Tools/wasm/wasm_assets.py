@@ -101,31 +101,6 @@ SYSCONFIG_NAMES = (
     "_sysconfigdata__wasi_wasm64-wasi",
 )
 
-SYSCONFIG_NAMES = (
-    "_sysconfigdata__emscripten_wasm32-emscripten",
-    "_sysconfigdata__emscripten_wasm32-emscripten",
-    "_sysconfigdata__wasi_wasm32-wasi",
-    "_sysconfigdata__wasi_wasm64-wasi",
-)
-
-
-def get_builddir(args: argparse.Namespace) -> pathlib.Path:
-    """Get builddir path from pybuilddir.txt"""
-    with open("pybuilddir.txt", encoding="utf-8") as f:
-        builddir = f.read()
-    return pathlib.Path(builddir)
-
-
-def get_sysconfigdata(args: argparse.Namespace) -> pathlib.Path:
-    """Get path to sysconfigdata relative to build root"""
-    data_name = sysconfig._get_sysconfigdata_name()
-    if not data_name.startswith(SYSCONFIG_NAMES):
-        raise ValueError(
-            f"Invalid sysconfig data name '{data_name}'.", SYSCONFIG_NAMES
-        )
-    filename = data_name + ".py"
-    return args.builddir / filename
-
 
 def get_builddir(args: argparse.Namespace) -> pathlib.Path:
     """Get builddir path from pybuilddir.txt"""

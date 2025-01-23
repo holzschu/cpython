@@ -865,59 +865,6 @@ PyTypeObject PyGen_Type = {
     _PyGen_Finalize,                            /* tp_finalize */
 };
 
-#if TARGET_OS_IPHONE
-void init_PyGen_Type() {
-    PyGen_Type.tp_name = "generator";                                /* tp_name */
-    PyGen_Type.tp_basicsize = offsetof(PyGenObject, gi_iframe) +
-    offsetof(_PyInterpreterFrame, localsplus);                        /* tp_basicsize */
-    PyGen_Type.tp_itemsize = sizeof(PyObject *);                                         /* tp_itemsize */
-    PyGen_Type.tp_dealloc = (destructor)gen_dealloc;                    /* tp_dealloc */
-    PyGen_Type.tp_vectorcall_offset = 0;                                          /* tp_vectorcall_offset */
-    PyGen_Type.tp_getattr = 0;                                          /* tp_getattr */
-    PyGen_Type.tp_setattr = 0;                                          /* tp_setattr */
-    PyGen_Type.tp_as_async = &gen_as_async;                                          /* tp_as_async */
-    PyGen_Type.tp_repr = (reprfunc)gen_repr;                         /* tp_repr */
-    PyGen_Type.tp_as_number = 0;                                          /* tp_as_number */
-    PyGen_Type.tp_as_sequence = 0;                                          /* tp_as_sequence */
-    PyGen_Type.tp_as_mapping = 0;                                          /* tp_as_mapping */
-    PyGen_Type.tp_hash = 0;                                          /* tp_hash */
-    PyGen_Type.tp_call = 0;                                          /* tp_call */
-    PyGen_Type.tp_str = 0;                                          /* tp_str */
-    PyGen_Type.tp_getattro = PyObject_GenericGetAttr;                    /* tp_getattro */
-    PyGen_Type.tp_setattro = 0;                                          /* tp_setattro */
-    PyGen_Type.tp_as_buffer = 0;                                          /* tp_as_buffer */
-    PyGen_Type.tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC;    /* tp_flags */
-    PyGen_Type.tp_doc = 0;                                          /* tp_doc */
-    PyGen_Type.tp_traverse = (traverseproc)gen_traverse;                 /* tp_traverse */
-    PyGen_Type.tp_clear = 0;                                          /* tp_clear */
-    PyGen_Type.tp_richcompare = 0;                                          /* tp_richcompare */
-    PyGen_Type.tp_weaklistoffset = offsetof(PyGenObject, gi_weakreflist);      /* tp_weaklistoffset */
-    PyGen_Type.tp_iter = PyObject_SelfIter;                          /* tp_iter */
-    PyGen_Type.tp_iternext = (iternextfunc)gen_iternext;                 /* tp_iternext */
-    PyGen_Type.tp_methods = gen_methods;                                /* tp_methods */
-    PyGen_Type.tp_members = gen_memberlist;                             /* tp_members */
-    PyGen_Type.tp_getset = gen_getsetlist;                             /* tp_getset */
-    PyGen_Type.tp_base = 0;                                          /* tp_base */
-    PyGen_Type.tp_dict = 0;                                          /* tp_dict */
-    PyGen_Type.tp_descr_get = 0;                                          /* tp_descr_get */
-    PyGen_Type.tp_descr_set = 0;                                          /* tp_descr_set */
-    PyGen_Type.tp_dictoffset = 0;                                          /* tp_dictoffset */
-    PyGen_Type.tp_init = 0;                                          /* tp_init */
-    PyGen_Type.tp_alloc = 0;                                          /* tp_alloc */
-    PyGen_Type.tp_new = 0;                                          /* tp_new */
-    PyGen_Type.tp_free = 0;                                          /* tp_free */
-    PyGen_Type.tp_is_gc = 0;                                          /* tp_is_gc */
-    PyGen_Type.tp_bases = 0;                                          /* tp_bases */
-    PyGen_Type.tp_mro = 0;                                          /* tp_mro */
-    PyGen_Type.tp_cache = 0;                                          /* tp_cache */
-    PyGen_Type.tp_subclasses = 0;                                          /* tp_subclasses */
-    PyGen_Type.tp_weaklist = 0;                                          /* tp_weaklist */
-    PyGen_Type.tp_del = 0;                                          /* tp_del */
-    PyGen_Type.tp_version_tag = 0;                                          /* tp_version_tag */
-    PyGen_Type.tp_finalize = _PyGen_Finalize;                            /* tp_finalize */
-}
-#endif
-
 static PyObject *
 make_gen(PyTypeObject *type, PyFunctionObject *func)
 {

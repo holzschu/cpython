@@ -1872,49 +1872,6 @@ static PyType_Spec deque_spec = {
     .slots = deque_slots,
 };
 
-#if TARGET_OS_IPHONE
-static void reset_deque_type() {
-	deque_type.tp_name =  "collections.deque";                /* tp_name */
-	deque_type.tp_basicsize =  sizeof(dequeobject);                /* tp_basicsize */
-	deque_type.tp_itemsize =  0;                                  /* tp_itemsize */
-	deque_type.tp_dealloc =  (destructor)deque_dealloc;          /* tp_dealloc */
-	deque_type.tp_vectorcall_offset =  0;                                  /* tp_vectorcall_offset */
-	deque_type.tp_getattr =  0;                                  /* tp_getattr */
-	deque_type.tp_setattr =  0;                                  /* tp_setattr */
-	deque_type.tp_as_async =  0;                                  /* tp_as_async */
-	deque_type.tp_repr =  deque_repr;                         /* tp_repr */
-	deque_type.tp_as_number =  0;                   /* tp_as_number */
-	deque_type.tp_as_sequence =  &deque_as_sequence;                 /* tp_as_sequence */
-	deque_type.tp_as_mapping =  0;                                  /* tp_as_mapping */
-	deque_type.tp_hash =  PyObject_HashNotImplemented;        /* tp_hash */
-	deque_type.tp_call =  0;                                  /* tp_call */
-	deque_type.tp_str =  0;                                  /* tp_str */
-	deque_type.tp_getattro =  PyObject_GenericGetAttr;            /* tp_getattro */
-	deque_type.tp_setattro =  0;                                  /* tp_setattro */
-	deque_type.tp_as_buffer =  0;                                  /* tp_as_buffer */
-	deque_type.tp_flags =  Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_HAVE_GC | Py_TPFLAGS_SEQUENCE;   /* tp_flags */
-	deque_type.tp_doc =  deque_doc;                          /* tp_doc */
-	deque_type.tp_traverse =  (traverseproc)deque_traverse;       /* tp_traverse */
-	deque_type.tp_clear =  (inquiry)deque_clear;               /* tp_clear */
-	deque_type.tp_richcompare =  (richcmpfunc)deque_richcompare;     /* tp_richcompare */
-	deque_type.tp_weaklistoffset=  offsetof(dequeobject, weakreflist); /* tp_weaklistoffset*/
-	deque_type.tp_iter =  (getiterfunc)deque_iter;            /* tp_iter */
-	deque_type.tp_iternext =  0;                                  /* tp_iternext */
-	deque_type.tp_methods =  deque_methods;                      /* tp_methods */
-	deque_type.tp_members =  0;                                  /* tp_members */
-	deque_type.tp_getset =  deque_getset;                       /* tp_getset */
-	deque_type.tp_base =  0;                                  /* tp_base */
-	deque_type.tp_dict =  0;                                  /* tp_dict */
-	deque_type.tp_descr_get =  0;                                  /* tp_descr_get */
-	deque_type.tp_descr_set =  0;                                  /* tp_descr_set */
-	deque_type.tp_dictoffset =  0;                                  /* tp_dictoffset */
-	deque_type.tp_init =  (initproc)deque_init;               /* tp_init */
-	deque_type.tp_alloc =  PyType_GenericAlloc;                /* tp_alloc */
-	deque_type.tp_new =  deque_new;                          /* tp_new */
-	deque_type.tp_free =  PyObject_GC_Del;                    /* tp_free */
-}
-#endif
-
 /*********************** Deque Iterator **************************/
 
 typedef struct {
@@ -2098,48 +2055,6 @@ static PyType_Spec dequeiter_spec = {
     .slots = dequeiter_slots,
 };
 
-#if TARGET_OS_IPHONE
-static void reset_dequeiter_type() {
-	dequeiter_type.tp_name = "_collections._deque_iterator";             /* tp_name */
-	dequeiter_type.tp_basicsize = sizeof(dequeiterobject);                    /* tp_basicsize */
-	dequeiter_type.tp_itemsize = 0;                                          /* tp_itemsize */
-	dequeiter_type.tp_dealloc = (destructor)dequeiter_dealloc;              /* tp_dealloc */
-	dequeiter_type.tp_vectorcall_offset = 0;                                          /* tp_vectorcall_offset */
-	dequeiter_type.tp_getattr = 0;                                          /* tp_getattr */
-	dequeiter_type.tp_setattr = 0;                                          /* tp_setattr */
-	dequeiter_type.tp_as_async = 0;                                          /* tp_as_async */
-	dequeiter_type.tp_repr = 0;                                          /* tp_repr */
-	dequeiter_type.tp_as_number = 0;                                          /* tp_as_number */
-	dequeiter_type.tp_as_sequence = 0;                                          /* tp_as_sequence */
-	dequeiter_type.tp_as_mapping = 0;                                          /* tp_as_mapping */
-	dequeiter_type.tp_hash = 0;                                          /* tp_hash */
-	dequeiter_type.tp_call = 0;                                          /* tp_call */
-	dequeiter_type.tp_str = 0;                                          /* tp_str */
-	dequeiter_type.tp_getattro = PyObject_GenericGetAttr;                    /* tp_getattro */
-	dequeiter_type.tp_setattro = 0;                                          /* tp_setattro */
-	dequeiter_type.tp_as_buffer = 0;                                          /* tp_as_buffer */
-	dequeiter_type.tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC;    /* tp_flags */
-	dequeiter_type.tp_doc = 0;                                          /* tp_doc */
-	dequeiter_type.tp_traverse = (traverseproc)dequeiter_traverse;           /* tp_traverse */
-	dequeiter_type.tp_clear = 0;                                          /* tp_clear */
-	dequeiter_type.tp_richcompare = 0;                                          /* tp_richcompare */
-	dequeiter_type.tp_weaklistoffset = 0;                                          /* tp_weaklistoffset */
-	dequeiter_type.tp_iter = PyObject_SelfIter;                          /* tp_iter */
-	dequeiter_type.tp_iternext = (iternextfunc)dequeiter_next;               /* tp_iternext */
-	dequeiter_type.tp_methods = dequeiter_methods;                          /* tp_methods */
-	dequeiter_type.tp_members = 0;                                          /* tp_members */
-	dequeiter_type.tp_getset = 0;                                          /* tp_getset */
-	dequeiter_type.tp_base = 0;                                          /* tp_base */
-	dequeiter_type.tp_dict = 0;                                          /* tp_dict */
-	dequeiter_type.tp_descr_get = 0;                                          /* tp_descr_get */
-	dequeiter_type.tp_descr_set = 0;                                          /* tp_descr_set */
-	dequeiter_type.tp_dictoffset = 0;                                          /* tp_dictoffset */
-	dequeiter_type.tp_init = 0;                                          /* tp_init */
-	dequeiter_type.tp_alloc = 0;                                          /* tp_alloc */
-	dequeiter_type.tp_new = dequeiter_new;                              /* tp_new */
-}
-#endif
-
 /*********************** Deque Reverse Iterator **************************/
 
 static PyObject *
@@ -2256,48 +2171,6 @@ static PyType_Spec dequereviter_spec = {
               Py_TPFLAGS_IMMUTABLETYPE),
     .slots = dequereviter_slots,
 };
-
-#if TARGET_OS_IPHONE
-static void reset_dequereviter_type() {
-	dequereviter_type.tp_name = "_collections._deque_reverse_iterator";     /* tp_name */
-	dequereviter_type.tp_basicsize = sizeof(dequeiterobject);                    /* tp_basicsize */
-	dequereviter_type.tp_itemsize = 0;                                          /* tp_itemsize */
-	dequereviter_type.tp_dealloc = (destructor)dequeiter_dealloc;              /* tp_dealloc */
-	dequereviter_type.tp_vectorcall_offset = 0;                                          /* tp_vectorcall_offset */
-	dequereviter_type.tp_getattr = 0;                                          /* tp_getattr */
-	dequereviter_type.tp_setattr = 0;                                          /* tp_setattr */
-	dequereviter_type.tp_as_async = 0;                                          /* tp_as_async */
-	dequereviter_type.tp_repr = 0;                                          /* tp_repr */
-	dequereviter_type.tp_as_number = 0;                                          /* tp_as_number */
-	dequereviter_type.tp_as_sequence = 0;                                          /* tp_as_sequence */
-	dequereviter_type.tp_as_mapping = 0;                                          /* tp_as_mapping */
-	dequereviter_type.tp_hash = 0;                                          /* tp_hash */
-	dequereviter_type.tp_call = 0;                                          /* tp_call */
-	dequereviter_type.tp_str = 0;                                          /* tp_str */
-	dequereviter_type.tp_getattro = PyObject_GenericGetAttr;                    /* tp_getattro */
-	dequereviter_type.tp_setattro = 0;                                          /* tp_setattro */
-	dequereviter_type.tp_as_buffer = 0;                                          /* tp_as_buffer */
-	dequereviter_type.tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC;    /* tp_flags */
-	dequereviter_type.tp_doc = 0;                                          /* tp_doc */
-	dequereviter_type.tp_traverse = (traverseproc)dequeiter_traverse;           /* tp_traverse */
-	dequereviter_type.tp_clear = 0;                                          /* tp_clear */
-	dequereviter_type.tp_richcompare = 0;                                          /* tp_richcompare */
-	dequereviter_type.tp_weaklistoffset = 0;                                          /* tp_weaklistoffset */
-	dequereviter_type.tp_iter = PyObject_SelfIter;                          /* tp_iter */
-	dequereviter_type.tp_iternext = (iternextfunc)dequereviter_next;            /* tp_iternext */
-	dequereviter_type.tp_methods = dequeiter_methods;                          /* tp_methods */
-	dequereviter_type.tp_members = 0;                                          /* tp_members */
-	dequereviter_type.tp_getset = 0;                                          /* tp_getset */
-	dequereviter_type.tp_base = 0;                                          /* tp_base */
-	dequereviter_type.tp_dict = 0;                                          /* tp_dict */
-	dequereviter_type.tp_descr_get = 0;                                          /* tp_descr_get */
-	dequereviter_type.tp_descr_set = 0;                                          /* tp_descr_set */
-	dequereviter_type.tp_dictoffset = 0;                                          /* tp_dictoffset */
-	dequereviter_type.tp_init = 0;                                          /* tp_init */
-	dequereviter_type.tp_alloc = 0;                                          /* tp_alloc */
-	dequereviter_type.tp_new = dequereviter_new;                           /* tp_new */
-}
-#endif
 
 /* defaultdict type *********************************************************/
 
@@ -2604,49 +2477,6 @@ static PyType_Spec defdict_spec = {
     .slots = defdict_slots,
 };
 
-#if TARGET_OS_IPHONE
-static PyTypeObject reset_defdict_type() {
-	defdict_type.tp_name = "collections.defaultdict";          /* tp_name */
-	defdict_type.tp_basicsize = sizeof(defdictobject);              /* tp_basicsize */
-	defdict_type.tp_itemsize = 0;                                  /* tp_itemsize */
-	defdict_type.tp_dealloc = (destructor)defdict_dealloc;        /* tp_dealloc */
-	defdict_type.tp_vectorcall_offset = 0;                                  /* tp_vectorcall_offset */
-	defdict_type.tp_getattr = 0;                                  /* tp_getattr */
-	defdict_type.tp_setattr = 0;                                  /* tp_setattr */
-	defdict_type.tp_as_async = 0;                                  /* tp_as_async */
-	defdict_type.tp_repr = (reprfunc)defdict_repr;             /* tp_repr */
-	defdict_type.tp_as_number = &defdict_as_number;                 /* tp_as_number */
-	defdict_type.tp_as_sequence = 0;                                  /* tp_as_sequence */
-	defdict_type.tp_as_mapping = 0;                                  /* tp_as_mapping */
-	defdict_type.tp_hash = 0;                                  /* tp_hash */
-	defdict_type.tp_call = 0;                                  /* tp_call */
-	defdict_type.tp_str = 0;                                  /* tp_str */
-	defdict_type.tp_getattro = PyObject_GenericGetAttr;            /* tp_getattro */
-	defdict_type.tp_setattro = 0;                                  /* tp_setattro */
-	defdict_type.tp_as_buffer = 0;                                  /* tp_as_buffer */
-	defdict_type.tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_HAVE_GC; /* tp_flags */
-	defdict_type.tp_doc = defdict_doc;                        /* tp_doc */
-	defdict_type.tp_traverse = defdict_traverse;                   /* tp_traverse */
-	defdict_type.tp_clear = (inquiry)defdict_tp_clear;          /* tp_clear */
-	defdict_type.tp_richcompare = 0;                                  /* tp_richcompare */
-	defdict_type.tp_weaklistoffset= 0;                                  /* tp_weaklistoffset*/
-	defdict_type.tp_iter = 0;                                  /* tp_iter */
-	defdict_type.tp_iternext = 0;                                  /* tp_iternext */
-	defdict_type.tp_methods = defdict_methods;                    /* tp_methods */
-	defdict_type.tp_members = defdict_members;                    /* tp_members */
-	defdict_type.tp_getset = 0;                                  /* tp_getset */
-	defdict_type.tp_base = DEFERRED_ADDRESS(&PyDict_Type);     /* tp_base */
-	defdict_type.tp_dict = 0;                                  /* tp_dict */
-	defdict_type.tp_descr_get = 0;                                  /* tp_descr_get */
-	defdict_type.tp_descr_set = 0;                                  /* tp_descr_set */
-	defdict_type.tp_dictoffset = 0;                                  /* tp_dictoffset */
-	defdict_type.tp_init = defdict_init;                       /* tp_init */
-	defdict_type.tp_alloc = PyType_GenericAlloc;                /* tp_alloc */
-	defdict_type.tp_new = 0;                                  /* tp_new */
-	defdict_type.tp_free = PyObject_GC_Del;                    /* tp_free */
-}
-#endif
-
 /* helper function for Counter  *********************************************/
 
 /*[clinic input]
@@ -2910,47 +2740,6 @@ static PyType_Spec tuplegetter_spec = {
     .slots = tuplegetter_slots,
 };
 
-#if TARGET_OS_IPHONE
-static void reset_tuplegetter_type() {
-	tuplegetter_type.tp_name = "_collections._tuplegetter";                /* tp_name */
-	tuplegetter_type.tp_basicsize = sizeof(_tuplegetterobject);                 /* tp_basicsize */
-	tuplegetter_type.tp_itemsize = 0;                                          /* tp_itemsize */
-	tuplegetter_type.tp_dealloc = (destructor)tuplegetter_dealloc;            /* tp_dealloc */
-	tuplegetter_type.tp_vectorcall_offset = 0;                                          /* tp_vectorcall_offset */
-	tuplegetter_type.tp_getattr = 0;                                          /* tp_getattr */
-	tuplegetter_type.tp_setattr = 0;                                          /* tp_setattr */
-	tuplegetter_type.tp_as_async = 0;                                          /* tp_as_async */
-	tuplegetter_type.tp_repr = (reprfunc)tuplegetter_repr;                 /* tp_repr */
-	tuplegetter_type.tp_as_number = 0;                                          /* tp_as_number */
-	tuplegetter_type.tp_as_sequence = 0;                                          /* tp_as_sequence */
-	tuplegetter_type.tp_as_mapping = 0;                                          /* tp_as_mapping */
-	tuplegetter_type.tp_hash = 0;                                          /* tp_hash */
-	tuplegetter_type.tp_call = 0;                                          /* tp_call */
-	tuplegetter_type.tp_str = 0;                                          /* tp_str */
-	tuplegetter_type.tp_getattro = 0;                                          /* tp_getattro */
-	tuplegetter_type.tp_setattro = 0;                                          /* tp_setattro */
-	tuplegetter_type.tp_as_buffer = 0;                                          /* tp_as_buffer */
-	tuplegetter_type.tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC;    /* tp_flags */
-	tuplegetter_type.tp_doc = 0;                                          /* tp_doc */
-	tuplegetter_type.tp_traverse = (traverseproc)tuplegetter_traverse;         /* tp_traverse */
-	tuplegetter_type.tp_clear = (inquiry)tuplegetter_clear;                 /* tp_clear */
-	tuplegetter_type.tp_richcompare = 0;                                          /* tp_richcompare */
-	tuplegetter_type.tp_weaklistoffset = 0;                                          /* tp_weaklistoffset */
-	tuplegetter_type.tp_iter = 0;                                          /* tp_iter */
-	tuplegetter_type.tp_iternext = 0;                                          /* tp_iternext */
-	tuplegetter_type.tp_methods = tuplegetter_methods;                        /* tp_methods */
-	tuplegetter_type.tp_members = tuplegetter_members;                        /* tp_members */
-	tuplegetter_type.tp_getset = 0;                                          /* tp_getset */
-	tuplegetter_type.tp_base = 0;                                          /* tp_base */
-	tuplegetter_type.tp_dict = 0;                                          /* tp_dict */
-	tuplegetter_type.tp_descr_get = tuplegetter_descr_get;                      /* tp_descr_get */
-	tuplegetter_type.tp_descr_set = tuplegetter_descr_set;                      /* tp_descr_set */
-	tuplegetter_type.tp_dictoffset = 0;                                          /* tp_dictoffset */
-	tuplegetter_type.tp_init = 0;                                          /* tp_init */
-	tuplegetter_type.tp_alloc = 0;                                          /* tp_alloc */
-	tuplegetter_type.tp_new = tuplegetter_new;                            /* tp_new */
-}
-#endif
 
 /* module level code ********************************************************/
 
@@ -3046,12 +2835,5 @@ static struct PyModuleDef _collectionsmodule = {
 PyMODINIT_FUNC
 PyInit__collections(void)
 {
-#if TARGET_OS_IPHONE
-	reset_deque_type();
-	reset_dequeiter_type();
-	reset_dequereviter_type();
-	reset_defdict_type();
-	reset_tuplegetter_type();
-#endif
     return PyModuleDef_Init(&_collectionsmodule);
 }

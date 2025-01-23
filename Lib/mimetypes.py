@@ -45,21 +45,17 @@ __all__ = [
     "suffix_map", "encodings_map", "types_map", "common_types"
 ]
 
-# This fixes an issue when running on the Arm macs with iPad compatibility mode. No change on iOS (all these files are unreadable anyway)
-if (sys.platform == "darwin"):
-    knownfiles = []
-else:
-    knownfiles = [
-            "/etc/mime.types",
-            "/etc/httpd/mime.types",                    # Mac OS X
-            "/etc/httpd/conf/mime.types",               # Apache
-            "/etc/apache/mime.types",                   # Apache 1
-            "/etc/apache2/mime.types",                  # Apache 2
-            "/usr/local/etc/httpd/conf/mime.types",
-            "/usr/local/lib/netscape/mime.types",
-            "/usr/local/etc/httpd/conf/mime.types",     # Apache 1.2
-            "/usr/local/etc/mime.types",                # Apache 1.3
-            ]
+knownfiles = [
+    "/etc/mime.types",
+    "/etc/httpd/mime.types",                    # Mac OS X
+    "/etc/httpd/conf/mime.types",               # Apache
+    "/etc/apache/mime.types",                   # Apache 1
+    "/etc/apache2/mime.types",                  # Apache 2
+    "/usr/local/etc/httpd/conf/mime.types",
+    "/usr/local/lib/netscape/mime.types",
+    "/usr/local/etc/httpd/conf/mime.types",     # Apache 1.2
+    "/usr/local/etc/mime.types",                # Apache 1.3
+    ]
 
 inited = False
 _db = None

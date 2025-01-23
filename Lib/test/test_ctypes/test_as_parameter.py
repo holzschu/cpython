@@ -125,7 +125,6 @@ class BasicWrapTestCase(unittest.TestCase):
         result = f(self.wrap(-10), self.wrap(cb))
         self.assertEqual(result, -18)
 
-    @need_symbol('c_longlong')
     def test_longlong_callbacks(self):
         f = dll._testfunc_callback_q_qf
         f.restype = c_longlong

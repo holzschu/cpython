@@ -578,38 +578,6 @@ def test_assert_unicode():
         raise RuntimeError("Expected sys.audit(9) to fail.")
 
 
-def test_sys_getframe():
-    import sys
-
-    def hook(event, args):
-        if event.startswith("sys."):
-            print(event, args[0].f_code.co_name)
-
-    sys.addaudithook(hook)
-    sys._getframe()
-
-
-def test_syslog():
-    import syslog
-
-    def hook(event, args):
-        if event.startswith("syslog."):
-            print(event, *args)
-
-    sys.addaudithook(hook)
-    syslog.openlog('python')
-    syslog.syslog('test')
-    syslog.setlogmask(syslog.LOG_DEBUG)
-    syslog.closelog()
-    # implicit open
-    syslog.syslog('test2')
-    # open with default ident
-    syslog.openlog(logoption=syslog.LOG_NDELAY, facility=syslog.LOG_LOCAL0)
-    sys.argv = None
-    syslog.openlog()
-    syslog.closelog()
-
-
 if __name__ == "__main__":
     from test.support import suppress_msvcrt_asserts
 

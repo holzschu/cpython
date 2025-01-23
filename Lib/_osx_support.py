@@ -76,10 +76,6 @@ def _read_output(commandstring, capture_stderr=False):
 
 def _find_build_tool(toolname):
     """Find a build tool on current path or using xcrun"""
-    # iOS: xcrun is not installed, some binaries have no PATH: 
-    if (sys.platform == 'darwin' and os.uname().machine.startswith('iP')):
-        return (_find_executable(toolname) or toolname)
-    
     return (_find_executable(toolname)
                 or _read_output("/usr/bin/xcrun -find %s" % (toolname,))
                 or ''
@@ -195,10 +191,6 @@ def _supports_arm64_builds():
     # 1. macOS 11 and later, unconditionally
     # 2. macOS 10.15 with Xcode 12.2 or later
     # For now the second category is ignored.
-    # The lines above come from Apple engineers. They forgot: 
-    # 3. iPhoneOS / iPadOS (while cross-compiling).
-    if (sys.platform == 'darwin' and os.uname().machine.startswith('iP')):
-        return True
     osx_version = _get_system_version_tuple()
     return osx_version >= (11, 0) if osx_version else False
 

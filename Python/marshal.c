@@ -1550,11 +1550,7 @@ read_object(RFILE *p)
 {
     PyObject *v;
     if (PyErr_Occurred()) {
-#if !TARGET_OS_IPHONE
         fprintf(stderr, "XXX readobject called with exception set\n");
-#else
-        fprintf(thread_stderr, "XXX readobject called with exception set\n");
-#endif
         return NULL;
     }
     if (p->ptr && p->end) {

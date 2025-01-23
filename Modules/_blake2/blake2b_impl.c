@@ -409,7 +409,6 @@ static PyType_Slot blake2b_type_slots[] = {
     {0,0}
 };
 
-
 PyType_Spec blake2b_type_spec = {
     .name = "_blake2.blake2b",
     .basicsize =  sizeof(BLAKE2bObject),
