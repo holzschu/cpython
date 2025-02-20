@@ -1,7 +1,0 @@
-*.pyc
-*.egg-info
-/build
-/dist
-.DS_Store
-/.tox
-__pycache__

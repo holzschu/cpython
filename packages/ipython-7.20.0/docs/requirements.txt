@@ -1,7 +1,0 @@
--e .
-ipykernel
-setuptools>=18.5
-sphinx
-sphinx-rtd-theme
-docrepr
-matplotlib

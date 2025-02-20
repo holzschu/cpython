@@ -2,12 +2,12 @@ import sys, os, platform
 import subprocess
 import errno
 
-# on Windows we give up and always import setuptools early to fix things for us
-if sys.platform == "win32":
-    import setuptools
+# the setuptools distutils shim should make distutils available, but this will definitely do
+# it, since setuptools is now required at build-time
+import setuptools
 
 
-sources = ['c/_cffi_backend.c']
+sources = ['src/c/_cffi_backend.c']
 libraries = ['ffi']
 include_dirs = ['/usr/include/ffi',
                 '/usr/include/libffi']    # may be changed by pkg-config
@@ -125,10 +125,10 @@ def use_homebrew_for_libffi():
 
 if sys.platform == "win32" and uses_msvc():
     if platform.machine() == "ARM64":
-        include_dirs.append(os.path.join("c/libffi_arm64/include"))
-        library_dirs.append(os.path.join("c/libffi_arm64"))
+        include_dirs.append(os.path.join("src/c/libffi_arm64/include"))
+        library_dirs.append(os.path.join("src/c/libffi_arm64"))
     else:
-        COMPILE_LIBFFI = 'c/libffi_x86_x64'    # from the CPython distribution
+        COMPILE_LIBFFI = 'src/c/libffi_x86_x64'    # from the CPython distribution
         assert os.path.isdir(COMPILE_LIBFFI), "directory not found!"
         include_dirs[:] = [COMPILE_LIBFFI]
         libraries[:] = []
@@ -149,12 +149,11 @@ else:
     ask_supports_sync_synchronize()
 
 if 'darwin' in sys.platform:
-    # Code to include sysroot ffi headers, not available for iOS
     # priority is given to `pkg_config`, but always fall back on SDK's libffi.
-    platform = os.getenv('PLATFORM') or 'macosx'
-    if not platform.startswith('ip'):
-        extra_compile_args += ['-iwithsysroot/usr/include/ffi']
-    else:
+    extra_compile_args += ['-iwithsysroot/usr/include/ffi']
+
+    # Code to include sysroot ffi headers, not available in the default SDK for iOS
+if 'ios' in sys.platform:
         prefix = os.getenv('PREFIX') or '../../'
         include_dirs = [prefix + '/Frameworks_' + platform + '/include/ffi']
 
@@ -182,6 +181,10 @@ if __name__ == '__main__':
     # arguments mostly empty in this case.
     cpython = ('_cffi_backend' not in sys.builtin_module_names)
 
+    install_requires = []
+    if cpython:
+        install_requires.append('pycparser')
+
     setup(
         name='cffi',
         description='Foreign Function Interface for Python calling C code.',
@@ -197,8 +200,10 @@ Contact
 
 `Mailing list <https://groups.google.com/forum/#!forum/python-cffi>`_
 """,
-        version='1.15.1',
+        version='1.17.1',
+        python_requires='>=3.8',
         packages=['cffi'] if cpython else [],
+        package_dir={"": "src"},
         package_data={'cffi': ['_cffi_include.h', 'parse_c_type.h', 
                                '_embedding.h', '_cffi_errors.h']}
                      if cpython else {},
@@ -223,9 +228,7 @@ Contact
             extra_objects=forced_extra_objs,
         )] if cpython else [],
 
-        install_requires=[
-            'pycparser' if sys.version_info >= (2, 7) else 'pycparser<2.19',
-        ] if cpython else [],
+        install_requires=install_requires,
 
         entry_points = {
             "distutils.setup_keywords": [
@@ -235,14 +238,13 @@ Contact
 
         classifiers=[
             'Programming Language :: Python',
-            'Programming Language :: Python :: 2',
-            'Programming Language :: Python :: 2.7',
             'Programming Language :: Python :: 3',
-            'Programming Language :: Python :: 3.6',
-            'Programming Language :: Python :: 3.7',
             'Programming Language :: Python :: 3.8',
             'Programming Language :: Python :: 3.9',
             'Programming Language :: Python :: 3.10',
+            'Programming Language :: Python :: 3.11',
+            'Programming Language :: Python :: 3.12',
+            'Programming Language :: Python :: 3.13',
             'Programming Language :: Python :: Implementation :: CPython',
             'Programming Language :: Python :: Implementation :: PyPy',
             'License :: OSI Approved :: MIT License',
