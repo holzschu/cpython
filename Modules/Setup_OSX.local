@@ -1,0 +1,2 @@
+# Edit this file for local setup changes
+# OSX: no pre-embedded modules because it doesn't compile when bootstrapping
