@@ -51,7 +51,11 @@ typedef struct _Py_Identifier {
 // in non-builtin extensions (and naughty PyPI modules).
 
 #define _Py_static_string_init(value) { .string = (value), .index = -1 }
+#if !TARGET_OS_IPHONE
 #define _Py_static_string(varname, value)  static _Py_Identifier varname = _Py_static_string_init(value)
+#else
+#define _Py_static_string(varname, value)  static __thread _Py_Identifier varname = _Py_static_string_init(value)
+#endif
 #define _Py_IDENTIFIER(varname) _Py_static_string(PyId_##varname, #varname)
 
 #endif /* !Py_BUILD_CORE */

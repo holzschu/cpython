@@ -115,7 +115,11 @@ static void print_subinterp(void)
     int64_t id = PyInterpreterState_GetID(interp);
     printf("interp %" PRId64 " <0x%" PRIXPTR ">, thread state <0x%" PRIXPTR ">: ",
             id, (uintptr_t)interp, (uintptr_t)ts);
+#if !TARGET_OS_IPHONE
     fflush(stdout);
+#else
+    fflush(thread_stdout);
+#endif
     PyRun_SimpleString(
         "import sys;"
         "print('id(modules) =', id(sys.modules));"
@@ -241,7 +245,11 @@ static void check_stdio_details(const wchar_t *encoding, const wchar_t *errors)
     } else {
         printf("Expected errors: default\n");
     }
+#if !TARGET_OS_IPHONE
     fflush(stdout);
+#else
+    fflush(thread_stdout);
+#endif
 
     PyConfig config;
     _PyConfig_InitCompatConfig(&config);
@@ -292,8 +300,13 @@ static int test_forced_io_encoding(void)
 /* The pre-initialization tests tend to break by segfaulting, so explicitly
  * flushed progress messages make the broken API easier to find when they fail.
  */
+#if !TARGET_OS_IPHONE
 #define _Py_EMBED_PREINIT_CHECK(msg) \
     do {printf(msg); fflush(stdout);} while (0);
+#else
+#define _Py_EMBED_PREINIT_CHECK(msg) \
+    do {printf(msg); fflush(thread_stdout);} while (0);
+#endif
 
 static int test_pre_initialization_api(void)
 {
@@ -304,7 +317,11 @@ static int test_pre_initialization_api(void)
     _Py_EMBED_PREINIT_CHECK("Checking Py_DecodeLocale\n");
     wchar_t *program = Py_DecodeLocale("./spam", NULL);
     if (program == NULL) {
+#if !TARGET_OS_IPHONE
         fprintf(stderr, "Fatal error: cannot decode program name\n");
+#else
+        fprintf(thread_stderr, "Fatal error: cannot decode program name\n");
+#endif
         return 1;
     }
     _Py_EMBED_PREINIT_CHECK("Checking Py_SetProgramName\n");

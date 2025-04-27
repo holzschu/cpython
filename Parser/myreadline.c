@@ -306,10 +306,17 @@ PyOS_StdioReadline(FILE *sys_stdin, FILE *sys_stdout, const char *prompt)
 #endif
 
     fflush(sys_stdout);
+#if !TARGET_OS_IPHONE
     if (prompt) {
         fprintf(stderr, "%s", prompt);
     }
     fflush(stderr);
+#else
+    if (prompt) {
+        fprintf(thread_stderr, "%s", prompt);
+    }
+    fflush(thread_stderr);
+#endif
 
     n = 0;
     p = NULL;
@@ -406,9 +413,21 @@ PyOS_Readline(FILE *sys_stdin, FILE *sys_stdout, const char *prompt)
         // hope that nobody actually cares):
         !_Py_IsMainInterpreter(tstate->interp))
     {
+#if TARGET_OS_IPHONE
+        if (fileno(sys_stdin) == STDIN_FILENO)
+            sys_stdin = thread_stdin;
+        if (fileno(sys_stdout) == STDOUT_FILENO)
+            sys_stdout = thread_stdout;
+#endif
         rv = PyOS_StdioReadline(sys_stdin, sys_stdout, prompt);
     }
     else {
+#if TARGET_OS_IPHONE
+        if (fileno(sys_stdin) == STDIN_FILENO)
+            sys_stdin = thread_stdin;
+        if (fileno(sys_stdout) == STDOUT_FILENO)
+            sys_stdout = thread_stdout;
+#endif
         rv = (*PyOS_ReadlineFunctionPointer)(sys_stdin, sys_stdout, prompt);
     }
 
