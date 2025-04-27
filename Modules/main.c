@@ -90,7 +90,11 @@ static inline int config_run_code(const PyConfig *config)
 static int
 stdin_is_interactive(const PyConfig *config)
 {
+#if !TARGET_OS_IPHONE
     return (isatty(fileno(stdin)) || config->interactive);
+#else
+    return (ios_isatty(fileno(stdin)) || config->interactive);
+#endif
 }
 
 
@@ -190,9 +194,18 @@ pymain_header(const PyConfig *config)
         return;
     }
 
+#if !TARGET_OS_IPHONE
     fprintf(stderr, "Python %s on %s\n", Py_GetVersion(), Py_GetPlatform());
+#else
+    fprintf(thread_stderr, "Python %s on %s\n", Py_GetVersion(), Py_GetPlatform());
+#endif
     if (config->site_import) {
+#if !TARGET_OS_IPHONE
         fprintf(stderr, "%s\n", COPYRIGHT);
+#else
+        fprintf(thread_stderr, "%s\n", COPYRIGHT);
+        fflush(thread_stderr);
+#endif
     }
 }
 
@@ -206,7 +219,11 @@ pymain_import_readline(const PyConfig *config)
     if (!config->inspect && config_run_code(config)) {
         return;
     }
+#if !TARGET_OS_IPHONE
     if (!isatty(fileno(stdin))) {
+#else
+    if (!ios_isatty(fileno(thread_stdin))) {
+#endif
         return;
     }
 
@@ -320,25 +337,41 @@ pymain_run_module(const wchar_t *modname, int set_argv0)
     }
     runpy = PyImport_ImportModule("runpy");
     if (runpy == NULL) {
+#if !TARGET_OS_IPHONE
         fprintf(stderr, "Could not import runpy module\n");
+#else 
+        fprintf(thread_stderr, "Could not import runpy module\n");
+#endif
         return pymain_exit_err_print();
     }
     runmodule = PyObject_GetAttrString(runpy, "_run_module_as_main");
     if (runmodule == NULL) {
+#if !TARGET_OS_IPHONE
         fprintf(stderr, "Could not access runpy._run_module_as_main\n");
+#else
+        fprintf(thread_stderr, "Could not access runpy._run_module_as_main\n");
+#endif
         Py_DECREF(runpy);
         return pymain_exit_err_print();
     }
     module = PyUnicode_FromWideChar(modname, wcslen(modname));
     if (module == NULL) {
+#if !TARGET_OS_IPHONE
         fprintf(stderr, "Could not convert module name to unicode\n");
+#else
+        fprintf(thread_stderr, "Could not convert module name to unicode\n");
+#endif
         Py_DECREF(runpy);
         Py_DECREF(runmodule);
         return pymain_exit_err_print();
     }
     runargs = PyTuple_Pack(2, module, set_argv0 ? Py_True : Py_False);
     if (runargs == NULL) {
+#if !TARGET_OS_IPHONE
         fprintf(stderr,
+#else
+        fprintf(thread_stderr,
+#endif 
             "Could not create arguments for runpy._run_module_as_main\n");
         Py_DECREF(runpy);
         Py_DECREF(runmodule);
@@ -565,10 +598,18 @@ pymain_run_stdin(PyConfig *config)
         return pymain_exit_err_print();
     }
 
+#if !TARGET_OS_IPHONE
     if (!isatty(fileno(stdin))
+#else
+    if (!ios_isatty(fileno(stdin))
+#endif
         || _Py_GetEnv(config->use_environment, "PYTHON_BASIC_REPL")) {
         PyCompilerFlags cf = _PyCompilerFlags_INIT;
+#if !TARGET_OS_IPHONE
         int run = PyRun_AnyFileExFlags(stdin, "<stdin>", 0, &cf);
+#else
+        int run = PyRun_AnyFileExFlags(thread_stdin, "<stdin>", 0, &cf);
+#endif
         return (run != 0);
     }
     int run = pymain_run_module(L"_pyrepl", 0);
@@ -598,10 +639,18 @@ pymain_repl(PyConfig *config, int *exitcode)
         return;
     }
 
+#if !TARGET_OS_IPHONE
     if (!isatty(fileno(stdin))
+#else
+    if (!ios_isatty(fileno(stdin))
+#endif
         || _Py_GetEnv(config->use_environment, "PYTHON_BASIC_REPL")) {
         PyCompilerFlags cf = _PyCompilerFlags_INIT;
+#if !TARGET_OS_IPHONE
         int run = PyRun_AnyFileExFlags(stdin, "<stdin>", 0, &cf);
+#else
+        int run = PyRun_AnyFileExFlags(thread_stdin, "<stdin>", 0, &cf);
+#endif
         *exitcode = (run != 0);
         return;
     }

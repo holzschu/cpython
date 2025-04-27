@@ -283,7 +283,11 @@ faulthandler_disable_fatal_handler(fault_handler_t *handler)
 static void
 faulthandler_fatal_error(int signum)
 {
+#if !TARGET_OS_IPHONE
     const int fd = fatal_error.fd;
+#else
+	const int fd = fileno(thread_stderr);
+#endif
     size_t i;
     fault_handler_t *handler = NULL;
     int save_errno = errno;

@@ -246,6 +246,11 @@ meth_get__qualname__(PyCFunctionObject *m, void *closure)
 static int
 meth_traverse(PyCFunctionObject *m, visitproc visit, void *arg)
 {
+#if TARGET_OS_IPHONE
+	// iOS: module cleanup in PyImport_Cleanup has left some modules with negative ref counts.
+    if ((m->m_self != NULL) && (m->m_self->ob_refcnt < 0)) m->m_self = NULL;
+    if ((m->m_module != NULL) && (m->m_module->ob_refcnt < 0)) m->m_module = NULL;
+#endif
     Py_VISIT(PyCFunction_GET_CLASS(m));
     Py_VISIT(m->m_self);
     Py_VISIT(m->m_module);

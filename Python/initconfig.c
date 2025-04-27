@@ -2327,6 +2327,7 @@ config_read(PyConfig *config, int compute_path_config)
 }
 
 
+#if !TARGET_OS_IPHONE
 static void
 config_init_stdio(const PyConfig *config)
 {
@@ -2362,7 +2363,43 @@ config_init_stdio(const PyConfig *config)
         /* Leave stderr alone - it should be unbuffered anyway. */
     }
 }
+#else // TARGET_OS_IPHONE
+static void
+config_init_stdio(const PyConfig *config)
+{
+#if defined(MS_WINDOWS) || defined(__CYGWIN__)
+    /* don't translate newlines (\r\n <=> \n) */
+    _setmode(fileno(thread_stdin), O_BINARY);
+    _setmode(fileno(thread_stdout), O_BINARY);
+    _setmode(fileno(thread_stderr), O_BINARY);
+#endif
 
+    if (!config->buffered_stdio) {
+#ifdef HAVE_SETVBUF
+        setvbuf(thread_stdin,  (char *)NULL, _IONBF, BUFSIZ);
+        setvbuf(thread_stdout, (char *)NULL, _IONBF, BUFSIZ);
+        setvbuf(thread_stderr, (char *)NULL, _IONBF, BUFSIZ);
+#else /* !HAVE_SETVBUF */
+        setbuf(thread_stdin,  (char *)NULL);
+        setbuf(thread_stdout, (char *)NULL);
+        setbuf(thread_stderr, (char *)NULL);
+#endif /* !HAVE_SETVBUF */
+    }
+    else if (config->interactive) {
+#ifdef MS_WINDOWS
+        /* Doesn't have to have line-buffered -- use unbuffered */
+        /* Any set[v]buf(thread_stdin, ...) screws up Tkinter :-( */
+        setvbuf(thread_stdout, (char *)NULL, _IONBF, BUFSIZ);
+#else /* !MS_WINDOWS */
+#ifdef HAVE_SETVBUF
+        setvbuf(thread_stdin,  (char *)NULL, _IOLBF, BUFSIZ);
+        setvbuf(thread_stdout, (char *)NULL, _IOLBF, BUFSIZ);
+#endif /* HAVE_SETVBUF */
+#endif /* !MS_WINDOWS */
+        /* Leave stderr alone - it should be unbuffered anyway. */
+    }
+}
+#endif
 
 /* Write the configuration:
 
@@ -2404,7 +2441,11 @@ _PyConfig_Write(const PyConfig *config, _PyRuntimeState *runtime)
 static void
 config_usage(int error, const wchar_t* program)
 {
+#if !TARGET_OS_IPHONE
     FILE *f = error ? stderr : stdout;
+#else
+    FILE *f = error ? thread_stderr : thread_stdout;
+#endif
 
     fprintf(f, usage_line, program);
     if (error)
@@ -2503,7 +2544,11 @@ config_parse_cmdline(PyConfig *config, PyWideStringList *warnoptions,
                     return status;
                 }
             } else {
+#if !TARGET_OS_IPHONE
                 fprintf(stderr, "--check-hash-based-pycs must be one of "
+#else
+                fprintf(thread_stderr, "--check-hash-based-pycs must be one of "
+#endif
                         "'default', 'always', or 'never'\n");
                 config_usage(1, program);
                 return _PyStatus_EXIT(2);

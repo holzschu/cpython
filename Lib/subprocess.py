@@ -75,7 +75,9 @@ else:
     _mswindows = True
 
 # some platforms do not support subprocesses
-_can_fork_exec = sys.platform not in {"emscripten", "wasi", "ios", "tvos", "watchos"}
+# _can_fork_exec = sys.platform not in {"emscripten", "wasi", "ios", "tvos", "watchos"}
+# iOS can fork with a-Shell / Carnets:
+_can_fork_exec = sys.platform not in {"emscripten", "wasi", "tvos", "watchos"}
 
 if _mswindows:
     import _winapi
@@ -715,9 +717,10 @@ def _use_posix_spawn():
         # os.posix_spawn() is not available
         return False
 
-    if sys.platform in ('darwin', 'sunos5'):
+    if sys.platform in ('darwin', 'ios', 'sunos5'):
         # posix_spawn() is a syscall on both macOS and Solaris,
         # and properly reports errors
+        # on iOS, it works better than fork+exec
         return True
 
     # Check libc name and runtime libc version
@@ -1131,6 +1134,9 @@ class Popen:
         if not self._child_created:
             # We didn't get to successfully create a child process.
             return
+        # iOS: we're done
+        if (sys.platform == 'ios'):
+            return;
         if self.returncode is None:
             # Not reading subprocess exit status creates a zombie process which
             # is only destroyed at the parent python process exit
@@ -1904,6 +1910,10 @@ class Popen:
                             process_group, gid, gids, uid, umask,
                             preexec_fn, _USE_VFORK)
                     self._child_created = True
+                    # iOS: return after fork(). It means we don't close the pipes.
+                    # (because we didn't fork)
+                    if (sys.platform == 'ios'):
+                        return
                 finally:
                     # be sure the FD is closed no matter what
                     os.close(errpipe_write)
@@ -1923,6 +1933,9 @@ class Popen:
             finally:
                 # be sure the FD is closed no matter what
                 os.close(errpipe_read)
+                # iOS: return from here
+                if (sys.platform == 'ios'):
+                    return 
 
             if errpipe_data:
                 try:

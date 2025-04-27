@@ -77,7 +77,8 @@ class EnvBuilder:
         true_system_site_packages = self.system_site_packages
         self.system_site_packages = False
         self.create_configuration(context)
-        self.setup_python(context)
+        if not (sys.platform == 'ios'):
+            self.setup_python(context)
         if self.with_pip:
             self._setup_pip(context)
         if not self.upgrade:
@@ -534,6 +535,25 @@ class EnvBuilder:
         """
         binpath = context.bin_path
         plen = len(path)
+        # iOS version: simplified script
+        if (sys.platform == 'ios'):
+            prompt = self.prompt if self.prompt is not None else context.env_name
+            context.prompt = '(%s)' % prompt
+            for file in ['activate', 'activate.py', 'deactivate.py']:
+                srcfile = os.path.join(path, 'ios', file)
+                dstdir = binpath
+                dstfile = os.path.join(dstdir, file)
+                with open(srcfile, 'rb') as f:
+                    data = f.read()
+                data = data.decode('utf-8')
+                data = data.replace('__VENV_PROMPT__', context.prompt)
+                data = data.encode('utf-8')
+                if data is not None:
+                    with open(dstfile, 'wb') as f:
+                        f.write(data)
+                    shutil.copymode(srcfile, dstfile)
+            return
+        # Not iOS version:
         if os.name == 'nt':
             def skip_file(f):
                 f = os.path.normcase(f)
@@ -603,7 +623,47 @@ def create(env_dir, system_site_packages=False, clear=False,
 
 def main(args=None):
     import argparse
-
+    # iOS/a-Shell: reduced set of options. Very reduced:
+    if (sys.platform == 'ios'):
+        parser = argparse.ArgumentParser(prog=__name__,
+                                         description='Creates virtual Python '
+                                                     'environments in one or '
+                                                     'more target '
+                                                     'directories.'
+                                                     ' On iOS, virtual '
+                                                     'environments are only '
+                                                     'for user-installed '
+                                                     'packages. System '
+                                                     'packages are shared '
+                                                     'between all virtual '
+                                                     'environments',
+                                         epilog='Once an environment has been '
+                                                'created, you may wish to '
+                                                'activate it by '
+                                                'sourcing the activate script '
+                                                'in its bin directory.')
+        parser.add_argument('dirs', metavar='ENV_DIR', nargs='+',
+                            help='A directory to create the environment in.')
+        parser.add_argument('--clear', default=False, action='store_true',
+                            dest='clear', help='Delete the contents of the '
+                                               'environment directory if it '
+                                               'already exists, before '
+                                               'environment creation.')
+        parser.add_argument('--prompt',
+                            help='Provides an alternative prompt prefix for '
+                            'this environment.')
+        options = parser.parse_args(args)
+        builder = EnvBuilder(system_site_packages=False,
+                clear=options.clear,
+                symlinks=False,
+                upgrade=False,
+                with_pip=False,
+                prompt=options.prompt,
+                upgrade_deps=False)
+        for d in options.dirs:
+            builder.create(d)
+        return
+    # End iOS
     parser = argparse.ArgumentParser(prog=__name__,
                                      description='Creates virtual Python '
                                                  'environments in one or '

@@ -660,12 +660,89 @@ PyModule_GetState(PyObject* m)
     return _PyModule_GetState(m);
 }
 
+// iOS addition: set the state pointer of a module to NULL
+#if TARGET_OS_IPHONE
+void
+PyModule_ClearState(PyObject* m)
+{
+    if (!PyModule_Check(m)) {
+        PyErr_BadArgument();
+        return;
+    }
+    PyModuleObject *mod = (PyModuleObject*)m;
+    if (mod->md_state != NULL) {
+        PyMem_Free(mod->md_state);
+	}
+    if (mod->md_state != NULL)
+        mod->md_state = NULL;
+}
+#endif
+
 void
 _PyModule_Clear(PyObject *m)
 {
+#if TARGET_OS_IPHONE
+    // Modules created with Cython + PEP489 have strange issues with number of references
+    // which prevent the freefunc function from being called.
+    // We explicitly call the freefunc function here, before the dictionary is cleared.
+    // (otherwise, "name" is gone)
+    // This only applies to pandas and numpy, other modules can be compiled without PEP489
+    // See also import.c / PyImport_Cleanup()
+    // Python 3.9: this is required for _asyncio (new). Must check for pandas and numpy.
+    // Unclear whether this is required for scipy, but it does no harm to call destructors.
+    // 01/05/21: starting tests on astropy and sklearn. If it does not crash, we keep it.
+    // 10/07/21: adding statsmodels
+    // 29/10/21: added lxml, pyfftw, pygeos, wordcloud, qutip (all cython modules).
+    // 02/11/21: pygeos, pyproj, fiona, statsmodels, rasterio, shapely
+    // 17/06/22: removed contourpy (switch to pybind11)
+    // 26/04/25: not necessary for _asyncio and lxml. Testing the rest, then removing.
+    int moduleNeedsCleanup = 0;
+    PyModuleObject *mod = (PyModuleObject *)m;
+	if (mod->md_name != NULL) {
+		const char* utf8name = PyUnicode_AsUTF8(mod->md_name);
+		if ((strncmp(utf8name, "_asyncio", 8) == 0) 
+				|| (strncmp(utf8name, "lxml.", 5) == 0) 
+				|| (strncmp(utf8name, "numpy.", 6) == 0)
+				|| (strncmp(utf8name, "qutip.", 6) == 0)
+				|| (strncmp(utf8name, "scipy.", 6) == 0)
+				|| (strncmp(utf8name, "fiona.", 6) == 0)
+				|| (strncmp(utf8name, "pyproj.", 7) == 0)
+				|| (strncmp(utf8name, "pandas.", 7) == 0) 
+				|| (strncmp(utf8name, "pyfftw.", 7) == 0)
+				|| (strncmp(utf8name, "pygeos.", 7) == 0)
+				|| (strncmp(utf8name, "astropy.", 8) == 0)
+				|| (strncmp(utf8name, "shapely.", 8) == 0)
+				|| (strncmp(utf8name, "sklearn.", 8) == 0) 
+				|| (strncmp(utf8name, "rasterio.", 9) == 0)
+				|| (strncmp(utf8name, "cartoppy.", 9) == 0)
+				|| (strncmp(utf8name, "wordcloud.", 10) == 0)
+				|| (strncmp(utf8name, "statsmodels.", 12) == 0)) {
+			// scipy.spatial._distance_pybind uses pybind11, not cython. 
+			// same with scipy.fft._pocketfft.pypocketfft and contourpy
+			// scipy also contains a pybind11 modules, ...highspy.highs_bindings ?
+			// pybind11 cleanup function is already called, and can't be called twice. 
+			if ((strncmp(utf8name, "scipy.spatial._distance_pybind", 30) != 0) && 
+				(strncmp(utf8name, "scipy.fft._pocketfft.pypocketfft", 32) != 0)) {
+				// iOS, debug:
+				fprintf(thread_stderr, "Module = %x name = %s refCount = %zd ", mod, utf8name, m->ob_refcnt);
+				if (mod->md_def && mod->md_def->m_free) {
+					fprintf(thread_stderr, "module has a free function: %x", mod->md_def->m_free);
+					moduleNeedsCleanup = 1;
+				}
+				fprintf(thread_stderr, "\n");
+			}
+		}
+	}
+#endif
     PyObject *d = ((PyModuleObject *)m)->md_dict;
     if (d != NULL)
         _PyModule_ClearDict(d);
+#if TARGET_OS_IPHONE
+    // Cleanup module after clearing dictionary:
+    // iOS, April 25 2025: is this line causing a crash later in gc_collect_main?
+    // if (moduleNeedsCleanup > 0) mod->md_def->m_free(mod);
+	// ((PyModuleObject *)m)->md_dict = NULL;
+#endif
 }
 
 void
@@ -730,6 +807,15 @@ _PyModule_ClearDict(PyObject *d)
 
 }
 
+#if TARGET_OS_IPHONE
+void PyModule_ClearDict(PyObject* m) {
+    PyObject *d = ((PyModuleObject *)m)->md_dict;
+    if (d != NULL)
+        _PyModule_ClearDict(d);
+	((PyModuleObject *)m)->md_dict = NULL;
+}
+#endif
+
 /*[clinic input]
 class module "PyModuleObject *" "&PyModule_Type"
 [clinic start generated code]*/
@@ -759,6 +845,15 @@ module___init___impl(PyModuleObject *self, PyObject *name, PyObject *doc)
 static void
 module_dealloc(PyModuleObject *m)
 {
+#if TARGET_OS_IPHONE 
+   	// fprintf(stderr, "# destroying %x.", m);
+   	// if (m->md_name) {
+	// 	const char* utf8name = PyUnicode_AsUTF8(m->md_name);
+	// 	fprintf(stderr, " name = %s \n", utf8name);
+	// } else {
+	// 	fprintf(stderr, " (no name)\n");
+	// }
+#endif
     int verbose = _Py_GetConfig()->verbose;
 
     PyObject_GC_UnTrack(m);
@@ -777,6 +872,12 @@ module_dealloc(PyModuleObject *m)
     Py_XDECREF(m->md_name);
     if (m->md_state != NULL)
         PyMem_Free(m->md_state);
+#if TARGET_OS_IPHONE
+    if (m->md_state != NULL)
+        m->md_state = NULL;
+    if (m->md_name != NULL)
+    	m->md_name = NULL;
+#endif
     Py_TYPE(m)->tp_free((PyObject *)m);
 }
 

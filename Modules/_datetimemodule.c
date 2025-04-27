@@ -3041,6 +3041,49 @@ static PyTypeObject PyDateTime_DeltaType = {
     0,                                                  /* tp_free */
 };
 
+#if TARGET_OS_IPHONE
+static void reset_PyDateTime_DeltaType() {
+   PyDateTime_DeltaType.tp_name = "datetime.timedelta";                               /* tp_name */
+   PyDateTime_DeltaType.tp_basicsize = sizeof(PyDateTime_Delta);                           /* tp_basicsize */
+   PyDateTime_DeltaType.tp_itemsize = 0;                                                  /* tp_itemsize */
+   PyDateTime_DeltaType.tp_dealloc = 0;                                                  /* tp_dealloc */
+   PyDateTime_DeltaType.tp_vectorcall_offset = 0;                               /* tp_vectorcall_offset */
+   PyDateTime_DeltaType.tp_getattr = 0;                                                  /* tp_getattr */
+   PyDateTime_DeltaType.tp_setattr = 0;                                                  /* tp_setattr */
+   PyDateTime_DeltaType.tp_as_async = 0;                                                  /* tp_as_async */
+   PyDateTime_DeltaType.tp_repr = (reprfunc)delta_repr;                               /* tp_repr */
+   PyDateTime_DeltaType.tp_as_number = &delta_as_number;                                   /* tp_as_number */
+   PyDateTime_DeltaType.tp_as_sequence = 0;                                                  /* tp_as_sequence */
+   PyDateTime_DeltaType.tp_as_mapping = 0;                                                  /* tp_as_mapping */
+   PyDateTime_DeltaType.tp_hash = (hashfunc)delta_hash;                               /* tp_hash */
+   PyDateTime_DeltaType.tp_call = 0;                                                  /* tp_call */
+   PyDateTime_DeltaType.tp_str = (reprfunc)delta_str;                                /* tp_str */
+   PyDateTime_DeltaType.tp_getattro = PyObject_GenericGetAttr;                            /* tp_getattro */
+   PyDateTime_DeltaType.tp_setattro = 0;                                                  /* tp_setattro */
+   PyDateTime_DeltaType.tp_as_buffer = 0;                                                  /* tp_as_buffer */
+   PyDateTime_DeltaType.tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE;           /* tp_flags */
+   PyDateTime_DeltaType.tp_doc = delta_doc;                                          /* tp_doc */
+   PyDateTime_DeltaType.tp_traverse = 0;                                                  /* tp_traverse */
+   PyDateTime_DeltaType.tp_clear = 0;                                                  /* tp_clear */
+   PyDateTime_DeltaType.tp_richcompare = delta_richcompare;                                  /* tp_richcompare */
+   PyDateTime_DeltaType.tp_weaklistoffset = 0;                                       /* tp_weaklistoffset */
+   PyDateTime_DeltaType.tp_iter = 0;                                                  /* tp_iter */
+   PyDateTime_DeltaType.tp_iternext = 0;                                                  /* tp_iternext */
+   PyDateTime_DeltaType.tp_methods = delta_methods;                                      /* tp_methods */
+   PyDateTime_DeltaType.tp_members = delta_members;                                      /* tp_members */
+   PyDateTime_DeltaType.tp_getset = 0;                                                  /* tp_getset */
+   PyDateTime_DeltaType.tp_base = 0;                                                  /* tp_base */
+   PyDateTime_DeltaType.tp_dict = 0;                                                  /* tp_dict */
+   PyDateTime_DeltaType.tp_descr_get = 0;                                                  /* tp_descr_get */
+   PyDateTime_DeltaType.tp_descr_set = 0;                                                  /* tp_descr_set */
+   PyDateTime_DeltaType.tp_dictoffset = 0;                                                  /* tp_dictoffset */
+   PyDateTime_DeltaType.tp_init = 0;                                                  /* tp_init */
+   PyDateTime_DeltaType.tp_alloc = 0;                                                  /* tp_alloc */
+   PyDateTime_DeltaType.tp_new = delta_new;                                          /* tp_new */
+   PyDateTime_DeltaType.tp_free = 0;                                                  /* tp_free */
+}
+#endif
+
 // XXX Can we make this const?
 static PyDateTime_Delta zero_delta = {
     PyObject_HEAD_INIT(&PyDateTime_DeltaType)
@@ -3914,6 +3957,49 @@ static PyTypeObject PyDateTime_DateType = {
     0,                                                  /* tp_free */
 };
 
+#if TARGET_OS_IPHONE
+static void reset_PyDateTime_DateType() {
+   PyDateTime_DateType.tp_name = "datetime.date";                                    /* tp_name */
+   PyDateTime_DateType.tp_basicsize = sizeof(PyDateTime_Date);                            /* tp_basicsize */
+   PyDateTime_DateType.tp_itemsize = 0;                                                  /* tp_itemsize */
+   PyDateTime_DateType.tp_dealloc = 0;                                                  /* tp_dealloc */
+   PyDateTime_DateType.tp_vectorcall_offset = 0;                               /* tp_vectorcall_offset */
+   PyDateTime_DateType.tp_getattr = 0;                                                  /* tp_getattr */
+   PyDateTime_DateType.tp_setattr = 0;                                                  /* tp_setattr */
+   PyDateTime_DateType.tp_as_async = 0;                                                  /* tp_as_async */
+   PyDateTime_DateType.tp_repr = (reprfunc)date_repr;                                /* tp_repr */
+   PyDateTime_DateType.tp_as_number = &date_as_number;                                    /* tp_as_number */
+   PyDateTime_DateType.tp_as_sequence = 0;                                                  /* tp_as_sequence */
+   PyDateTime_DateType.tp_as_mapping = 0;                                                  /* tp_as_mapping */
+   PyDateTime_DateType.tp_hash = (hashfunc)date_hash;                                /* tp_hash */
+   PyDateTime_DateType.tp_call = 0;                                                  /* tp_call */
+   PyDateTime_DateType.tp_str = (reprfunc)date_str;                                 /* tp_str */
+   PyDateTime_DateType.tp_getattro = PyObject_GenericGetAttr;                            /* tp_getattro */
+   PyDateTime_DateType.tp_setattro = 0;                                                  /* tp_setattro */
+   PyDateTime_DateType.tp_as_buffer = 0;                                                  /* tp_as_buffer */
+   PyDateTime_DateType.tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE;           /* tp_flags */
+   PyDateTime_DateType.tp_doc = date_doc;                                           /* tp_doc */
+   PyDateTime_DateType.tp_traverse = 0;                                                  /* tp_traverse */
+   PyDateTime_DateType.tp_clear = 0;                                                  /* tp_clear */
+   PyDateTime_DateType.tp_richcompare = date_richcompare;                                   /* tp_richcompare */
+   PyDateTime_DateType.tp_weaklistoffset = 0;                                       /* tp_weaklistoffset */
+   PyDateTime_DateType.tp_iter = 0;                                                  /* tp_iter */
+   PyDateTime_DateType.tp_iternext = 0;                                                  /* tp_iternext */
+   PyDateTime_DateType.tp_methods = date_methods;                                       /* tp_methods */
+   PyDateTime_DateType.tp_members = 0;                                                  /* tp_members */
+   PyDateTime_DateType.tp_getset = date_getset;                                        /* tp_getset */
+   PyDateTime_DateType.tp_base = 0;                                                  /* tp_base */
+   PyDateTime_DateType.tp_dict = 0;                                                  /* tp_dict */
+   PyDateTime_DateType.tp_descr_get = 0;                                                  /* tp_descr_get */
+   PyDateTime_DateType.tp_descr_set = 0;                                                  /* tp_descr_set */
+   PyDateTime_DateType.tp_dictoffset = 0;                                                  /* tp_dictoffset */
+   PyDateTime_DateType.tp_init = 0;                                                  /* tp_init */
+   PyDateTime_DateType.tp_alloc = 0;                                                  /* tp_alloc */
+   PyDateTime_DateType.tp_new = date_new;                                           /* tp_new */
+   PyDateTime_DateType.tp_free = 0;                                                  /* tp_free */
+}
+#endif
+
 /*
  * PyDateTime_TZInfo implementation.
  */
@@ -4139,6 +4225,49 @@ static PyTypeObject PyDateTime_TZInfoType = {
     PyType_GenericNew,                          /* tp_new */
     0,                                          /* tp_free */
 };
+
+#if TARGET_OS_IPHONE
+static void reset_PyDateTime_TZInfoType() {
+	PyDateTime_TZInfoType.tp_name = "datetime.tzinfo";                          /* tp_name */
+	PyDateTime_TZInfoType.tp_basicsize = sizeof(PyDateTime_TZInfo);                  /* tp_basicsize */
+	PyDateTime_TZInfoType.tp_itemsize = 0;                                          /* tp_itemsize */
+	PyDateTime_TZInfoType.tp_dealloc = 0;                                          /* tp_dealloc */
+	PyDateTime_TZInfoType.tp_vectorcall_offset = 0;                           /* tp_vectorcall_offset */
+	PyDateTime_TZInfoType.tp_getattr = 0;                                          /* tp_getattr */
+	PyDateTime_TZInfoType.tp_setattr = 0;                                          /* tp_setattr */
+	PyDateTime_TZInfoType.tp_as_async = 0;                                          /* tp_as_async */
+	PyDateTime_TZInfoType.tp_repr = 0;                                          /* tp_repr */
+	PyDateTime_TZInfoType.tp_as_number = 0;                                          /* tp_as_number */
+	PyDateTime_TZInfoType.tp_as_sequence = 0;                                          /* tp_as_sequence */
+	PyDateTime_TZInfoType.tp_as_mapping = 0;                                          /* tp_as_mapping */
+	PyDateTime_TZInfoType.tp_hash = 0;                                          /* tp_hash */
+	PyDateTime_TZInfoType.tp_call = 0;                                          /* tp_call */
+	PyDateTime_TZInfoType.tp_str = 0;                                          /* tp_str */
+	PyDateTime_TZInfoType.tp_getattro = PyObject_GenericGetAttr;                    /* tp_getattro */
+	PyDateTime_TZInfoType.tp_setattro = 0;                                          /* tp_setattro */
+	PyDateTime_TZInfoType.tp_as_buffer = 0;                                          /* tp_as_buffer */
+	PyDateTime_TZInfoType.tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE;   /* tp_flags */
+	PyDateTime_TZInfoType.tp_doc = tzinfo_doc;                                 /* tp_doc */
+	PyDateTime_TZInfoType.tp_traverse = 0;                                          /* tp_traverse */
+	PyDateTime_TZInfoType.tp_clear = 0;                                          /* tp_clear */
+	PyDateTime_TZInfoType.tp_richcompare = 0;                                          /* tp_richcompare */
+	PyDateTime_TZInfoType.tp_weaklistoffset = 0;                                 /* tp_weaklistoffset */
+	PyDateTime_TZInfoType.tp_iter = 0;                                          /* tp_iter */
+	PyDateTime_TZInfoType.tp_iternext = 0;                                          /* tp_iternext */
+	PyDateTime_TZInfoType.tp_methods = tzinfo_methods;                             /* tp_methods */
+	PyDateTime_TZInfoType.tp_members = 0;                                          /* tp_members */
+	PyDateTime_TZInfoType.tp_getset = 0;                                          /* tp_getset */
+	PyDateTime_TZInfoType.tp_base = 0;                                          /* tp_base */
+	PyDateTime_TZInfoType.tp_dict = 0;                                          /* tp_dict */
+	PyDateTime_TZInfoType.tp_descr_get = 0;                                          /* tp_descr_get */
+	PyDateTime_TZInfoType.tp_descr_set = 0;                                          /* tp_descr_set */
+	PyDateTime_TZInfoType.tp_dictoffset = 0;                                          /* tp_dictoffset */
+	PyDateTime_TZInfoType.tp_init = 0;                                          /* tp_init */
+	PyDateTime_TZInfoType.tp_alloc = 0;                                          /* tp_alloc */
+	PyDateTime_TZInfoType.tp_new = PyType_GenericNew;                          /* tp_new */
+	PyDateTime_TZInfoType.tp_free = 0;                                          /* tp_free */
+}
+#endif
 
 static char *timezone_kws[] = {"offset", "name", NULL};
 
@@ -4374,6 +4503,48 @@ static PyTypeObject PyDateTime_TimeZoneType = {
     0,                                /* tp_alloc */
     timezone_new,                     /* tp_new */
 };
+
+#if TARGET_OS_IPHONE
+static void reset_PyDateTime_TimeZoneType() {
+  PyDateTime_TimeZoneType.tp_name = "datetime.timezone";              /* tp_name */
+  PyDateTime_TimeZoneType.tp_basicsize = sizeof(PyDateTime_TimeZone);      /* tp_basicsize */
+  PyDateTime_TimeZoneType.tp_itemsize = 0;                                /* tp_itemsize */
+  PyDateTime_TimeZoneType.tp_dealloc = (destructor)timezone_dealloc;     /* tp_dealloc */
+  PyDateTime_TimeZoneType.tp_vectorcall_offset = 0;                          /* tp_vectorcall_offset */
+  PyDateTime_TimeZoneType.tp_getattr = 0;                                /* tp_getattr */
+  PyDateTime_TimeZoneType.tp_setattr = 0;                                /* tp_setattr */
+  PyDateTime_TimeZoneType.tp_as_async = 0;                                /* tp_as_async */
+  PyDateTime_TimeZoneType.tp_repr = (reprfunc)timezone_repr;          /* tp_repr */
+  PyDateTime_TimeZoneType.tp_as_number = 0;                                /* tp_as_number */
+  PyDateTime_TimeZoneType.tp_as_sequence = 0;                                /* tp_as_sequence */
+  PyDateTime_TimeZoneType.tp_as_mapping = 0;                                /* tp_as_mapping */
+  PyDateTime_TimeZoneType.tp_hash = (hashfunc)timezone_hash;          /* tp_hash */
+  PyDateTime_TimeZoneType.tp_call = 0;                                /* tp_call */
+  PyDateTime_TimeZoneType.tp_str = (reprfunc)timezone_str;           /* tp_str */
+  PyDateTime_TimeZoneType.tp_getattro = 0;                                /* tp_getattro */
+  PyDateTime_TimeZoneType.tp_setattro = 0;                                /* tp_setattro */
+  PyDateTime_TimeZoneType.tp_as_buffer = 0;                                /* tp_as_buffer */
+  PyDateTime_TimeZoneType.tp_flags = Py_TPFLAGS_DEFAULT;               /* tp_flags */
+  PyDateTime_TimeZoneType.tp_doc = timezone_doc;                     /* tp_doc */
+  PyDateTime_TimeZoneType.tp_traverse = 0;                                /* tp_traverse */
+  PyDateTime_TimeZoneType.tp_clear = 0;                                /* tp_clear */
+  PyDateTime_TimeZoneType.tp_richcompare = (richcmpfunc)timezone_richcompare;/* tp_richcompare */
+  PyDateTime_TimeZoneType.tp_weaklistoffset = 0;                                /* tp_weaklistoffset */
+  PyDateTime_TimeZoneType.tp_iter = 0;                                /* tp_iter */
+  PyDateTime_TimeZoneType.tp_iternext = 0;                                /* tp_iternext */
+  PyDateTime_TimeZoneType.tp_methods = timezone_methods;                 /* tp_methods */
+  PyDateTime_TimeZoneType.tp_members = 0;                                /* tp_members */
+  PyDateTime_TimeZoneType.tp_getset = 0;                                /* tp_getset */
+  PyDateTime_TimeZoneType.tp_base = 0;              /* tp_base; filled in PyInit__datetime */
+  PyDateTime_TimeZoneType.tp_dict = 0;                                /* tp_dict */
+  PyDateTime_TimeZoneType.tp_descr_get = 0;                                /* tp_descr_get */
+  PyDateTime_TimeZoneType.tp_descr_set = 0;                                /* tp_descr_set */
+  PyDateTime_TimeZoneType.tp_dictoffset = 0;                                /* tp_dictoffset */
+  PyDateTime_TimeZoneType.tp_init = 0;                                /* tp_init */
+  PyDateTime_TimeZoneType.tp_alloc = 0;                                /* tp_alloc */
+  PyDateTime_TimeZoneType.tp_new = timezone_new;                     /* tp_new */
+}
+#endif
 
 // XXX Can we make this const?
 static PyDateTime_TimeZone utc_timezone = {
@@ -5052,6 +5223,49 @@ static PyTypeObject PyDateTime_TimeType = {
     time_new,                                   /* tp_new */
     0,                                          /* tp_free */
 };
+
+#if TARGET_OS_IPHONE
+static void reset_PyDateTime_TimeType() {
+  PyDateTime_TimeType.tp_name = "datetime.time";                            /* tp_name */
+  PyDateTime_TimeType.tp_basicsize = sizeof(PyDateTime_Time);                    /* tp_basicsize */
+  PyDateTime_TimeType.tp_itemsize = 0;                                          /* tp_itemsize */
+  PyDateTime_TimeType.tp_dealloc = (destructor)time_dealloc;                   /* tp_dealloc */
+  PyDateTime_TimeType.tp_vectorcall_offset = 0;                              /* tp_vectorcall_offset */
+  PyDateTime_TimeType.tp_getattr = 0;                                          /* tp_getattr */
+  PyDateTime_TimeType.tp_setattr = 0;                                          /* tp_setattr */
+  PyDateTime_TimeType.tp_as_async = 0;                                          /* tp_as_async */
+  PyDateTime_TimeType.tp_repr = (reprfunc)time_repr;                        /* tp_repr */
+  PyDateTime_TimeType.tp_as_number = 0;                                          /* tp_as_number */
+  PyDateTime_TimeType.tp_as_sequence = 0;                                          /* tp_as_sequence */
+  PyDateTime_TimeType.tp_as_mapping = 0;                                          /* tp_as_mapping */
+  PyDateTime_TimeType.tp_hash = (hashfunc)time_hash;                        /* tp_hash */
+  PyDateTime_TimeType.tp_call = 0;                                          /* tp_call */
+  PyDateTime_TimeType.tp_str = (reprfunc)time_str;                         /* tp_str */
+  PyDateTime_TimeType.tp_getattro = PyObject_GenericGetAttr;                    /* tp_getattro */
+  PyDateTime_TimeType.tp_setattro = 0;                                          /* tp_setattro */
+  PyDateTime_TimeType.tp_as_buffer = 0;                                          /* tp_as_buffer */
+  PyDateTime_TimeType.tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE;   /* tp_flags */
+  PyDateTime_TimeType.tp_doc = time_doc;                                   /* tp_doc */
+  PyDateTime_TimeType.tp_traverse = 0;                                          /* tp_traverse */
+  PyDateTime_TimeType.tp_clear = 0;                                          /* tp_clear */
+  PyDateTime_TimeType.tp_richcompare = time_richcompare;                     /* tp_richcompare */
+  PyDateTime_TimeType.tp_weaklistoffset = 0;                                /* tp_weaklistoffset */
+  PyDateTime_TimeType.tp_iter = 0;                                          /* tp_iter */
+  PyDateTime_TimeType.tp_iternext = 0;                                          /* tp_iternext */
+  PyDateTime_TimeType.tp_methods = time_methods;                               /* tp_methods */
+  PyDateTime_TimeType.tp_members = 0;                                          /* tp_members */
+  PyDateTime_TimeType.tp_getset = time_getset;                                /* tp_getset */
+  PyDateTime_TimeType.tp_base = 0;                                          /* tp_base */
+  PyDateTime_TimeType.tp_dict = 0;                                          /* tp_dict */
+  PyDateTime_TimeType.tp_descr_get = 0;                                          /* tp_descr_get */
+  PyDateTime_TimeType.tp_descr_set = 0;                                          /* tp_descr_set */
+  PyDateTime_TimeType.tp_dictoffset = 0;                                      /* tp_dictoffset */
+  PyDateTime_TimeType.tp_init = 0;                                          /* tp_init */
+  PyDateTime_TimeType.tp_alloc = time_alloc;                                 /* tp_alloc */
+  PyDateTime_TimeType.tp_new = time_new;                                   /* tp_new */
+  PyDateTime_TimeType.tp_free = 0;                                          /* tp_free */
+}
+#endif
 
 /*
  * PyDateTime_DateTime implementation.
@@ -6921,6 +7135,49 @@ static PyTypeObject PyDateTime_DateTimeType = {
     0,                                          /* tp_free */
 };
 
+#if TARGET_OS_IPHONE
+static void reset_PyDateTime_DateTimeType() {
+  PyDateTime_DateTimeType.tp_name = "datetime.datetime";                        /* tp_name */
+  PyDateTime_DateTimeType.tp_basicsize = sizeof(PyDateTime_DateTime);                /* tp_basicsize */
+  PyDateTime_DateTimeType.tp_itemsize = 0;                                          /* tp_itemsize */
+  PyDateTime_DateTimeType.tp_dealloc = (destructor)datetime_dealloc;               /* tp_dealloc */
+  PyDateTime_DateTimeType.tp_vectorcall_offset = 0;                            /* tp_vectorcall_offset */
+  PyDateTime_DateTimeType.tp_getattr = 0;                                          /* tp_getattr */
+  PyDateTime_DateTimeType.tp_setattr = 0;                                          /* tp_setattr */
+  PyDateTime_DateTimeType.tp_as_async = 0;                                          /* tp_as_async */
+  PyDateTime_DateTimeType.tp_repr = (reprfunc)datetime_repr;                    /* tp_repr */
+  PyDateTime_DateTimeType.tp_as_number = &datetime_as_number;                        /* tp_as_number */
+  PyDateTime_DateTimeType.tp_as_sequence = 0;                                          /* tp_as_sequence */
+  PyDateTime_DateTimeType.tp_as_mapping = 0;                                          /* tp_as_mapping */
+  PyDateTime_DateTimeType.tp_hash = (hashfunc)datetime_hash;                    /* tp_hash */
+  PyDateTime_DateTimeType.tp_call = 0;                                          /* tp_call */
+  PyDateTime_DateTimeType.tp_str = (reprfunc)datetime_str;                     /* tp_str */
+  PyDateTime_DateTimeType.tp_getattro = PyObject_GenericGetAttr;                    /* tp_getattro */
+  PyDateTime_DateTimeType.tp_setattro = 0;                                          /* tp_setattro */
+  PyDateTime_DateTimeType.tp_as_buffer = 0;                                          /* tp_as_buffer */
+  PyDateTime_DateTimeType.tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE;   /* tp_flags */
+  PyDateTime_DateTimeType.tp_doc = datetime_doc;                               /* tp_doc */
+  PyDateTime_DateTimeType.tp_traverse = 0;                                          /* tp_traverse */
+  PyDateTime_DateTimeType.tp_clear = 0;                                          /* tp_clear */
+  PyDateTime_DateTimeType.tp_richcompare = datetime_richcompare;                       /* tp_richcompare */
+  PyDateTime_DateTimeType.tp_weaklistoffset = 0;                                          /* tp_weaklistoffset */
+  PyDateTime_DateTimeType.tp_iter = 0;                                          /* tp_iter */
+  PyDateTime_DateTimeType.tp_iternext = 0;                                          /* tp_iternext */
+  PyDateTime_DateTimeType.tp_methods = datetime_methods;                           /* tp_methods */
+  PyDateTime_DateTimeType.tp_members = 0;                                          /* tp_members */
+  PyDateTime_DateTimeType.tp_getset = datetime_getset;                            /* tp_getset */
+  PyDateTime_DateTimeType.tp_base = 0;                                          /* tp_base */
+  PyDateTime_DateTimeType.tp_dict = 0;                                          /* tp_dict */
+  PyDateTime_DateTimeType.tp_descr_get = 0;                                          /* tp_descr_get */
+  PyDateTime_DateTimeType.tp_descr_set = 0;                                          /* tp_descr_set */
+  PyDateTime_DateTimeType.tp_dictoffset = 0;                                          /* tp_dictoffset */
+  PyDateTime_DateTimeType.tp_init = 0;                                          /* tp_init */
+  PyDateTime_DateTimeType.tp_alloc = datetime_alloc;                             /* tp_alloc */
+  PyDateTime_DateTimeType.tp_new = datetime_new;                               /* tp_new */
+  PyDateTime_DateTimeType.tp_free = 0;                                          /* tp_free */
+}
+#endif
+
 /* ---------------------------------------------------------------------------
  * datetime C-API.
  */
@@ -7326,6 +7583,16 @@ static PyModuleDef datetimemodule = {
 PyMODINIT_FUNC
 PyInit__datetime(void)
 {
+
+#if TARGET_OS_IPHONE
+	// reset all types at each run:
+	reset_PyDateTime_DeltaType();
+	reset_PyDateTime_DateType();
+	reset_PyDateTime_TZInfoType();
+	reset_PyDateTime_TimeZoneType();
+	reset_PyDateTime_TimeType();
+	reset_PyDateTime_DateTimeType();
+#endif
     return PyModuleDef_Init(&datetimemodule);
 }
 

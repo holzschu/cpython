@@ -239,6 +239,7 @@ _PyObject_MakeTpCall(PyThreadState *tstate, PyObject *callable,
     PyObject *result = NULL;
     if (_Py_EnterRecursiveCallTstate(tstate, " while calling a Python object") == 0)
     {
+        // == call(callable, argstuple) or call(callable, argstuple, kwdict)
         result = _PyCFunctionWithKeywords_TrampolineCall(
             (PyCFunctionWithKeywords)call, callable, argstuple, kwdict);
         _Py_LeaveRecursiveCallTstate(tstate);

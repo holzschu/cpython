@@ -612,6 +612,12 @@ iomodule_clear(PyObject *mod) {
 #ifdef HAVE_WINDOWS_CONSOLE_IO
     Py_CLEAR(state->PyWindowsConsoleIO_Type);
 #endif
+#if TARGET_OS_IPHONE
+    void *dict = PyModule_GetDict(mod);
+	// Erase the state, and set the pointer to NULL:
+	PyModule_ClearState(mod);
+	PyModule_ClearDict(mod);
+#endif
     return 0;
 }
 

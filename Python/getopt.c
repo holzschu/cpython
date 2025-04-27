@@ -102,7 +102,11 @@ int _PyOS_GetOpt(Py_ssize_t argc, wchar_t * const *argv, int *longindex)
         // Parse long option.
         if (*opt_ptr == L'\0') {
             if (_PyOS_opterr) {
+#if !TARGET_OS_IPHONE
                 fprintf(stderr, "expected long option\n");
+#else
+                fprintf(thread_stderr, "expected long option\n");
+#endif
             }
             return -1;
         }
@@ -114,7 +118,11 @@ int _PyOS_GetOpt(Py_ssize_t argc, wchar_t * const *argv, int *longindex)
         }
         if (!opt->name) {
             if (_PyOS_opterr) {
+#if !TARGET_OS_IPHONE
                 fprintf(stderr, "unknown option %ls\n", argv[_PyOS_optind - 1]);
+#else
+                fprintf(thread_stderr, "unknown option %ls\n", argv[_PyOS_optind - 1]);
+#endif
             }
             return '_';
         }
@@ -124,7 +132,11 @@ int _PyOS_GetOpt(Py_ssize_t argc, wchar_t * const *argv, int *longindex)
         }
         if (_PyOS_optind >= argc) {
             if (_PyOS_opterr) {
+#if !TARGET_OS_IPHONE
                 fprintf(stderr, "Argument expected for the %ls options\n",
+#else
+                fprintf(thread_stderr, "Argument expected for the %ls options\n",
+#endif
                         argv[_PyOS_optind - 1]);
             }
             return '_';
@@ -135,14 +147,22 @@ int _PyOS_GetOpt(Py_ssize_t argc, wchar_t * const *argv, int *longindex)
 
     if (option == 'J') {
         if (_PyOS_opterr) {
+#if !TARGET_OS_IPHONE
             fprintf(stderr, "-J is reserved for Jython\n");
+#else
+            fprintf(thread_stderr, "-J is reserved for Jython\n");
+#endif
         }
         return '_';
     }
 
     if ((ptr = wcschr(SHORT_OPTS, option)) == NULL) {
         if (_PyOS_opterr) {
+#if !TARGET_OS_IPHONE
             fprintf(stderr, "Unknown option: -%c\n", (char)option);
+#else
+            fprintf(thread_stderr, "Unknown option: -%c\n", (char)option);
+#endif
         }
         return '_';
     }
@@ -156,7 +176,11 @@ int _PyOS_GetOpt(Py_ssize_t argc, wchar_t * const *argv, int *longindex)
         else {
             if (_PyOS_optind >= argc) {
                 if (_PyOS_opterr) {
+#if !TARGET_OS_IPHONE
                     fprintf(stderr,
+#else
+                    fprintf(thread_stderr,
+#endif
                         "Argument expected for the -%c option\n", (char)option);
                 }
                 return '_';

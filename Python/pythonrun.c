@@ -468,12 +468,20 @@ _PyRun_SimpleFileObject(FILE *fp, PyObject *filename, int closeit,
 
         pyc_fp = _Py_fopen_obj(filename, "rb");
         if (pyc_fp == NULL) {
+#if !TARGET_OS_IPHONE
             fprintf(stderr, "python: Can't reopen .pyc file\n");
+#else
+            fprintf(thread_stderr, "python: Can't reopen .pyc file\n");
+#endif
             goto done;
         }
 
         if (set_main_loader(dict, filename, "SourcelessFileLoader") < 0) {
+#if !TARGET_OS_IPHONE
             fprintf(stderr, "python: failed to set __main__.__loader__\n");
+#else
+            fprintf(thread_stderr, "python: failed to set __main__.__loader__\n");
+#endif
             ret = -1;
             fclose(pyc_fp);
             goto done;
@@ -483,7 +491,11 @@ _PyRun_SimpleFileObject(FILE *fp, PyObject *filename, int closeit,
         /* When running from stdin, leave __main__.__loader__ alone */
         if ((!PyUnicode_Check(filename) || !PyUnicode_EqualToUTF8(filename, "<stdin>")) &&
             set_main_loader(dict, filename, "SourceFileLoader") < 0) {
+#if !TARGET_OS_IPHONE
             fprintf(stderr, "python: failed to set __main__.__loader__\n");
+#else
+            fprintf(thread_stderr, "python: failed to set __main__.__loader__\n");
+#endif
             ret = -1;
             goto done;
         }
@@ -601,7 +613,11 @@ _Py_HandleSystemExit(int *exitcode_p)
         return 0;
     }
 
+#if !TARGET_OS_IPHONE
     fflush(stdout);
+#else
+    fflush(thread_stdout);
+#endif
 
     PyObject *exc = PyErr_GetRaisedException();
     assert(exc != NULL && PyExceptionInstance_Check(exc));
@@ -629,10 +645,15 @@ _Py_HandleSystemExit(int *exitcode_p)
         }
     }
     else {
+#if !TARGET_OS_IPHONE
         if (PyObject_Print(exc, stderr, Py_PRINT_RAW) < 0) {
-            PyErr_Clear();
-        }
         fflush(stderr);
+#else
+        if (PyObject_Print(exc, thread_stderr, Py_PRINT_RAW) < 0) {
+        fflush(thread_stderr);
+#endif
+            PyErr_Clear();
+		}
     }
     PySys_WriteStderr("\n");
     Py_CLEAR(exc);
@@ -700,7 +721,11 @@ _PyErr_PrintEx(PyThreadState *tstate, int set_sys_last_vars)
 
             PyObject *exc2 = _PyErr_GetRaisedException(tstate);
             assert(exc2 && PyExceptionInstance_Check(exc2));
+#if !TARGET_OS_IPHONE
             fflush(stdout);
+#else
+            fflush(thread_stdout);
+#endif
             PySys_WriteStderr("Error in sys.excepthook:\n");
             PyErr_DisplayException(exc2);
             PySys_WriteStderr("\nOriginal exception was:\n");
@@ -929,7 +954,11 @@ print_exception(struct exception_print_context *ctx, PyObject *value)
     }
 
     Py_INCREF(value);
+#if !TARGET_OS_IPHONE
     fflush(stdout);
+#else
+    fflush(thread_stdout);
+#endif
 
     if (print_exception_traceback(ctx, value) < 0) {
         goto error;
@@ -1169,7 +1198,11 @@ PyErr_Display(PyObject *unused, PyObject *value, PyObject *tb)
     PyObject *file = _PySys_GetAttr(tstate, &_Py_ID(stderr));
     if (file == NULL) {
         _PyObject_Dump(value);
+#if !TARGET_OS_IPHONE
         fprintf(stderr, "lost sys.stderr\n");
+#else
+        fprintf(thread_stderr, "lost sys.stderr\n");
+#endif
         return;
     }
     if (file == Py_None) {

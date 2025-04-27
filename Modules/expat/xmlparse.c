@@ -121,6 +121,13 @@
 #include "expat.h"
 #include "siphash.h"
 
+#ifdef __APPLE__
+#include <TargetConditionals.h> 
+#if TARGET_OS_IPHONE
+#include "ios_error.h"
+#endif
+#endif
+
 #if defined(HAVE_GETRANDOM) || defined(HAVE_SYSCALL_GETRANDOM)
 #  if defined(HAVE_GETRANDOM)
 #    include <sys/random.h> /* getrandom */
@@ -941,7 +948,11 @@ gather_time_entropy(void) {
 static unsigned long
 ENTROPY_DEBUG(const char *label, unsigned long entropy) {
   if (getDebugLevel("EXPAT_ENTROPY_DEBUG", 0) >= 1u) {
+#if !TARGET_OS_IPHONE
     fprintf(stderr, "expat: Entropy: %s --> 0x%0*lx (%lu bytes)\n", label,
+#else
+    fprintf(thread_stderr, "expat: Entropy: %s --> 0x%0*lx (%lu bytes)\n", label,
+#endif
             (int)sizeof(entropy) * 2, entropy, (unsigned long)sizeof(entropy));
   }
   return entropy;

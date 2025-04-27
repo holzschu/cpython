@@ -60,6 +60,10 @@
  /* Needed for the implementation of os.statvfs */
 #  include <sys/param.h>
 #  include <sys/mount.h>
+// for iOS_system, so that os.system *is* defined:
+#if TARGET_OS_IPHONE
+#define HAVE_SYSTEM 1
+#endif
 #endif
 
 /* On android API level 21, 'AT_EACCESS' is not declared although
@@ -1670,7 +1674,10 @@ convertenviron(void)
     d = PyDict_New();
     if (d == NULL)
         return NULL;
-#ifdef MS_WINDOWS
+#if TARGET_OS_IPHONE
+	// iOS: we need the environment table for the current process:
+	e = environmentVariables(ios_currentPid());
+#elif defined(MS_WINDOWS)
     /* _wenviron must be initialized in this way if the program is started
        through main() instead of wmain(). */
     (void)_wgetenv(L"");
@@ -3251,14 +3258,27 @@ os_access_impl(PyObject *module, path_t *path, int mode, int dir_fd,
                 flags |= AT_SYMLINK_NOFOLLOW;
             if (effective_ids)
                 flags |= AT_EACCESS;
+#if !TARGET_OS_IPHONE
             result = faccessat(dir_fd, path->narrow, mode, flags);
+#else
+			// iOS: App install resets the "x" bit inside Application, so
+			// we don't check for it.
+			result = faccessat(dir_fd, path->narrow, mode & ~X_OK, flags);
+#endif
         } else {
             faccessat_unavailable = 1;
         }
     }
     else
 #endif
+#if !TARGET_OS_IPHONE
         result = access(path->narrow, mode);
+#else
+		// iOS: App install resets the "x" bit inside Application, so
+		// we don't check for it.
+		// Also, access() replies OK for directories that are not writeable.
+        result = access(path->narrow, mode & ~X_OK);
+#endif
     Py_END_ALLOW_THREADS
 
 #ifdef HAVE_FACCESSAT
@@ -6026,7 +6046,13 @@ os_system_impl(PyObject *module, PyObject *command)
     }
 
     Py_BEGIN_ALLOW_THREADS
+#if TARGET_OS_IPHONE
+	pid_t pid = ios_fork();
+#endif
     result = system(bytes);
+#if TARGET_OS_IPHONE
+	ios_waitpid(pid);	
+#endif
     Py_END_ALLOW_THREADS
     return result;
 }
@@ -6247,6 +6273,13 @@ os_uname_impl(PyObject *module)
     SET(1, u.nodename);
     SET(2, u.release);
     SET(3, u.version);
+    // IPHONE simulator appears like MacOSX, with no differences
+#if TARGET_OS_SIMULATOR
+	char* u_machine = getenv("SIMULATOR_MODEL_IDENTIFIER");
+	if (u_machine != NULL)
+		SET(4, u_machine)
+	else 
+#endif
     SET(4, u.machine);
 
 #undef SET
@@ -6938,6 +6971,10 @@ os_execv_impl(PyObject *module, path_t *path, PyObject *argv)
     execv(path->narrow, argvlist);
 #endif
     _Py_END_SUPPRESS_IPH
+#if TARGET_OS_IPHONE
+        // iOS: we return now
+        Py_RETURN_NONE;
+#endif
 
     /* If we get here it's definitely an error */
 
@@ -7026,6 +7063,13 @@ os_execve_impl(PyObject *module, path_t *path, PyObject *argv, PyObject *env)
         execve(path->narrow, argvlist, envlist);
 #endif
     _Py_END_SUPPRESS_IPH
+#if TARGET_OS_IPHONE
+        while (--envc >= 0)
+            PyMem_DEL(envlist[envc]);
+        PyMem_DEL(envlist);
+        // iOS: we return now
+        Py_RETURN_NONE;
+#endif    	
 
     /* If we get here it's definitely an error */
 
@@ -8063,17 +8107,26 @@ os_fork_impl(PyObject *module)
         return NULL;
     }
     PyOS_BeforeFork();
+#if !TARGET_OS_IPHONE // on iOS, go through both branches:
     pid = fork();
     int saved_errno = errno;
     if (pid == 0) {
+#else
+    pid = ios_fork();
+    int saved_errno = errno;
+#endif
         /* child: this clobbers and resets the import lock. */
         PyOS_AfterFork_Child();
+#if !TARGET_OS_IPHONE // on iOS, go through both branches:
     } else {
+#endif
         /* parent: release the import lock. */
         PyOS_AfterFork_Parent();
         // After PyOS_AfterFork_Parent() starts the world to avoid deadlock.
         warn_about_fork_with_threads("fork");
+#if !TARGET_OS_IPHONE // on iOS, go through both branches:
     }
+#endif
     if (pid == -1) {
         errno = saved_errno;
         return posix_error();
@@ -11119,6 +11172,14 @@ os_close_impl(PyObject *module, int fd)
      * and http://linux.derkeiler.com/Mailing-Lists/Kernel/2005-09/3000.html
      * for more details.
      */
+#if TARGET_OS_IPHONE
+	// Don't close the streams for stdin/stdout/stderr
+	if ((fd == STDIN_FILENO) ||  (fd == STDOUT_FILENO) || (fd == STDERR_FILENO) || 
+			(fd == fileno(thread_stdin)) || (fd == fileno(thread_stdout)) || (fd == fileno(thread_stderr))) 
+	{
+		Py_RETURN_NONE;
+	} 
+#endif
     Py_BEGIN_ALLOW_THREADS
     _Py_BEGIN_SUPPRESS_IPH
     res = close(fd);
@@ -15264,6 +15325,14 @@ os_get_terminal_size_impl(PyObject *module, int fd)
      * If this happens, and the optional fd argument is not present,
      * the ioctl below will fail returning EBADF. This is what we want.
      */
+#if TARGET_OS_IPHONE
+	// ioctl will not five us the right answer for stdout:
+	if ((fd == fileno(stdout)) || (fd == fileno(thread_stdout)))
+	{ 
+		columns = atoi(getenv("COLUMNS"));
+		lines = atoi(getenv("LINES")); 
+	} else 
+#endif
 
 #ifdef TERMSIZE_USE_IOCTL
     {
@@ -15341,6 +15410,10 @@ os_cpu_count_impl(PyObject *module)
     ncpu = 0;
 # endif
 
+#elif TARGET_OS_IPHONE 
+	// Don't start multiple process on iOS/iPadOS.
+	// (it messes with the multiprocessing in ios_system)
+	ncpu = 1;
 #elif defined(__hpux)
     ncpu = mpctl(MPC_GETNUMSPUS, NULL, NULL);
 

@@ -169,7 +169,9 @@ class ResourceTracker(object):
                 self._fd = w
                 self._pid = pid
             finally:
-                os.close(r)
+                # Do not close pipes from inside iOS:
+                if (sys.platform != 'ios'):
+                    os.close(r)
 
     def _check_alive(self):
         '''Check that the pipe has not been closed by sending a probe.'''

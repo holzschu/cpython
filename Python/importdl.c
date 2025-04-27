@@ -111,6 +111,9 @@ _Py_ext_module_loader_info_clear(struct _Py_ext_module_loader_info *info)
     Py_CLEAR(info->name_encoded);
 }
 
+#if TARGET_OS_IPHONE
+extern void Py_GetArgcArgv(int *argc, wchar_t ***argv);
+#endif
 int
 _Py_ext_module_loader_info_init(struct _Py_ext_module_loader_info *p_info,
                                 PyObject *name, PyObject *filename,
@@ -149,6 +152,21 @@ _Py_ext_module_loader_info_init(struct _Py_ext_module_loader_info *p_info,
             _Py_ext_module_loader_info_clear(&info);
             return -1;
         }
+#if TARGET_OS_IPHONE
+		// filename can be Python-zmq.backend.cffi._cffi.framework/Python-zmq.backend.cffi._cffi
+		// In that case, we want it changed to PythonAzmq.backend.cffi._cffi.framework/PythonAzmq.backend.cffi._cffi
+		int argc; 
+		wchar_t** argv;
+		Py_GetArgcArgv(&argc, &argv);
+		if ((wcscmp(argv[0], L"python") != 0) && (wcsncmp(argv[0], L"python3", 7) != 0)) {
+			wchar_t* interpreterName = wcsdup(argv[0]); // pythonA, pythonB...
+			interpreterName[0] = L'P'; // PythonA
+			PyObject* newInterpreter = PyUnicode_FromWideChar(interpreterName, -1);
+			PyObject* oldInterpreter = PyUnicode_FromWideChar(L"Python-", -1);
+			filename = PyUnicode_Replace(filename, oldInterpreter, newInterpreter, -1); 
+			free(interpreterName);
+		}
+#endif
         info.filename = Py_NewRef(filename);
 
 #ifndef MS_WINDOWS

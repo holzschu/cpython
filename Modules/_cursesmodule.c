@@ -114,6 +114,7 @@ static const char PyCursesVersion[] = "2.2";
 
 #define CURSES_MODULE
 #include "py_curses.h"
+#include <mach/boolean.h>
 
 #if defined(HAVE_TERM_H) || defined(__sgi)
 /* For termname, longname, putp, tigetflag, tigetnum, tigetstr, tparm
@@ -170,7 +171,12 @@ class _curses.window "PyCursesWindowObject *" "&PyCursesWindow_Type"
 static PyObject *PyCursesError;
 
 /* Tells whether setupterm() has been called to initialise terminfo.  */
+#if !TARGET_OS_IPHONE
 static int initialised_setupterm = FALSE;
+#else 
+// iOS: we cannot call the function to initialize terminfo, but it is running already.
+static int initialised_setupterm = TRUE;
+#endif
 
 /* Tells whether initscr() has been called to initialise curses.  */
 static int initialised = FALSE;
@@ -640,7 +646,20 @@ Window_OneArgNoReturnVoidFunction(wtimeout, int, "i;delay")
 
 Window_NoArg2TupleReturnFunction(getyx, int, "ii")
 Window_NoArg2TupleReturnFunction(getbegyx, int, "ii")
+#if !TARGET_OS_IPHONE
 Window_NoArg2TupleReturnFunction(getmaxyx, int, "ii")
+#else
+static PyObject * PyCursesWindow_getmaxyx(PyCursesWindowObject *self, PyObject *Py_UNUSED(ignored))
+{
+	/* iOS version: we get window dimensions through environment variables */
+	/* getmaxyx is a macro, so no pointers (cf man page) */
+	int arg1, arg2;
+	arg1 = getenv("ROWS");
+	arg2 = getenv("COLUMNS");
+	// getmaxyx(self->win,arg1,arg2);
+	return Py_BuildValue("ii", arg1, arg2);
+}
+#endif
 Window_NoArg2TupleReturnFunction(getparyx, int, "ii")
 
 Window_OneArgNoReturnFunction(clearok, int, "i;True(1) or False(0)")
@@ -852,10 +871,18 @@ _curses_window_addstr_impl(PyCursesWindowObject *self, int group_left_1,
     {
         const char *str = PyBytes_AS_STRING(bytesobj);
         funcname = "addstr";
+#if !TARGET_OS_IPHONE
         if (use_xy)
             rtn = mvwaddstr(self->win,y,x,str);
         else
             rtn = waddstr(self->win,str);
+#else
+		if (use_xy)
+			fprintf(thread_stdout, "\033[%d;%dH", y, x);
+		fprintf(thread_stdout, "\033[4l"); // overwrite mode
+		rtn = fprintf(thread_stdout, "%s", str);
+		fflush(thread_stdout);
+#endif
         Py_DECREF(bytesobj);
     }
     if (use_attr)
@@ -935,10 +962,21 @@ _curses_window_addnstr_impl(PyCursesWindowObject *self, int group_left_1,
     {
         const char *str = PyBytes_AS_STRING(bytesobj);
         funcname = "addnstr";
+#if !TARGET_OS_IPHONE
         if (use_xy)
             rtn = mvwaddnstr(self->win,y,x,str,n);
         else
             rtn = waddnstr(self->win,str,n);
+#else
+		if (use_xy)
+			fprintf(thread_stdout, "\033[%d;%dH", y, x);
+		fprintf(thread_stdout, "\033[4l"); // overwrite mode
+		if ((n > 0) && (strlen(str) > n))
+			rtn = fprintf(thread_stdout, "%.*s", n, str);
+		else
+			rtn = fprintf(thread_stdout, "%s", str);
+		fflush(thread_stdout);
+#endif
         Py_DECREF(bytesobj);
     }
     if (use_attr)
@@ -1548,7 +1586,17 @@ PyCursesWindow_GetStr(PyCursesWindowObject *self, PyObject *args)
     switch (PyTuple_Size(args)) {
     case 0:
         Py_BEGIN_ALLOW_THREADS
+#if !TARGET_OS_IPHONE
         rtn2 = wgetnstr(self->win,rtn, 1023);
+#else
+		for (int i = 0; i < 1023; i++) {
+			char c = getc(thread_stdin);
+			if ((c == '\r') || (c == '\n')) 
+				break;
+			putc(c, thread_stdout); 
+			rtn[i] = c;
+		}
+#endif
         Py_END_ALLOW_THREADS
         break;
     case 1:
@@ -1559,7 +1607,17 @@ PyCursesWindow_GetStr(PyCursesWindowObject *self, PyObject *args)
             return NULL;
         }
         Py_BEGIN_ALLOW_THREADS
+#if !TARGET_OS_IPHONE
         rtn2 = wgetnstr(self->win, rtn, Py_MIN(n, 1023));
+#else
+		for (int i = 0; i < Py_MIN(n, 1023); i++) {
+			char c = getc(thread_stdin);
+			if ((c == '\r') || (c == '\n')) 
+				break;
+			rtn2 = putc(c, thread_stdout); 
+			rtn[i] = c;
+		}
+#endif
         Py_END_ALLOW_THREADS
         break;
     case 2:
@@ -1854,11 +1912,19 @@ _curses_window_insstr_impl(PyCursesWindowObject *self, int group_left_1,
 #endif
     {
         const char *str = PyBytes_AS_STRING(bytesobj);
+#if !TARGET_OS_IPHONE
         funcname = "insstr";
         if (use_xy)
             rtn = mvwinsstr(self->win,y,x,str);
         else
             rtn = winsstr(self->win,str);
+#else
+		if (use_xy)
+			fprintf(thread_stdout, "\033[%d;%dH", y, x);
+		fprintf(thread_stdout, "\033[4h"); // insert mode
+		rtn = fprintf(thread_stdout, "%s", str);
+		fflush(thread_stdout);		
+#endif		
         Py_DECREF(bytesobj);
     }
     if (use_attr)
@@ -1940,10 +2006,21 @@ _curses_window_insnstr_impl(PyCursesWindowObject *self, int group_left_1,
     {
         const char *str = PyBytes_AS_STRING(bytesobj);
         funcname = "insnstr";
+#if !TARGET_OS_IPHONE
         if (use_xy)
             rtn = mvwinsnstr(self->win,y,x,str,n);
         else
             rtn = winsnstr(self->win,str,n);
+#else
+		if (use_xy)
+			fprintf(thread_stdout, "\033[%d;%dH", y, x);
+		fprintf(thread_stdout, "\033[4h"); // insert mode
+		if ((n > 0) && (strlen(str) > n))
+			rtn = fprintf(thread_stdout, "%.*s", n, str);
+		else
+			rtn = fprintf(thread_stdout, "%s", str);
+		fflush(thread_stdout);
+#endif		
         Py_DECREF(bytesobj);
     }
     if (use_attr)
@@ -2722,7 +2799,11 @@ Calling first raw() then cbreak() leaves the terminal in cbreak mode.
 static PyObject *
 _curses_cbreak_impl(PyObject *module, int flag)
 /*[clinic end generated code: output=9f9dee9664769751 input=c7d0bddda93016c1]*/
+#if TARGET_OS_IPHONE
+{ Py_RETURN_NONE; }
+#else
 NoArgOrFlagNoReturnFunctionBody(cbreak, flag)
+#endif
 
 /*[clinic input]
 _curses.color_content
@@ -2865,7 +2946,14 @@ Update the physical screen to match the virtual screen.
 static PyObject *
 _curses_doupdate_impl(PyObject *module)
 /*[clinic end generated code: output=f34536975a75680c input=8da80914432a6489]*/
+#if TARGET_OS_IPHONE
+{
+	fflush(thread_stdout); 
+	Py_RETURN_NONE; 
+}
+#else
 NoArgNoReturnFunctionBody(doupdate)
+#endif
 
 /*[clinic input]
 _curses.echo
@@ -2893,7 +2981,11 @@ De-initialize the library, and return terminal to normal status.
 static PyObject *
 _curses_endwin_impl(PyObject *module)
 /*[clinic end generated code: output=c0150cd96d2f4128 input=e172cfa43062f3fa]*/
+#if TARGET_OS_IPHONE
+{ Py_RETURN_NONE; } 
+#else 
 NoArgNoReturnFunctionBody(endwin)
+#endif
 
 /*[clinic input]
 _curses.erasechar
@@ -3370,7 +3462,9 @@ static PyObject *
 _curses_setupterm_impl(PyObject *module, const char *term, int fd)
 /*[clinic end generated code: output=4584e587350f2848 input=4511472766af0c12]*/
 {
+#if !TARGET_OS_IPHONE
     int err;
+#endif
 
     if (fd == -1) {
         PyObject* sys_stdout;
@@ -3391,6 +3485,7 @@ _curses_setupterm_impl(PyObject *module, const char *term, int fd)
         }
     }
 
+#if !TARGET_OS_IPHONE
     if (!initialised_setupterm && setupterm((char *)term, fd, &err) == ERR) {
         const char* s = "setupterm: unknown error";
 
@@ -3403,6 +3498,7 @@ _curses_setupterm_impl(PyObject *module, const char *term, int fd)
         PyErr_SetString(PyCursesError,s);
         return NULL;
     }
+#endif
 
     initialised_setupterm = TRUE;
 
@@ -3795,7 +3891,11 @@ Return to normal "cooked" mode with line buffering.
 static PyObject *
 _curses_nocbreak_impl(PyObject *module)
 /*[clinic end generated code: output=eabf3833a4fbf620 input=e4b65f7d734af400]*/
+#if TARGET_OS_IPHONE
+{ Py_RETURN_NONE; } 
+#else
 NoArgNoReturnFunctionBody(nocbreak)
+#endif
 
 /*[clinic input]
 _curses.noecho
@@ -3922,7 +4022,15 @@ static PyObject *
 _curses_putp_impl(PyObject *module, const char *string)
 /*[clinic end generated code: output=e98081d1b8eb5816 input=1601faa828b44cb3]*/
 {
+#if TARGET_OS_IPHONE
+	// putp calls "tputs(str, 1, putchar)" (cf. man page)
+	// 1 here is the number of lines, not the number of chars
+	while (*string)
+		fputc(*string++, thread_stdout);
+	Py_RETURN_NONE;
+#else
     return PyCursesCheckERR(putp(string), "putp");
+#endif
 }
 
 /*[clinic input]
@@ -4035,7 +4143,11 @@ curses input functions one by one.
 static PyObject *
 _curses_raw_impl(PyObject *module, int flag)
 /*[clinic end generated code: output=a750e4b342be015b input=4b447701389fb4df]*/
+#if TARGET_OS_IPHONE
+{ Py_RETURN_NONE; } 
+#else 
 NoArgOrFlagNoReturnFunctionBody(raw, flag)
+#endif
 
 /*[clinic input]
 _curses.reset_prog_mode
@@ -4350,7 +4462,11 @@ _curses_tparm_impl(PyObject *module, const char *str, int i1, int i2, int i3,
 
     PyCursesSetupTermCalled;
 
+#if !TARGET_OS_IPHONE
     result = tparm((char *)str,i1,i2,i3,i4,i5,i6,i7,i8,i9);
+#else
+	asprintf(&result, (char *)str, i1,i2,i3,i4,i5,i6,i7,i8,i9);
+#endif
     if (!result) {
         PyErr_SetString(PyCursesError, "tparm() returned NULL");
         return NULL;

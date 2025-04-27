@@ -78,6 +78,44 @@ get_termios_state(PyObject *module)
 
 static struct PyModuleDef termiosmodule;
 
+#if TARGET_OS_IPHONE
+
+static int local_tcgetattr(int fildes, struct termios *termios_p) 
+{
+	if (!ios_isatty(fildes))
+		return -1;
+	ios_startInteractive();
+	// We cannot call tcgetattr, so we place our own values:
+	termios_p->c_iflag = 0;							  /* input flags */
+	termios_p->c_oflag = 0;							  /* output flags */
+	termios_p->c_cflag = CIGNORE;					  /* control flags */
+	termios_p->c_lflag = ICANON | ECHO | ISIG;        /* local flags */
+	termios_p->c_ispeed = B230400;       /* input speed */
+	termios_p->c_ospeed = B230400;       /* output speed */
+	/* control chars */
+	termios_p->c_cc[VEOF] = 4; // ^D
+	termios_p->c_cc[VINTR] = 3; // ^C
+	termios_p->c_cc[VSUSP] = 26; // ^Z
+	termios_p->c_cc[VERASE] = 0x7f; // delete
+	termios_p->c_cc[VMIN] = 0; // MIN
+	termios_p->c_cc[VTIME] = 0; // TIME
+	return 0;
+}
+
+static int local_tcsetattr(int fildes, int optional_actions, const struct termios *termios_p)
+{
+  // TODO: Should this function do anything?
+	if (!ios_isatty(fildes))
+		return -1;
+	return 0;
+}
+
+#define tcgetattr local_tcgetattr
+#define tcsetattr local_tcsetattr
+#undef abort
+#include <stdlib.h> // for atoi
+#endif
+
 /*[clinic input]
 termios.tcgetattr
 
@@ -215,7 +253,8 @@ termios_tcsetattr_impl(PyObject *module, int fd, int when, PyObject *term)
     r = tcgetattr(fd, &mode);
     Py_END_ALLOW_THREADS
     if (r == -1) {
-        return PyErr_SetFromErrno(state->TermiosError);
+    	return PyErr_Format(PyExc_OSError, "Failure in termios_tcsetattr_impl, fd= %d", fd);
+        // return PyErr_SetFromErrno(state->TermiosError);
     }
 
     speed_t ispeed, ospeed;
@@ -300,9 +339,13 @@ termios_tcsendbreak_impl(PyObject *module, int fd, int duration)
     termiosmodulestate *state = PyModule_GetState(module);
     int r;
 
+#if !TARGET_OS_IPHONE
     Py_BEGIN_ALLOW_THREADS
     r = tcsendbreak(fd, duration);
     Py_END_ALLOW_THREADS
+#else
+	r = dprintf(fd, "%c", 3);
+#endif
 
     if (r == -1) {
         return PyErr_SetFromErrno(state->TermiosError);
@@ -325,11 +368,13 @@ termios_tcdrain_impl(PyObject *module, int fd)
 /*[clinic end generated code: output=5fd86944c6255955 input=c99241b140b32447]*/
 {
     termiosmodulestate *state = PyModule_GetState(module);
-    int r;
+    int r = 0;
 
+#if !TARGET_OS_IPHONE
     Py_BEGIN_ALLOW_THREADS
     r = tcdrain(fd);
     Py_END_ALLOW_THREADS
+#endif
 
     if (r == -1) {
         return PyErr_SetFromErrno(state->TermiosError);
@@ -357,11 +402,13 @@ termios_tcflush_impl(PyObject *module, int fd, int queue)
 /*[clinic end generated code: output=2424f80312ec2f21 input=0f7d08122ddc07b5]*/
 {
     termiosmodulestate *state = PyModule_GetState(module);
-    int r;
+    int r = 0;
 
+#if !TARGET_OS_IPHONE
     Py_BEGIN_ALLOW_THREADS
     r = tcflush(fd, queue);
     Py_END_ALLOW_THREADS
+#endif
 
     if (r == -1) {
         return PyErr_SetFromErrno(state->TermiosError);
@@ -389,11 +436,13 @@ termios_tcflow_impl(PyObject *module, int fd, int action)
 /*[clinic end generated code: output=afd10928e6ea66eb input=c6aff0640b6efd9c]*/
 {
     termiosmodulestate *state = PyModule_GetState(module);
-    int r;
+    int r = 0;
 
+#if !TARGET_OS_IPHONE
     Py_BEGIN_ALLOW_THREADS
     r = tcflow(fd, action);
     Py_END_ALLOW_THREADS
+#endif
 
     if (r == -1) {
         return PyErr_SetFromErrno(state->TermiosError);
@@ -417,6 +466,23 @@ static PyObject *
 termios_tcgetwinsize_impl(PyObject *module, int fd)
 /*[clinic end generated code: output=31825977d5325fb6 input=5706c379d7fd984d]*/
 {
+#if TARGET_OS_IPHONE
+    int col = atoi(ios_getenv("COLUMNS"));
+    int row = atoi(ios_getenv("ROWS"));
+
+    PyObject *v;
+    if (!(v = PyTuple_New(2))) {
+        return NULL;
+    }
+
+    PyTuple_SetItem(v, 0, PyLong_FromLong((long)row));
+    PyTuple_SetItem(v, 1, PyLong_FromLong((long)col));
+    if (PyErr_Occurred()) {
+        Py_DECREF(v);
+        return NULL;
+    }
+    return v;
+#else
 #if defined(TIOCGWINSZ)
     termiosmodulestate *state = PyModule_GetState(module);
     struct winsize w;
@@ -471,6 +537,7 @@ termios_tcgetwinsize_impl(PyObject *module, int fd)
                     "requires termios.TIOCGWINSZ and/or termios.TIOCGSIZE");
     return NULL;
 #endif /* defined(TIOCGWINSZ) */
+#endif /* TARGET_OS_IPHONE */
 }
 
 /*[clinic input]
@@ -490,6 +557,11 @@ static PyObject *
 termios_tcsetwinsize_impl(PyObject *module, int fd, PyObject *winsz)
 /*[clinic end generated code: output=2ac3c9bb6eda83e1 input=4a06424465b24aee]*/
 {
+#if TARGET_OS_IPHONE
+    PyErr_SetString(PyExc_NotImplementedError,
+                    "not available on iOS");
+    return NULL;
+#endif
     if (!PySequence_Check(winsz) || PySequence_Size(winsz) != 2) {
         PyErr_SetString(PyExc_TypeError,
                      "tcsetwinsize, arg 2: must be a two-item sequence");

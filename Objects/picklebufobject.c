@@ -216,3 +216,19 @@ PyTypeObject PyPickleBuffer_Type = {
     .tp_as_buffer = &picklebuf_as_buffer,
     .tp_methods = picklebuf_methods,
 };
+
+#if TARGET_OS_IPHONE
+void init_PyPickleBuffer_Type() {
+    PyPickleBuffer_Type.tp_name = "pickle.PickleBuffer";
+    PyPickleBuffer_Type.tp_doc = PyDoc_STR("Wrapper for potentially out-of-band buffers");
+    PyPickleBuffer_Type.tp_basicsize = sizeof(PyPickleBufferObject);
+    PyPickleBuffer_Type.tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC;
+    PyPickleBuffer_Type.tp_new = picklebuf_new;
+    PyPickleBuffer_Type.tp_dealloc = (destructor) picklebuf_dealloc;
+    PyPickleBuffer_Type.tp_traverse = (traverseproc) picklebuf_traverse;
+    PyPickleBuffer_Type.tp_clear = (inquiry) picklebuf_clear;
+    PyPickleBuffer_Type.tp_weaklistoffset = offsetof(PyPickleBufferObject, weakreflist);
+    PyPickleBuffer_Type.tp_as_buffer = &picklebuf_as_buffer;
+    PyPickleBuffer_Type.tp_methods = picklebuf_methods;
+}
+#endif

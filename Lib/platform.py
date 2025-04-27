@@ -724,6 +724,9 @@ def _syscmd_file(target, default=''):
     if sys.platform in {'dos', 'win32', 'win16', 'ios', 'tvos', 'watchos'}:
         # XXX Others too ?
         return default
+    # iOS: no guarantee that 'file' is installed
+    if (sys.platform == 'ios'):
+        return default
 
     try:
         import subprocess

@@ -642,6 +642,9 @@ def _execvpe(file, args, env=None):
         fullname = path.join(dir, file)
         try:
             exec_func(fullname, *argrest)
+            # iOS: we return from execs. That surprises python
+            if (sys.platform == 'ios'):
+                return
         except (FileNotFoundError, NotADirectoryError) as e:
             last_exc = e
         except OSError as e:

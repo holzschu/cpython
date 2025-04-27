@@ -14,6 +14,11 @@
 #include <ffi.h>
 #include "ctypes.h"
 
+#if TARGET_OS_IPHONE
+#ifndef ffi_type_longdouble
+#define ffi_type_longdouble ffi_type_double
+#endif
+#endif
 
 #define CTYPES_CFIELD_CAPSULE_NAME_PYMEM "_ctypes/cfield.c pymem"
 
@@ -1581,7 +1586,11 @@ _ctypes_init_fielddesc(void)
 struct fielddesc *
 _ctypes_get_fielddesc(const char *fmt)
 {
+#if !TARGET_OS_IPHONE
     static int initialized = 0;
+#else
+    static __thread int initialized = 0;
+#endif
     struct fielddesc *table = formattable;
 
     if (!initialized) {

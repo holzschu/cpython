@@ -507,7 +507,11 @@ show_warning(PyThreadState *tstate, PyObject *filename, int lineno,
 
     f_stderr = _PySys_GetAttr(tstate, &_Py_ID(stderr));
     if (f_stderr == NULL) {
+#if !TARGET_OS_IPHONE
         fprintf(stderr, "lost sys.stderr\n");
+#else
+        fprintf(thread_stderr, "lost sys.stderr\n");
+#endif
         goto error;
     }
 

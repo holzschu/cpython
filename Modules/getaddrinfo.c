@@ -363,7 +363,11 @@ getaddrinfo(const char*hostname, const char*servname,
                 proto = "tcp";
                 break;
             default:
+#if !TARGET_OS_IPHONE
                 fprintf(stderr, "panic!\n");
+#else
+                fprintf(thread_stderr, "panic!\n");
+#endif
                 break;
             }
             if ((sp = getservbyname(servname, proto)) == NULL)

@@ -13,6 +13,10 @@
 
 #include <Python.h>
 
+#if TARGET_OS_IPHONE
+#undef abort
+#endif
+
 #include <stdio.h>                // printf()
 #include <stdlib.h>               // qsort()
 #include <string.h>               // memset()

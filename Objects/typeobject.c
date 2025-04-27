@@ -7683,6 +7683,18 @@ inherit_slots(PyTypeObject *type, PyTypeObject *base)
 static int add_operators(PyTypeObject *);
 static int add_tp_new_wrapper(PyTypeObject *type);
 
+#if TARGET_OS_IPHONE
+// to reset PyTypeObject parameters at cleanup (required for Cython):
+void PyType_Reset(PyTypeObject* pt) {
+    // Need to decrement the tp_dict of the typeObjects too (unless it's NULL):
+    Py_XDECREF(pt->tp_dict);
+    pt->tp_dict = 0;
+    // TODO: should I call PyDict_Cleanup on the typeObjects tp_dict?
+    // And reset the TP_FLAGS_READY flag:
+    pt->tp_flags &= ~Py_TPFLAGS_READY;
+}
+#endif
+
 #define COLLECTION_FLAGS (Py_TPFLAGS_SEQUENCE | Py_TPFLAGS_MAPPING)
 
 static int

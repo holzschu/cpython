@@ -2135,12 +2135,21 @@ static PyObject *
 sys__debugmallocstats_impl(PyObject *module)
 /*[clinic end generated code: output=ec3565f8c7cee46a input=33c0c9c416f98424]*/
 {
+#if !TARGET_OS_IPHONE
 #ifdef WITH_PYMALLOC
     if (_PyObject_DebugMallocStats(stderr)) {
         fputc('\n', stderr);
     }
 #endif
     _PyObject_DebugTypeStats(stderr);
+#else // TARGET_OS_IPHONE
+#ifdef WITH_PYMALLOC
+    if (_PyObject_DebugMallocStats(thread_stderr)) {
+        fputc('\n', thread_stderr);
+    }
+#endif
+    _PyObject_DebugTypeStats(thread_stderr);
+#endif
 
     Py_RETURN_NONE;
 }
@@ -3753,7 +3762,11 @@ err_occurred:
 static PyStatus
 _PySys_SetPreliminaryStderr(PyObject *sysdict)
 {
+#if !TARGET_OS_IPHONE
     PyObject *pstderr = PyFile_NewStdPrinter(fileno(stderr));
+#else
+    PyObject *pstderr = PyFile_NewStdPrinter(fileno(thread_stderr));
+#endif
     if (pstderr == NULL) {
         goto error;
     }
@@ -4073,7 +4086,11 @@ PySys_WriteStdout(const char *format, ...)
     va_list va;
 
     va_start(va, format);
+#if !TARGET_OS_IPHONE
     sys_write(&_Py_ID(stdout), stdout, format, va);
+#else
+    sys_write(&_Py_ID(stdout), thread_stdout, format, va);
+#endif
     va_end(va);
 }
 
@@ -4083,7 +4100,11 @@ PySys_WriteStderr(const char *format, ...)
     va_list va;
 
     va_start(va, format);
+#if !TARGET_OS_IPHONE
     sys_write(&_Py_ID(stderr), stderr, format, va);
+#else
+    sys_write(&_Py_ID(stderr), thread_stderr, format, va);
+#endif
     va_end(va);
 }
 
@@ -4115,7 +4136,11 @@ PySys_FormatStdout(const char *format, ...)
     va_list va;
 
     va_start(va, format);
+#if !TARGET_OS_IPHONE
     sys_format(&_Py_ID(stdout), stdout, format, va);
+#else
+    sys_format(&_Py_ID(stdout), thread_stdout, format, va);
+#endif
     va_end(va);
 }
 
@@ -4125,6 +4150,10 @@ PySys_FormatStderr(const char *format, ...)
     va_list va;
 
     va_start(va, format);
+#if !TARGET_OS_IPHONE
     sys_format(&_Py_ID(stderr), stderr, format, va);
+#else
+    sys_format(&_Py_ID(stderr), thread_stderr, format, va);
+#endif
     va_end(va);
 }

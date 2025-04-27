@@ -627,6 +627,10 @@ if sys.platform == "ios":
     class IOSBrowser(BaseBrowser):
         def open(self, url, new=0, autoraise=True):
             sys.audit("webbrowser.open", url)
+            # iOS_system (a-Shell, Carnets) specifics: just call openurl if it exists:
+            os.system("openurl " + url)
+            return True
+        
             # If ctypes isn't available, we can't open a browser
             if objc is None:
                 return False

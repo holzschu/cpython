@@ -2238,6 +2238,10 @@ PyTypeObject _PyNotImplemented_Type = {
 
 PyObject _Py_NotImplementedStruct = _PyObject_HEAD_INIT(&_PyNotImplemented_Type);
 
+#if TARGET_OS_IPHONE
+extern void init_PyPickleBuffer_Type(void);
+extern void init_PyGen_Type(void);
+#endif
 
 PyStatus
 _PyObject_InitState(PyInterpreterState *interp)
@@ -2246,6 +2250,11 @@ _PyObject_InitState(PyInterpreterState *interp)
     if (refchain_init(interp) < 0) {
         return _PyStatus_NO_MEMORY();
     }
+#endif
+#if TARGET_OS_IPHONE
+	// re-initialize all types:
+	init_PyPickleBuffer_Type();
+	init_PyGen_Type();
 #endif
     return _PyStatus_OK();
 }
