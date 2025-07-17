@@ -60,3 +60,6 @@
 [submodule "packages/maturin"]
 	path = packages/maturin
 	url = git@github.com:holzschu/maturin.git
+[submodule "packages/psutil"]
+	path = packages/psutil
+	url = git@github.com:holzschu/psutil.git
