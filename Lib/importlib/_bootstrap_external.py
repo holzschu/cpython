@@ -1737,8 +1737,12 @@ class AppleFrameworkLoader(ExtensionFileLoader):
         if spec.origin.endswith(".fwork"):
             with _io.FileIO(spec.origin, 'r') as file:
                 framework_binary = file.read().decode().strip()
-            bundle_path = _path_split(sys.executable)[0]
-            spec.origin = _path_join(bundle_path, framework_binary)
+            # iOS system (a-Shell, Carnets): we don't use bundle_path.
+            # The system will look for libraries in $APPDIR, 
+            # which is the only place where we are allowed to place libraries.
+            # bundle_path = _path_split(sys.executable)[0]
+            # spec.origin = _path_join(bundle_path, framework_binary)
+            spec.origin = framework_binary
 
         # If the loader is created based on the spec for a loaded module, the
         # path will be pointing at the Framework location. If this occurs,
@@ -1748,8 +1752,10 @@ class AppleFrameworkLoader(ExtensionFileLoader):
         else:
             with _io.FileIO(self.path + ".origin", 'r') as file:
                 origin = file.read().decode().strip()
-                bundle_path = _path_split(sys.executable)[0]
-                path = _path_join(bundle_path, origin)
+                # iOS system (a-Shell, Carnets): we don't use bundle_path.
+                # bundle_path = _path_split(sys.executable)[0]
+                # path = _path_join(bundle_path, origin)
+                path = origin
 
         module = _bootstrap._call_with_frames_removed(_imp.create_dynamic, spec)
 

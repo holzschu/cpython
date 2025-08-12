@@ -700,8 +700,8 @@ _PyModule_Clear(PyObject *m)
     PyModuleObject *mod = (PyModuleObject *)m;
 	if (mod->md_name != NULL) {
 		const char* utf8name = PyUnicode_AsUTF8(mod->md_name);
-		if ((strncmp(utf8name, "_asyncio", 8) == 0) 
-				|| (strncmp(utf8name, "lxml.", 5) == 0) 
+		if ((strncmp(utf8name, "_asyncio", 8) == 0)
+				|| (strncmp(utf8name, "lxml.", 5) == 0)
 				|| (strncmp(utf8name, "numpy.", 6) == 0)
 				|| (strncmp(utf8name, "qutip.", 6) == 0)
 				|| (strncmp(utf8name, "scipy.", 6) == 0)
@@ -724,12 +724,12 @@ _PyModule_Clear(PyObject *m)
 			if ((strncmp(utf8name, "scipy.spatial._distance_pybind", 30) != 0) && 
 				(strncmp(utf8name, "scipy.fft._pocketfft.pypocketfft", 32) != 0)) {
 				// iOS, debug:
-				fprintf(thread_stderr, "Module = %x name = %s refCount = %zd ", mod, utf8name, m->ob_refcnt);
 				if (mod->md_def && mod->md_def->m_free) {
+					fprintf(thread_stderr, "Module = %x name = %s refCount = %zd ", mod, utf8name, m->ob_refcnt);
 					fprintf(thread_stderr, "module has a free function: %x", mod->md_def->m_free);
+					fprintf(thread_stderr, "\n"); fflush(thread_stderr);
 					moduleNeedsCleanup = 1;
 				}
-				fprintf(thread_stderr, "\n");
 			}
 		}
 	}
@@ -739,9 +739,11 @@ _PyModule_Clear(PyObject *m)
         _PyModule_ClearDict(d);
 #if TARGET_OS_IPHONE
     // Cleanup module after clearing dictionary:
-    // iOS, April 25 2025: is this line causing a crash later in gc_collect_main?
-    // if (moduleNeedsCleanup > 0) mod->md_def->m_free(mod);
-	// ((PyModuleObject *)m)->md_dict = NULL;
+    if (moduleNeedsCleanup > 0) {
+    	mod->md_def->m_free(mod);
+    	// Do not set md_dict to NULL unless there was a cleanup
+		mod->md_dict = NULL;
+	}
 #endif
 }
 

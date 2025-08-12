@@ -54,6 +54,7 @@
 #undef getwchar
 #undef putwchar
 #define isatty ios_isatty
+#define waitpid ios_full_waitpid
 #endif
 #endif
 

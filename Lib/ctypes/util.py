@@ -72,7 +72,9 @@ elif os.name == "posix" and sys.platform in {"darwin", "ios", "tvos", "watchos"}
     def find_library(name):
         possible = ['lib%s.dylib' % name,
                     '%s.dylib' % name,
-                    '%s.framework/%s' % (name, name)]
+                    '%s.framework/%s' % (name, name),
+                    # iOS addition: 
+                    'lib%s.framework/lib%s' % (name, name)]
         for name in possible:
             try:
                 return _dyld_find(name)

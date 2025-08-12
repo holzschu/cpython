@@ -1963,6 +1963,9 @@ class Popen:
                         builtins, exception_name.decode('ascii'),
                         SubprocessError)
                 if issubclass(child_exception_type, OSError) and hex_errno:
+                    # iOS change. Weirdly, b'\x00' fails int conversion.
+                    if (hex_errno == b'\x00'):
+                        hex_errno = "0"
                     errno_num = int(hex_errno, 16)
                     if err_msg == "noexec:chdir":
                         err_msg = ""
