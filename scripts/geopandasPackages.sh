@@ -247,7 +247,7 @@ pushd packages
 pushd rasterio
 touch rasterio/*.pyx
 cp ../setup_rasterio.py ./setup.py 
-rm -rf build/ >>  $PREFIX/make_install_osx.log 2>&1
+rm -rf build/
 env CC=clang CXX=clang++ CPPFLAGS="-isysroot $OSX_SDKROOT -I $PREFIX/Frameworks_macosx/include/gdal " CFLAGS="-isysroot $OSX_SDKROOT $DEBUG -I $PREFIX/Frameworks_macosx/include/gdal " CXXFLAGS="-isysroot $OSX_SDKROOT $DEBUG -I $PREFIX/Frameworks_macosx/include/gdal " LDFLAGS="-isysroot $OSX_SDKROOT $DEBUG -F $PREFIX/Frameworks_macosx/ -framework libgdal" LDSHARED="clang -v -undefined error -dynamiclib -isysroot $OSX_SDKROOT -lz -L$PREFIX -lpython3.13 $DEBUG -F $PREFIX/Frameworks_macosx/ -framework libgdal" PLATFORM=macosx GDAL_VERSION=3.6.0 python3.13 setup.py build 
 env CC=clang CXX=clang++ CPPFLAGS="-isysroot $OSX_SDKROOT -I $PREFIX/Frameworks_macosx/include/gdal " CFLAGS="-isysroot $OSX_SDKROOT $DEBUG -I $PREFIX/Frameworks_macosx/include/gdal " CXXFLAGS="-isysroot $OSX_SDKROOT $DEBUG -I $PREFIX/Frameworks_macosx/include/gdal " LDFLAGS="-isysroot $OSX_SDKROOT $DEBUG -F $PREFIX/Frameworks_macosx/ -framework libgdal" LDSHARED="clang -v -undefined error -dynamiclib -isysroot $OSX_SDKROOT -lz -L$PREFIX -lpython3.13 $DEBUG -F $PREFIX/Frameworks_macosx/ -framework libgdal" PLATFORM=macosx GDAL_VERSION=3.6.0 python3.13 -m pip install . --no-build-isolation
 echo "rasterio libraries for OSX: " 

@@ -98,8 +98,8 @@ popd
 	env CC=clang CXX=clang++ CPPFLAGS="-isysroot $OSX_SDKROOT" CFLAGS="-isysroot $OSX_SDKROOT  $CYTHON_OPTIONS $DEBUG" CXXFLAGS="-isysroot $OSX_SDKROOT  $CYTHON_OPTIONS $DEBUG" LDFLAGS="-isysroot $OSX_SDKROOT $DEBUG " LDSHARED="clang -v -undefined error -dynamiclib -isysroot $OSX_SDKROOT -lz -L$PREFIX -lpython3.13 -lc++ $DEBUG"  PLATFORM=macosx python3.13 setup.py build
 	env CC=clang CXX=clang++ CPPFLAGS="-isysroot $OSX_SDKROOT" CFLAGS="-isysroot $OSX_SDKROOT  $CYTHON_OPTIONS $DEBUG" CXXFLAGS="-isysroot $OSX_SDKROOT  $CYTHON_OPTIONS $DEBUG" LDFLAGS="-isysroot $OSX_SDKROOT $DEBUG " LDSHARED="clang -v -undefined error -dynamiclib -isysroot $OSX_SDKROOT -lz -L$PREFIX -lpython3.13 -lc++ $DEBUG"  PLATFORM=macosx python3.13 -m pip install . 
 	# And pip still deleted the version number:
-cp build/lib.macosx-${OSX_VERSION}-x86_64-cpython-313/wordcloud/_version.py $PYTHONHOME/lib/python3.13/site-packages/wordcloud/_version.py  >>  $PREFIX/make_install_osx.log 2>&1
-find build -name \*.so -print  >>  $PREFIX/make_install_osx.log 2>&1
+cp build/lib.macosx-${OSX_VERSION}-x86_64-cpython-313/wordcloud/_version.py $PYTHONHOME/lib/python3.13/site-packages/wordcloud/_version.py
+find build -name \*.so -print
 mkdir -p  $PREFIX/build/lib.macosx-${OSX_VERSION}-x86_64-3.13/wordcloud/
 cp build//lib.macosx-${OSX_VERSION}-x86_64-cpython-313/wordcloud/query_integral_image.cpython-313-darwin.so $PREFIX/build/lib.macosx-${OSX_VERSION}-x86_64-3.13/wordcloud/
 popd 

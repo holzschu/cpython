@@ -108,7 +108,7 @@ then
 	export LIBRARY_PATH="/Library/Developer/CommandLineTools/SDKs/MacOSX12.0.sdk/usr/lib" # Still needed?
 	pushd packages
     downloadSource cvxopt
-	pushd cvxopt-* >>  $PREFIX/make_install_osx.log 2>&1
+	pushd cvxopt-*
 	rm -rf build/* 
 	env CC=clang CXX=clang++ CPPFLAGS="-isysroot $OSX_SDKROOT" \
 		CFLAGS="-isysroot $OSX_SDKROOT $DEBUG" \

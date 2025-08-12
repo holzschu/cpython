@@ -141,7 +141,7 @@ pushd packages
 # 8.36 is the last ipython-8 version. 
 # I should test with ipython 9, but it will require re-checking the files.
 downloadSource ipython 8.36.0
-pushd ipython-8* >>  $PREFIX/make_install_osx.log 2>&1
+pushd ipython-8*
 # That's one large sed replace, but it's a single file in the repository.
 # We need system_ios to replace system_piped *and* system_raw.
 sed -i bak 's/^    system = system_piped/    # iOS: use system_ios instead\

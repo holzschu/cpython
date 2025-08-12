@@ -73,48 +73,6 @@ install_dylib () {
 	echo "${RELATIVE_EXT%.so}.fwork" |  sed "s/^Frameworks\/arm64-iphoneos\///" > "$CODESIGNING_FOLDER_PATH/$FRAMEWORK_FOLDER/$FULL_MODULE_NAME.origin"
 }
 
-# This function is for creating frameworks for site-packages Python modules (the ones in .../lib/python3.13/site-packages/
-install_site_package () {
-	DIRECTORY=$PREFIX/Library/lib/python3.13/site-packages
-	PACKAGE=$1
-	LIBRARY=$2
-
-	FULL_MODULE_NAME=Python-$(echo $PACKAGE | tr "/" ".")
-
-	# A bundle identifier; not actually used, but required by Xcode framework packaging
-	FRAMEWORK_BUNDLE_ID=$(echo $PRODUCT_BUNDLE_IDENTIFIER.$FULL_MODULE_NAME | tr "_" "-" | sed "s/^\.//")
-	# The name of the framework folder.
-	FRAMEWORK_FOLDER="Frameworks/$FULL_MODULE_NAME.framework"
-	
-	# If the framework folder doesn't exist, create it.
-	if [ ! -d "$CODESIGNING_FOLDER_PATH/$FRAMEWORK_FOLDER" ]; then
-		echo "Creating framework for $PACKAGE"
-		mkdir -p "$CODESIGNING_FOLDER_PATH/$FRAMEWORK_FOLDER"
-		cp "$CODESIGNING_FOLDER_PATH/dylib-Info-template.plist" "$CODESIGNING_FOLDER_PATH/$FRAMEWORK_FOLDER/Info.plist"
-		plutil -replace CFBundleExecutable -string "$FULL_MODULE_NAME" "$CODESIGNING_FOLDER_PATH/$FRAMEWORK_FOLDER/Info.plist"
-		plutil -replace CFBundleIdentifier -string "$FRAMEWORK_BUNDLE_ID" "$CODESIGNING_FOLDER_PATH/$FRAMEWORK_FOLDER/Info.plist"
-		# Mine:
-		plutil -replace CFBundleName -string $FULL_MODULE_NAME "$CODESIGNING_FOLDER_PATH/$FRAMEWORK_FOLDER/Info.plist"
-		plutil -replace DTPlatformName -string "iphoneos" "$CODESIGNING_FOLDER_PATH/$FRAMEWORK_FOLDER/Info.plist"
-		plutil -replace DTSDKName -string "iphoneos" "$CODESIGNING_FOLDER_PATH/$FRAMEWORK_FOLDER/Info.plist"
-		plutil -replace DTPlatformVersion -string "14.0" "$CODESIGNING_FOLDER_PATH/$FRAMEWORK_FOLDER/Info.plist"
-		plutil -replace MinimumOSVersion -string "14.0" "$CODESIGNING_FOLDER_PATH/$FRAMEWORK_FOLDER/Info.plist"
-	fi
-
-	echo "Installing binary for $FRAMEWORK_FOLDER/$FULL_MODULE_NAME"
-	cp "$LIBRARY" "$CODESIGNING_FOLDER_PATH/$FRAMEWORK_FOLDER/$FULL_MODULE_NAME"
-	# change framework id:
-	install_name_tool -id @rpath/$FULL_MODULE_NAME.framework/$FULL_MODULE_NAME "$CODESIGNING_FOLDER_PATH/$FRAMEWORK_FOLDER/$FULL_MODULE_NAME"
-	# Create a placeholder .fwork file where the .so is supposed to be:
-	echo "$FRAMEWORK_FOLDER/$FULL_MODULE_NAME" > $DIRECTORY/$PACKAGE.cpython-313-iphoneos.fwork 
-	# Create a back reference to the .so file location in the framework (relative to PYTHONHOME, which is $APPDIR/Library)
-	# This is currently not used in the code, AFAICS.
-	LOCAL_LIBRARY=$(echo $DIRECTORY | sed "s|$PREFIX/Library/||")
-	echo $LOCAL_LIBRARY/$PACKAGE.cpython-313-iphoneos.so > "$CODESIGNING_FOLDER_PATH/$FRAMEWORK_FOLDER/$FULL_MODULE_NAME.origin"
-}
-
-
-
 # 2) compile for iOS:
 export OSX_VERSION=$(sw_vers -productVersion |awk -F. '{print $1"."$2}')
 unset LIBRARY_PATH
@@ -204,22 +162,22 @@ env CC=clang CXX=clang++ CPP="clang -E" AR="ar" \
 	ac_cv_func_setuid=no \
     ac_cv_func_forkpty=no \
     ac_cv_func_openpty=no \
-	ac_cv_func_clock_settime=no >& configure_ios.log
+	ac_cv_func_clock_settime=no
 # --without-pymalloc  when debugging memory
 # --enable-framework : seems to work with Python 3.13 and iOS
 # use either --enable-shared  or --enable-framework
 # --with-app-store-compliance will generate an error with _struct the second time it is applied (I think)
-make >& make_ios.log
+make
 # This places everything into iOS/Frameworks/arm64-iphoneos/
-make install  >> $PREFIX/make_ios.log 2>&1
+make install
 # copy sysconfig_data:
-cp iOS/Frameworks/arm64-iphoneos/lib/python3.13/_sysconfigdata__ios_arm64-iphoneos.py $PREFIX/Library/lib/python3.13/  >> $PREFIX/make_ios.log 2>&1
+cp iOS/Frameworks/arm64-iphoneos/lib/python3.13/_sysconfigdata__ios_arm64-iphoneos.py $PREFIX/Library/lib/python3.13/
 # Create the frameworks 
-cp iOS/Resources/dylib-Info-template.plist $CODESIGNING_FOLDER_PATH  >> $PREFIX/make_ios.log 2>&1
+cp iOS/Resources/dylib-Info-template.plist $CODESIGNING_FOLDER_PATH
 #
-echo "Install Python $PYTHON_VER standard library extension modules..."  >> $PREFIX/make_ios.log 2>&1
+echo "Install Python $PYTHON_VER standard library extension modules..."
 find "$PREFIX/iOS/Frameworks/arm64-iphoneos/lib/python$PYTHON_VER/lib-dynload" -name "*.so" | while read FULL_EXT; do
-install_dylib $PREFIX/iOS/Frameworks/arm64-iphoneos/lib/python$PYTHON_VER/lib-dynload "$FULL_EXT"  >> $PREFIX/make_ios.log 2>&1
+install_dylib $PREFIX/iOS/Frameworks/arm64-iphoneos/lib/python$PYTHON_VER/lib-dynload "$FULL_EXT"
 done
 #
 

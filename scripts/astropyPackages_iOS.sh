@@ -28,51 +28,6 @@ PYTHON_VER=3.13
 CODESIGNING_FOLDER_PATH=$PREFIX/iOS
 PRODUCT_BUNDLE_IDENTIFIER=Nicolas-Holzschuch
 
-# This function is for creating frameworks for standard Python modules (the ones in .../lib/python3.13/lib-dynload/
-install_dylib () {
-	INSTALL_BASE=$1
-	FULL_EXT=$2
-
-	# The name of the extension file
-	EXT=$(basename "$FULL_EXT")
-	# The location of the extension file, relative to the bundle
-	RELATIVE_EXT=${FULL_EXT#$CODESIGNING_FOLDER_PATH/}
-	# The path to the extension file, relative to the install base
-	PYTHON_EXT=${FULL_EXT/$INSTALL_BASE/}
-	# The full dotted name of the extension module, constructed from the file path.
-	FULL_MODULE_NAME=Python-$(echo $PYTHON_EXT | cut -d "." -f 1 | tr "/" "." | sed "s/^\.//");
-
-	# A bundle identifier; not actually used, but required by Xcode framework packaging
-	FRAMEWORK_BUNDLE_ID=$(echo $PRODUCT_BUNDLE_IDENTIFIER.$FULL_MODULE_NAME | tr "_" "-" | sed "s/^\.//")
-	# The name of the framework folder.
-	FRAMEWORK_FOLDER="Frameworks/$FULL_MODULE_NAME.framework"
-
-	# If the framework folder doesn't exist, create it.
-	if [ ! -d "$CODESIGNING_FOLDER_PATH/$FRAMEWORK_FOLDER" ]; then
-		echo "Creating framework for $RELATIVE_EXT"
-		mkdir -p "$CODESIGNING_FOLDER_PATH/$FRAMEWORK_FOLDER"
-		cp "$CODESIGNING_FOLDER_PATH/dylib-Info-template.plist" "$CODESIGNING_FOLDER_PATH/$FRAMEWORK_FOLDER/Info.plist"
-		plutil -replace CFBundleExecutable -string "$FULL_MODULE_NAME" "$CODESIGNING_FOLDER_PATH/$FRAMEWORK_FOLDER/Info.plist"
-		plutil -replace CFBundleIdentifier -string "$FRAMEWORK_BUNDLE_ID" "$CODESIGNING_FOLDER_PATH/$FRAMEWORK_FOLDER/Info.plist"
-		# Mine:
-		plutil -replace CFBundleName -string $FULL_MODULE_NAME "$CODESIGNING_FOLDER_PATH/$FRAMEWORK_FOLDER/Info.plist"
-		plutil -replace DTPlatformName -string "iphoneos" "$CODESIGNING_FOLDER_PATH/$FRAMEWORK_FOLDER/Info.plist"
-		plutil -replace DTSDKName -string "iphoneos" "$CODESIGNING_FOLDER_PATH/$FRAMEWORK_FOLDER/Info.plist"
-		plutil -replace DTPlatformVersion -string "14.0" "$CODESIGNING_FOLDER_PATH/$FRAMEWORK_FOLDER/Info.plist"
-		plutil -replace MinimumOSVersion -string "14.0" "$CODESIGNING_FOLDER_PATH/$FRAMEWORK_FOLDER/Info.plist"
-	fi
-
-	echo "Installing binary for $FRAMEWORK_FOLDER/$FULL_MODULE_NAME"
-	mv "$FULL_EXT" "$CODESIGNING_FOLDER_PATH/$FRAMEWORK_FOLDER/$FULL_MODULE_NAME"
-	# change framework id:
-	install_name_tool -id @rpath/$FULL_MODULE_NAME.framework/$FULL_MODULE_NAME "$CODESIGNING_FOLDER_PATH/$FRAMEWORK_FOLDER/$FULL_MODULE_NAME"
-	# Create a placeholder .fwork file where the .so was
-	echo "$FRAMEWORK_FOLDER/$FULL_MODULE_NAME" > ${FULL_EXT%.so}.fwork
-	# Create a back reference to the .so file location in the framework (relative to PYTHONHOME, which is $APPDIR/Library)
-	# This is currently not used in the code, AFAICS.
-	echo "${RELATIVE_EXT%.so}.fwork" |  sed "s/^Frameworks\/arm64-iphoneos\///" > "$CODESIGNING_FOLDER_PATH/$FRAMEWORK_FOLDER/$FULL_MODULE_NAME.origin"
-}
-
 # This function is for creating frameworks for site-packages Python modules (the ones in .../lib/python3.13/site-packages/
 install_site_package () {
 	DIRECTORY=$PREFIX/Library/lib/python3.13/site-packages
