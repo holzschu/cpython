@@ -2,6 +2,7 @@
 
 # Copyright (c) IPython Development Team.
 # Distributed under the terms of the Modified BSD License.
+from __future__ import annotations
 
 import os
 import shutil
@@ -16,7 +17,7 @@ from nbconvert.utils import _contextlib_chdir
 from .latex import LatexExporter
 
 
-class LatexFailed(IOError):  # noqa
+class LatexFailed(IOError):
     """Exception for failed latex run
 
     Captured latex output is in error.output.
@@ -32,8 +33,7 @@ class LatexFailed(IOError):  # noqa
 
     def __str__(self):
         """String representation."""
-        u = self.__unicode__()
-        return u
+        return self.__unicode__()
 
 
 def prepend_to_env_search_path(varname, value, envdict):
@@ -74,7 +74,7 @@ class PDFExporter(LatexExporter):
 
     output_mimetype = "application/pdf"
 
-    _captured_output = List()
+    _captured_output = List(Unicode())
 
     @default("file_extension")
     def _file_extension_default(self):
@@ -84,9 +84,7 @@ class PDFExporter(LatexExporter):
     def _template_extension_default(self):
         return ".tex.j2"
 
-    def run_command(  # noqa
-        self, command_list, filename, count, log_function, raise_on_failure=None
-    ):
+    def run_command(self, command_list, filename, count, log_function, raise_on_failure=None):
         """Run command_list count times.
 
         Parameters
@@ -115,9 +113,9 @@ class PDFExporter(LatexExporter):
         if cmd is None:
             link = "https://nbconvert.readthedocs.io/en/latest/install.html#installing-tex"
             msg = (
-                "{formatter} not found on PATH, if you have not installed "
-                "{formatter} you may need to do so. Find further instructions "
-                "at {link}.".format(formatter=command_list[0], link=link)
+                f"{command_list[0]} not found on PATH, if you have not installed "
+                f"{command_list[0]} you may need to do so. Find further instructions "
+                f"at {link}."
             )
             raise OSError(msg)
 
@@ -126,7 +124,7 @@ class PDFExporter(LatexExporter):
 
         shell = sys.platform == "win32"
         if shell:
-            command = subprocess.list2cmdline(command)  # type:ignore
+            command = subprocess.list2cmdline(command)  # type:ignore[assignment]
         env = os.environ.copy()
         prepend_to_env_search_path("TEXINPUTS", self.texinputs, env)
         prepend_to_env_search_path("BIBINPUTS", self.texinputs, env)
@@ -140,12 +138,12 @@ class PDFExporter(LatexExporter):
                     stdout=stdout,
                     stderr=subprocess.STDOUT,
                     stdin=null,
-                    shell=shell,  # noqa
+                    shell=shell,  # noqa: S603
                     env=env,
                 )
                 out, _ = p.communicate()
                 if p.returncode:
-                    if self.verbose:  # noqa
+                    if self.verbose:  # noqa: SIM108
                         # verbose means I didn't capture stdout with PIPE,
                         # so it's already been displayed and `out` is None.
                         out_str = ""

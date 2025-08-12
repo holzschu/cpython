@@ -16,6 +16,7 @@ library_dirs = []
 extra_compile_args = []
 extra_link_args = []
 
+platform = os.getenv('PLATFORM') or sys.platform
 
 def _ask_pkg_config(resultlist, option, result_prefix='', sysroot=False):
     pkg_config = os.environ.get('PKG_CONFIG','pkg-config')
@@ -105,7 +106,7 @@ def uses_msvc():
     return config.try_compile('#ifndef _MSC_VER\n#error "not MSVC"\n#endif')
 
 def use_pkg_config():
-    if sys.platform == 'darwin' and os.path.exists('/usr/local/bin/brew'):
+    if platform == 'darwin' and os.path.exists('/usr/local/bin/brew'):
         use_homebrew_for_libffi()
 
     _ask_pkg_config(include_dirs,       '--cflags-only-I', '-I', sysroot=True)
@@ -148,16 +149,16 @@ else:
     ask_supports_thread()
     ask_supports_sync_synchronize()
 
-if 'darwin' in sys.platform:
+if 'darwin' in platform:
     # priority is given to `pkg_config`, but always fall back on SDK's libffi.
     extra_compile_args += ['-iwithsysroot/usr/include/ffi']
 
-    # Code to include sysroot ffi headers, not available in the default SDK for iOS
-if 'ios' in sys.platform:
+    # Code to include our ffi headers, not available in the default SDK for iOS
+if 'iphoneos' in platform:
         prefix = os.getenv('PREFIX') or '../../'
         include_dirs = [prefix + '/Frameworks_' + platform + '/include/ffi']
 
-if 'freebsd' in sys.platform:
+if 'freebsd' in platform:
     include_dirs.append('/usr/local/include')
     library_dirs.append('/usr/local/lib')
 

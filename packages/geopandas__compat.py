@@ -18,6 +18,8 @@ PANDAS_GE_14 = Version(pd.__version__) >= Version("1.4.0rc0")
 PANDAS_GE_15 = Version(pd.__version__) >= Version("1.5.0")
 PANDAS_GE_20 = Version(pd.__version__) >= Version("2.0.0")
 PANDAS_GE_21 = Version(pd.__version__) >= Version("2.1.0")
+PANDAS_GE_22 = Version(pd.__version__) >= Version("2.2.0")
+PANDAS_GE_30 = Version(pd.__version__) >= Version("3.0.0.dev0")
 
 
 # -----------------------------------------------------------------------------
@@ -138,7 +140,7 @@ def set_use_pygeos(val=None):
 
     if USE_PYGEOS:
         # iOS addition: remove this warning.
-        if not os.uname().machine.startswith("iP"):
+        if not (sys.platform == "ios"):
             warnings.warn(
                 "GeoPandas is set to use PyGEOS over Shapely. PyGEOS support is deprecated"
                 "and will be removed in GeoPandas 1.0, released in the Q1 of 2024. "

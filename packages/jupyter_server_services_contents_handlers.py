@@ -179,7 +179,7 @@ class ContentsHandler(ContentsAPIHandler):
         # iOS: avoid creating new files in "/", create them in the current directory instead.
         import sys
         import os
-        if (sys.platform == "darwin" and os.uname().machine.startswith("iP")):
+        if (sys.platform == "ios"):
             dirname, basename = os.path.split(path)
             if (dirname == "/") or (dirname == ""):
                 path = os.getcwd() + path

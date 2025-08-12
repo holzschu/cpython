@@ -197,7 +197,7 @@ class MappingKernelManager(MultiKernelManager):
             os_path = os.path.dirname(os_path)
         # iOS: make sure we can access the directory. Otherwise, start from ~/Documents:
         import sys
-        if (sys.platform == "darwin" and os.uname().machine.startswith("iP")):
+        if (sys.platform == "ios"):
             if not os.access(os_path, os.X_OK | os.W_OK):
                 os_path = os.path.join(os.path.expanduser('~'), 'Documents')
         return os_path

@@ -112,7 +112,7 @@ class FileCheckpoints(FileManagerMixin, Checkpoints):
         cp_dir = os.path.join(os_path, self.checkpoint_dir)
         # iOS, move checkpoint directory to ~/Documents if local dir is not writeable
         import sys
-        if (sys.platform == 'darwin' and os.uname().machine.startswith('iP')):
+        if (sys.platform == 'ios'):
             try: 
                 ensure_dir_exists(cp_dir)
                 if not os.access(cp_dir, os.X_OK | os.W_OK):

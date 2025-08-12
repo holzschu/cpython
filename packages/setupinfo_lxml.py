@@ -29,6 +29,14 @@ if hasattr(sys, 'pypy_version_info') or (
     # disable Cython compilation of Python modules in PyPy and other non-CPythons
     del COMPILED_MODULES[:]
 
+# iOS/simulator: adapt to the actual platform we are cross-compiling for:
+# We cannot trust sys.platform since we are cross-compiling!
+if sys.platform == "darwin":
+    if "PLATFORM" in os.environ:
+        platform=os.environ["PLATFORM"]
+    else:
+        platform="macosx"
+
 SOURCE_PATH = "src"
 INCLUDE_PACKAGE_PATH = os.path.join(SOURCE_PATH, 'lxml', 'includes')
 
@@ -113,7 +121,7 @@ def ext_modules(static_include_dirs, static_library_dirs,
 
     base_dir = get_base_dir()
     # iOS: we can't trust pkgconfig when cross-compiling
-    if sys.platform == 'ios':
+    if platform.startswith('iphone'):
         _include_dirs = [get_xcode_isysroot() + '/usr/include/libxml2']
     else:
         _include_dirs = _prefer_reldirs(
@@ -122,7 +130,7 @@ def ext_modules(static_include_dirs, static_library_dirs,
                 INCLUDE_PACKAGE_PATH,
             ])
     # iOS: we can't trust pkgconfig when cross-compiling
-    if sys.platform == 'ios':
+    if platform.startswith('iphone'):
         _library_dirs = [get_xcode_isysroot() + '/usr/lib']
     else:
         _library_dirs = _prefer_reldirs(base_dir, library_dirs(static_library_dirs))
@@ -515,7 +523,7 @@ def flags(option):
 
 
 def get_xcode_isysroot():
-    return run_command('xcrun', '--show-sdk-path')
+    return run_command('xcrun', "--sdk", platform, '--show-sdk-path')
 
 
 ## Option handling:

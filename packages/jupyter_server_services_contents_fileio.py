@@ -206,7 +206,7 @@ class FileManagerMixin(LoggingConfigurable, Configurable):
         # Do not use atomic_writing on iOS if we don't have permission on the directory
         # (but keep using it otherwise -- minimal changes)
         import sys
-        if (sys.platform == "darwin" and os.uname().machine.startswith("iP")):
+        if (sys.platform == "ios"):
             dirname, basename = os.path.split(os_path)
             if not os.access(dirname, os.X_OK | os.W_OK):
                 with self.perm_to_403(os_path):
@@ -238,7 +238,7 @@ class FileManagerMixin(LoggingConfigurable, Configurable):
                 path = to_api_path(os_path, root=self.root_dir)  # type:ignore[attr-defined]
                 # iOS: better error message
                 import sys
-                if (sys.platform == "darwin" and os.uname().machine.startswith("iP")):
+                if (sys.platform == "ios"):
                     raise HTTPError(403, "Permission denied: %s (maybe you need to grand permission on the folder)" % path) from e
                 else:
                     raise HTTPError(403, "Permission denied: %s" % path) from e
