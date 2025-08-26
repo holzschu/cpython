@@ -6,7 +6,7 @@ endian='little'
 
 [constants]
 # Meson does not read environment variables. So we use sed.
-prefix = '/Users/holzschu/src/Xcode_iPad/Carnets/cpython'
+prefix = '/Users/holzschu/src/Xcode_iPad/a-Shell/cpython'
 pandas = prefix +  '/packages/pandas-2.0.3'
 toolchain = '/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS.sdk'
 common_flags = ['-isysroot', toolchain, '-arch', 'arm64', '-miphoneos-version-min=14.0', '-I' + prefix, '-I' + prefix + '/Frameworks_iphoneos/include/', '-I' + pandas + '/pandas/_libs/src/', '-DCYTHON_PEP489_MULTI_PHASE_INIT=0', '-DCYTHON_USE_DICT_VERSIONS=0', '-falign-functions=8', '-F' + prefix + '/Frameworks_iphoneos']
