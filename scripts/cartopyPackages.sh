@@ -75,33 +75,47 @@ downloadSource()
 
 # End boilerplate
 
-# Download nltk, so we can change the position for downloaded data (in data.py and in downloader.py)
-pushd packages
-downloadSource nltk 
-pushd nltk* 
-rm -rf build/* 
-sed -i bak 's/return os.path.join(homedir, "nltk_data")/return os.path.join\(homedir, "Documents\/nltk_data"\)/' nltk/downloader.py
-# Not strictly necessary anymore since NLTK_DATA is used, but let's keep it.
-sed -i bak 's/path.append(os.path.expanduser("~\/nltk_data"))/path.append\(os.path.expanduser\("~\/Documents\/nltk_data"\)\)/' nltk/data.py
-python3.13 -m pip install . 
-popd 
-popd 
-# wordcloud: Cloned from github because we need to regenerate the C from Cython.
-pushd packages
-pushd word_cloud 
-rm -rf build/* 
-# Force rebuild of C file, to have Cython improved memory management:
-pushd wordcloud 
-cython query_integral_image.pyx 
-popd 
-# Now compile:
-	env CC=clang CXX=clang++ CPPFLAGS="-isysroot $OSX_SDKROOT" CFLAGS="-isysroot $OSX_SDKROOT  $CYTHON_OPTIONS $DEBUG" CXXFLAGS="-isysroot $OSX_SDKROOT  $CYTHON_OPTIONS $DEBUG" LDFLAGS="-isysroot $OSX_SDKROOT $DEBUG " LDSHARED="clang -v -undefined error -dynamiclib -isysroot $OSX_SDKROOT -lz -L$PREFIX -lpython3.13 -lc++ $DEBUG"  PLATFORM=macosx python3.13 setup.py build
-	env CC=clang CXX=clang++ CPPFLAGS="-isysroot $OSX_SDKROOT" CFLAGS="-isysroot $OSX_SDKROOT  $CYTHON_OPTIONS $DEBUG" CXXFLAGS="-isysroot $OSX_SDKROOT  $CYTHON_OPTIONS $DEBUG" LDFLAGS="-isysroot $OSX_SDKROOT $DEBUG " LDSHARED="clang -v -undefined error -dynamiclib -isysroot $OSX_SDKROOT -lz -L$PREFIX -lpython3.13 -lc++ $DEBUG"  PLATFORM=macosx python3.13 -m pip install . 
-	# And pip still deleted the version number:
-cp build/lib.macosx-${OSX_VERSION}-x86_64-cpython-313/wordcloud/_version.py $PREFIX/Library/lib/python3.13/site-packages/wordcloud/_version.py
-find build -name \*.so -print
-mkdir -p  $PREFIX/build/lib.macosx-${OSX_VERSION}-x86_64-3.13/wordcloud/
-cp build//lib.macosx-${OSX_VERSION}-x86_64-cpython-313/wordcloud/query_integral_image.cpython-313-darwin.so $PREFIX/build/lib.macosx-${OSX_VERSION}-x86_64-3.13/wordcloud/
-popd 
-popd 
+python3.13 -m pip install pyshp 
+# owslib is optional
+pushd packages 
+# 0.25.0: shapely >= 2.0 (so no)
+# 0.23.0: shapely>=1.7
+# 0.24.0: shapely>=1.8
+downloadSource cartopy 0.24.0 
+pushd cartopy-* 
+rm -rf build/*  
+rm -rf .eggs  
+# Force re-cythonization:
+touch lib/cartopy/trace.pyx 
+if [ ! -f setup.pybak ]
+then
+	cp setup.py setup.pybak 
+	cp ../setup_Cartopy.py setup.py 
+fi
+env CC=clang CXX=clang++ CPPFLAGS="-isysroot $OSX_SDKROOT $CYTHON_OPTIONS -I $PREFIX/Frameworks_macosx/include " \
+	CFLAGS="-isysroot $OSX_SDKROOT $DEBUG $CYTHON_OPTIONS -I $PREFIX/Frameworks_macosx/include " \
+	CXXFLAGS="-isysroot $OSX_SDKROOT $DEBUG $CYTHON_OPTIONS -I $PREFIX/Frameworks_macosx/include " \
+	LDFLAGS="-isysroot $OSX_SDKROOT $DEBUG -F $PREFIX/Frameworks_macosx/ -framework libproj -framework libgeos_c" \
+	LDSHARED="clang -v -undefined error -dynamiclib -isysroot $OSX_SDKROOT -lz -L$PREFIX -lpython3.13 $DEBUG -F $PREFIX/Frameworks_macosx/ -framework libproj -framework libgeos_c" \
+	PLATFORM=macosx \
+	FORCE_CYTHON="True" \
+	python3.13 setup.py build 
+env CC=clang CXX=clang++ CPPFLAGS="-isysroot $OSX_SDKROOT -I $PREFIX/Frameworks_macosx/include " \
+	CFLAGS="-isysroot $OSX_SDKROOT $DEBUG -I $PREFIX/Frameworks_macosx/include " \
+	CXXFLAGS="-isysroot $OSX_SDKROOT $DEBUG -I $PREFIX/Frameworks_macosx/include " \
+	LDFLAGS="-isysroot $OSX_SDKROOT $DEBUG -F $PREFIX/Frameworks_macosx/ -framework libproj -framework libgeos_c" \
+	LDSHARED="clang -v -undefined error -dynamiclib -isysroot $OSX_SDKROOT -lz -L$PREFIX -lpython3.13 $DEBUG -F $PREFIX/Frameworks_macosx/ -framework libproj  -framework libgeos_c" \
+	PLATFORM=macosx \
+	FORCE_CYTHON="True" \
+    python3.13 -m pip install . --no-build-isolation --no-deps 
+echo "Cartopy libraries for OSX: "  
+find . -name \*.so  
+for library in cartopy/trace.cpython-313-darwin.so
+do
+	directory=$(dirname $library)
+	mkdir -p $PREFIX/build/lib.macosx-${OSX_VERSION}-x86_64-3.13/$directory 
+	cp ./build/lib.macosx-${OSX_VERSION}-x86_64-cpython-313/$library $PREFIX/build/lib.macosx-${OSX_VERSION}-x86_64-3.13/$library 
+done
+popd  
+popd  
 

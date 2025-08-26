@@ -75,33 +75,36 @@ downloadSource()
 
 # End boilerplate
 
-# Download nltk, so we can change the position for downloaded data (in data.py and in downloader.py)
+# Pure Python dependencies for pysal. 
+python3.13 -m pip install networkx --upgrade
+echo "Fixing Iranian web site for the State Department" 
+sed -i bak "s|https://blog.alifaraji.ir|https ://Address_removed_by_request_of_the_US_State_Department|g" $PREFIX/Library/lib/python3.13/site-packages/networkx/algorithms/operators/product.py
+# If you don't remove the backup file, AppStore inspection will fail too:
+rm  $PREFIX/Library/lib/python3.13/site-packages/networkx/algorithms/operators/product.pybak 
+echo "Done" 
+python3.13 -m pip install pytest --upgrade
+
+exit
+
+# pysal (and mapclassify). Can't download with pip, so submodule. Pure Python, so no need to replicate for iOS and Simulator.
+#  pysal contains mapclassify.
+#  must install pointpats before pysal 
 pushd packages
-downloadSource nltk 
-pushd nltk* 
-rm -rf build/* 
-sed -i bak 's/return os.path.join(homedir, "nltk_data")/return os.path.join\(homedir, "Documents\/nltk_data"\)/' nltk/downloader.py
-# Not strictly necessary anymore since NLTK_DATA is used, but let's keep it.
-sed -i bak 's/path.append(os.path.expanduser("~\/nltk_data"))/path.append\(os.path.expanduser\("~\/Documents\/nltk_data"\)\)/' nltk/data.py
-python3.13 -m pip install . 
-popd 
-popd 
-# wordcloud: Cloned from github because we need to regenerate the C from Cython.
+python3.13 -m pip install pointpats==2.4.0  --no-build-isolation --no-deps
+# pysal: 
 pushd packages
-pushd word_cloud 
-rm -rf build/* 
-# Force rebuild of C file, to have Cython improved memory management:
-pushd wordcloud 
-cython query_integral_image.pyx 
-popd 
-# Now compile:
-	env CC=clang CXX=clang++ CPPFLAGS="-isysroot $OSX_SDKROOT" CFLAGS="-isysroot $OSX_SDKROOT  $CYTHON_OPTIONS $DEBUG" CXXFLAGS="-isysroot $OSX_SDKROOT  $CYTHON_OPTIONS $DEBUG" LDFLAGS="-isysroot $OSX_SDKROOT $DEBUG " LDSHARED="clang -v -undefined error -dynamiclib -isysroot $OSX_SDKROOT -lz -L$PREFIX -lpython3.13 -lc++ $DEBUG"  PLATFORM=macosx python3.13 setup.py build
-	env CC=clang CXX=clang++ CPPFLAGS="-isysroot $OSX_SDKROOT" CFLAGS="-isysroot $OSX_SDKROOT  $CYTHON_OPTIONS $DEBUG" CXXFLAGS="-isysroot $OSX_SDKROOT  $CYTHON_OPTIONS $DEBUG" LDFLAGS="-isysroot $OSX_SDKROOT $DEBUG " LDSHARED="clang -v -undefined error -dynamiclib -isysroot $OSX_SDKROOT -lz -L$PREFIX -lpython3.13 -lc++ $DEBUG"  PLATFORM=macosx python3.13 -m pip install . 
-	# And pip still deleted the version number:
-cp build/lib.macosx-${OSX_VERSION}-x86_64-cpython-313/wordcloud/_version.py $PREFIX/Library/lib/python3.13/site-packages/wordcloud/_version.py
-find build -name \*.so -print
-mkdir -p  $PREFIX/build/lib.macosx-${OSX_VERSION}-x86_64-3.13/wordcloud/
-cp build//lib.macosx-${OSX_VERSION}-x86_64-cpython-313/wordcloud/query_integral_image.cpython-313-darwin.so $PREFIX/build/lib.macosx-${OSX_VERSION}-x86_64-3.13/wordcloud/
+pushd pysal
+# Disabled giddy and splot, as it installs quantecon, which installs numba, which installs llvmlite, which uses a JIT compiler.
+# segregation==v2.0.0 for the same reason
+# setup momepy version to 0.5.4 to avoid the update to Shapely
+# setup libpysal to ==4.7.0 for the same reason
+# setup pointpats to ==2.2.0 to avoid an update (we edited pointpats) 
+cp ../requirements_pysal.txt ./requirements.txt
+cp ../setup_pysal.py ./setup.py 
+cp ../frozen_pysal.py ./pysal/frozen.py
+cp ../base_pysal.py ./pysal/base.py
+# Here, we need "python3.13 -m pip install .", as "python3.13 setup.py install" does not install actually
+env CC=clang CXX=clang++ CPPFLAGS="-isysroot $OSX_SDKROOT" CFLAGS="-isysroot $OSX_SDKROOT  $CYTHON_OPTIONS $DEBUG" CXXFLAGS="-isysroot $OSX_SDKROOT  $CYTHON_OPTIONS $DEBUG " LDFLAGS="-isysroot $OSX_SDKROOT $DEBUG " LDSHARED="clang -v -undefined error -dynamiclib -isysroot $OSX_SDKROOT -lz -L$PREFIX -lpython3.13 -lc++ $DEBUG" NPY_BLAS_ORDER="openblas" NPY_LAPACK_ORDER="openblas" MATHLIB="-lm" PLATFORM=macosx python3.13 -m pip install . --no-deps --no-build-isolation
 popd 
 popd 
 

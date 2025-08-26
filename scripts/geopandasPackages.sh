@@ -238,7 +238,7 @@ popd
 # geopandas now
 python3.13 -m pip install geopandas==0.14.4
 # Disable warning about Shapely 2.0. Obviously remove when Shapely 2.0 is installed.
-cp packages/geopandas__compat.py $PYTHONHOME/lib/python3.13/site-packages/geopandas/_compat.py
+cp packages/geopandas__compat.py $PREFIX/Library/lib/python3.13/site-packages/geopandas/_compat.py
 # Packages used by geopandas:
 # rasterio: must use submodule since the Pip version does not include the Cython sources:
 python3.13 -m pip install snuggs

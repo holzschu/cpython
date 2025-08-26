@@ -74,34 +74,49 @@ downloadSource()
 }
 
 # End boilerplate
-
-# Download nltk, so we can change the position for downloaded data (in data.py and in downloader.py)
+# 
+# qutip. Need submodule because pip does not include Cython source
 pushd packages
-downloadSource nltk 
-pushd nltk* 
-rm -rf build/* 
-sed -i bak 's/return os.path.join(homedir, "nltk_data")/return os.path.join\(homedir, "Documents\/nltk_data"\)/' nltk/downloader.py
-# Not strictly necessary anymore since NLTK_DATA is used, but let's keep it.
-sed -i bak 's/path.append(os.path.expanduser("~\/nltk_data"))/path.append\(os.path.expanduser\("~\/Documents\/nltk_data"\)\)/' nltk/data.py
-python3.13 -m pip install . 
+pushd qutip
+mkdir -p build
+rm -rf build/*
+# edited setup.py to avoid inclusion of -mmacosx-version-min=10.9 when compiling for iOS.
+# and to have one variable static instead of global
+cp ../qutip_setup.py  ./setup.py 
+# force rebuilding of Cython files:
+find qutip -name \*.pyx -exec touch {} \; -print
+# Don't load MKL with iOS:
+sed -i bak 's/if plat == "emscripten":/if plat in ["emscripten", "ios"]:/' qutip/settings.py
+# change into a static variable in order to create the single dylib:
+sed -i bak 's/^int _idxint_size=32;/static &/' qutip/core/data/src/intdtype.h
+env CC=clang CXX=clang++ CPPFLAGS="-isysroot $OSX_SDKROOT" CFLAGS="-isysroot $OSX_SDKROOT  $CYTHON_OPTIONS $DEBUG" CXXFLAGS="-isysroot $OSX_SDKROOT  $CYTHON_OPTIONS $DEBUG" LDFLAGS="-isysroot $OSX_SDKROOT $DEBUG " LDSHARED="clang -v -undefined error -dynamiclib -isysroot $OSX_SDKROOT -lz -L$PREFIX -lpython3.13 -lc++ $DEBUG" NPY_BLAS_ORDER="openblas" NPY_LAPACK_ORDER="openblas" MATHLIB="-lm" python3.13 setup.py build
+env CC=clang CXX=clang++ CPPFLAGS="-isysroot $OSX_SDKROOT" CFLAGS="-isysroot $OSX_SDKROOT  $CYTHON_OPTIONS $DEBUG" CXXFLAGS="-isysroot $OSX_SDKROOT  $CYTHON_OPTIONS $DEBUG" LDFLAGS="-isysroot $OSX_SDKROOT $DEBUG " LDSHARED="clang -v -undefined error -dynamiclib -isysroot $OSX_SDKROOT -lz -L$PREFIX -lpython3.13 -lc++ $DEBUG" NPY_BLAS_ORDER="openblas" NPY_LAPACK_ORDER="openblas" MATHLIB="-lm" python3.13 -m pip install . --no-deps --no-build-isolation
+# 36 libraries by the last count (v 5.3.0)
+echo qutip libraries for OSX:
+find build -name \*.so -print 
+echo number of qutip libraries for OSX:
+find build -name \*.so -print | wc -l
+# Copy them into $PREFIX/build/lib.macosx-${OSX_VERSION}-x86_64-3.13
+pushd build/lib.macosx-*
+for library in `find qutip -name \*.so`
+do
+	directory=$(dirname $library)
+	mkdir -p $PREFIX/build/lib.macosx-${OSX_VERSION}-x86_64-3.13/$directory
+	cp $library $PREFIX/build/lib.macosx-${OSX_VERSION}-x86_64-3.13/$library
+done
 popd 
+# Making a single qutip dynamic library:
+echo Making a single qutip library for OSX:
+clang -v -undefined error -dynamiclib \
+	-isysroot $OSX_SDKROOT \
+	-lz -lm -lc++ \
+	-lpython3.13 \
+	-L$PREFIX/build/lib.macosx-${OSX_VERSION}-x86_64-3.13 \
+	-O3 -Wall  \
+	`find build -name \*.o` \
+	-L$PREFIX/Library/lib \
+	-Lbuild/temp.macosx-${OSX_VERSION}-x86_64-cpython-313 \
+	-o build/qutip.so 
+		cp build/qutip.so $PREFIX/build/lib.macosx-${OSX_VERSION}-x86_64-3.13	
 popd 
-# wordcloud: Cloned from github because we need to regenerate the C from Cython.
-pushd packages
-pushd word_cloud 
-rm -rf build/* 
-# Force rebuild of C file, to have Cython improved memory management:
-pushd wordcloud 
-cython query_integral_image.pyx 
-popd 
-# Now compile:
-	env CC=clang CXX=clang++ CPPFLAGS="-isysroot $OSX_SDKROOT" CFLAGS="-isysroot $OSX_SDKROOT  $CYTHON_OPTIONS $DEBUG" CXXFLAGS="-isysroot $OSX_SDKROOT  $CYTHON_OPTIONS $DEBUG" LDFLAGS="-isysroot $OSX_SDKROOT $DEBUG " LDSHARED="clang -v -undefined error -dynamiclib -isysroot $OSX_SDKROOT -lz -L$PREFIX -lpython3.13 -lc++ $DEBUG"  PLATFORM=macosx python3.13 setup.py build
-	env CC=clang CXX=clang++ CPPFLAGS="-isysroot $OSX_SDKROOT" CFLAGS="-isysroot $OSX_SDKROOT  $CYTHON_OPTIONS $DEBUG" CXXFLAGS="-isysroot $OSX_SDKROOT  $CYTHON_OPTIONS $DEBUG" LDFLAGS="-isysroot $OSX_SDKROOT $DEBUG " LDSHARED="clang -v -undefined error -dynamiclib -isysroot $OSX_SDKROOT -lz -L$PREFIX -lpython3.13 -lc++ $DEBUG"  PLATFORM=macosx python3.13 -m pip install . 
-	# And pip still deleted the version number:
-cp build/lib.macosx-${OSX_VERSION}-x86_64-cpython-313/wordcloud/_version.py $PREFIX/Library/lib/python3.13/site-packages/wordcloud/_version.py
-find build -name \*.so -print
-mkdir -p  $PREFIX/build/lib.macosx-${OSX_VERSION}-x86_64-3.13/wordcloud/
-cp build//lib.macosx-${OSX_VERSION}-x86_64-cpython-313/wordcloud/query_integral_image.cpython-313-darwin.so $PREFIX/build/lib.macosx-${OSX_VERSION}-x86_64-3.13/wordcloud/
-popd 
-popd 
-
+popd

@@ -127,7 +127,7 @@ cp ios_error.h $PREFIX/Frameworks_iphoneos/include
 
 find Misc Modules Objects Parser Python -name \*.o -delete
 find iOS/Frameworks/arm64-iphoneos -name \*.so -delete
-rm -rf iOS/Frameworks/*.framework
+# rm -rf iOS/Frameworks/*.framework
 rm -f Programs/_testembed Programs/_freeze_importlib
 # Do embed as many modules as possible:
 cp Modules/Setup_iOS.local Modules/Setup.local 

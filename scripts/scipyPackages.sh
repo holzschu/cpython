@@ -158,7 +158,7 @@ then
 	# Make one big library with all of them:
 	mkdir -p extras
 	rm -rf extras/*
-	# remove object files already incorporated into libraries:
+	# remove object files already incorporated into static libraries:
 	for directory in scipy/integrate/libmach_lib.a.p \
 		scipy/integrate/libvode_lib.a \
 		scipy/integrate/liblsoda_lib.a.p \
@@ -179,41 +179,27 @@ then
 		scipy/sparse/linalg/_propack/liblib__zpropack.a.p \
 		scipy/sparse/linalg/_propack/liblib__dpropack.a.p \
 		scipy/sparse/linalg/_propack/liblib__spropack.a.p 
-		do
-			mkdir -p extras/$directory
-			mv $directory/* extras/$directory/
-			mv $directory/.??* extras/$directory/
-		done
-	# Remove extra files (present in multiple dynamic libraries)
-	for file in scipy/special/_test_internal.cpython-313-darwin.so.p/dd_real_wrappers.cpp.o \
-		scipy/special/_test_internal.cpython-313-darwin.so.p/meson-generated__test_internal.c.o\
-		scipy/special/_ufuncs.cpython-313-darwin.so.p/xsf_wrappers.cpp.o \
-		scipy/special/cython_special.cpython-313-darwin.so.p/_cosine.c.o \
-		scipy/stats/_biasedurn.cpython-313-darwin.so.p/libnpyrandom_distributions.c.o \
-		scipy/special/_special_ufuncs.cpython-313-darwin.so.p/_special_ufuncs.cpp.o \
-		scipy/special/_ellip_harm_2.cpython-313-darwin.so.p/sf_error.cc.o \
-		scipy/special/_ufuncs.cpython-313-darwin.so.p/sf_error.cc.o \
-		scipy/special/_ufuncs_cxx.cpython-313-darwin.so.p/sf_error.cc.o \
-		scipy/special/_gufuncs.cpython-313-darwin.so.p/sf_error.cc.o \
-		scipy/special/_special_ufuncs.cpython-313-darwin.so.p/sf_error.cc.o \
-		scipy/special/_gufuncs.cpython-313-darwin.so.p/_gufuncs.cpp.o \
-		scipy/special/cython_special.cpython-313-darwin.so.p/dd_real_wrappers.cpp.o \
-		scipy/optimize/cython_optimize/_zeros.cpython-313-darwin.so.p/meson-generated__zeros.c.o \
+	do
+		mkdir -p extras/$directory
+		mv $directory/* extras/$directory/
+		mv $directory/.??* extras/$directory/
+	done
+	# We only remove files that are either duplicates (libnpyrandom_distributions, dd_real_wrappers) 
+	# or included in another (f2pywrappers)
+	for file in scipy/stats/_rcont/rcont.cpython-313-darwin.so.p/.._libnpyrandom_distributions.c.o \
 		scipy/sparse/linalg/_propack/_zpropack.cpython-313-darwin.so.p/meson-generated__zpropack-f2pywrappers.f.o \
 		scipy/sparse/linalg/_propack/_spropack.cpython-313-darwin.so.p/meson-generated__spropack-f2pywrappers.f.o \
 		scipy/sparse/linalg/_propack/_cpropack.cpython-313-darwin.so.p/meson-generated__cpropack-f2pywrappers.f.o \
 		scipy/sparse/linalg/_propack/_dpropack.cpython-313-darwin.so.p/meson-generated__dpropack-f2pywrappers.f.o \
-		scipy/special/_ufuncs_cxx.cpython-313-darwin.so.p/meson-generated__ufuncs_cxx.cpp.o \
-		scipy/special/_ufuncs.cpython-313-darwin.so.p/meson-generated__ufuncs.c.o \
-		scipy/special/_ellip_harm_2.cpython-313-darwin.so.p/meson-generated__ellip_harm_2.c.o \
 		scipy/integrate/_dop.cpython-313-darwin.so.p/meson-generated__dop-f2pywrappers.f.o \
 		scipy/integrate/_lsoda.cpython-313-darwin.so.p/meson-generated__lsoda-f2pywrappers.f.o \
-		scipy/integrate/_vode.cpython-313-darwin.so.p/meson-generated__vode-f2pywrappers.f.o
-		do
-			dir=`dirname $file`
-			mkdir -p extras/$dir
-			mv $file extras/$file
-		done
+		scipy/integrate/_vode.cpython-313-darwin.so.p/meson-generated__vode-f2pywrappers.f.o \
+		scipy/special/_test_internal.cpython-313-darwin.so.p/dd_real_wrappers.cpp.o
+	do
+		dir=`dirname $file`
+		mkdir -p extras/$dir
+		mv $file extras/$file
+	done
 	# We need to make sure we load our libopenblas and not /usr/local/lib/libopenblas
 	clang -v -undefined error -dynamiclib \
 		-isysroot $OSX_SDKROOT \
@@ -222,8 +208,39 @@ then
 		-L$PREFIX/build/lib.macosx-${OSX_VERSION}-x86_64-3.13 \
 		-L$PREFIX/Frameworks_macosx/lib -lopenblas \
 		-L. \
+		`find scipy/_lib -name \*.o`\
+		`find scipy/cluster -name \*.o`\
+		`find scipy/fft -name \*.o`\
+		`find scipy/fftpack -name \*.o`\
+		`find scipy/integrate -name \*.o`\
+		`find scipy/interpolate -name \*.o`\
+		`find scipy/io -name \*.o`\
+		`find scipy/linalg -name \*.o`\
+		`find scipy/ndimage -name \*.o`\
+		`find scipy/odr -name \*.o`\
+		`find scipy/optimize/_zeros.cpython-313-darwin.so.p -name \*.o`\
+		`find scipy/optimize/_bglu_dense.cpython-313-darwin.so.p -name \*.o`\
+		`find scipy/optimize/_direct.cpython-313-darwin.so.p -name \*.o`\
+		`find scipy/optimize/_group_columns.cpython-313-darwin.so.p -name \*.o`\
+		`find scipy/optimize/_highspy/_core.cpython-313-darwin.so.p -name \*.o`\
+		`find scipy/optimize/_highspy/_highs_options.cpython-313-darwin.so.p -name \*.o`\
+		`find scipy/optimize/_lbfgsb.cpython-313-darwin.so.p -name \*.o`\
+		`find scipy/optimize/_lsap.cpython-313-darwin.so.p -name \*.o`\
+		`find scipy/optimize/_lsq/givens_elimination.cpython-313-darwin.so.p -name \*.o`\
+		`find scipy/optimize/_minpack.cpython-313-darwin.so.p -name \*.o`\
+		`find scipy/optimize/_moduleTNC.cpython-313-darwin.so.p -name \*.o`\
+		`find scipy/optimize/_pava_pybind.cpython-313-darwin.so.p -name \*.o`\
+		`find scipy/optimize/_slsqplib.cpython-313-darwin.so.p -name \*.o`\
+		`find scipy/optimize/_trlib/_trlib.cpython-313-darwin.so.p -name \*.o`\
+		`find scipy/signal -name \*.o`\
+		`find scipy/sparse/ -name \*.o`\
+		`find scipy/special/_comb.cpython-313-darwin.so.p -name \*.o`\
+		`find scipy/special/_specfun.cpython-313-darwin.so.p -name \*.o`\
+		`find scipy/special/cython_special.cpython-313-darwin.so.p -name \*.o`\
+		`find scipy/special/_test_internal.cpython-313-darwin.so.p -name \*.o`\
+		`find scipy/spatial -name \*.o`\
+		`find scipy/stats -name \*.o`\
 		-O3 -Wall  \
-		`find scipy/ -name \*.o`\
 		-Lscipy -l_fortranobject -ldummy_g77_abi_wrappers \
 		-Lscipy/odr -lodrpack \
 		-Lscipy/integrate -lmach_lib -lvode_lib -llsoda_lib -ldop_lib \

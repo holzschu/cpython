@@ -19,8 +19,7 @@ export MACOSX_DEPLOYMENT_TARGET=$OSX_VERSION
 # export ARCH=$(uname -m)
 
 # 1) compile for OSX (required)
-find . -name \*.o -delete
-rm -rf Library/lib/python3.13/site-packages/* 
+find Misc Modules Objects Parser Python -name \*.o -delete
 rm -rf Library/lib/python3.13/lib-dynload/* 
 find Library -type f -name direct_url.jsonbak -delete
 # Do not embed modules:
@@ -112,5 +111,5 @@ python3.13 -m pip install urllib3 --upgrade
 python3.13 -m pip install webencodings --upgrade
 python3.13 -m pip install wheel --upgrade
 python3.13 -m pip install pygments --upgrade
-
-
+# small edit in pygments, to use system fonts like on the Mac:
+sed -i bak "s/elif sys.platform.startswith('darwin'):/elif sys.platform.startswith('darwin') or sys.platform.startswith('ios'):/"  Library/lib/python3.13/site-packages/pygments/formatters/img.py

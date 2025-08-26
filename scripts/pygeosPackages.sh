@@ -75,33 +75,50 @@ downloadSource()
 
 # End boilerplate
 
-# Download nltk, so we can change the position for downloaded data (in data.py and in downloader.py)
+# pygeos pip contains the Cython sources, so we're good with downloadSource:
+
 pushd packages
-downloadSource nltk 
-pushd nltk* 
+downloadSource pygeos
+pushd pygeos-*
+# Only change: zip-safe = false
+cp ../setup_pygeos.py ./setup.py 
+# Disable check on pygeos/shapely compatibility
+cp ../pygeos_io.py ./pygeos/io.py 
+# Changes required for compilation with Cython 3
+# (check if still necessary if pygeos is updated)
+cp ../pygeos_versioneer.py versioneer.py
+cp ../pygeos_src_ufuncs.c ./src/ufuncs.c
+cp ../pygeos_geos.pyx pygeos/_geos.pyx
+#
 rm -rf build/* 
-sed -i bak 's/return os.path.join(homedir, "nltk_data")/return os.path.join\(homedir, "Documents\/nltk_data"\)/' nltk/downloader.py
-# Not strictly necessary anymore since NLTK_DATA is used, but let's keep it.
-sed -i bak 's/path.append(os.path.expanduser("~\/nltk_data"))/path.append\(os.path.expanduser\("~\/Documents\/nltk_data"\)\)/' nltk/data.py
-python3.13 -m pip install . 
-popd 
-popd 
-# wordcloud: Cloned from github because we need to regenerate the C from Cython.
-pushd packages
-pushd word_cloud 
-rm -rf build/* 
-# Force rebuild of C file, to have Cython improved memory management:
-pushd wordcloud 
-cython query_integral_image.pyx 
-popd 
-# Now compile:
-	env CC=clang CXX=clang++ CPPFLAGS="-isysroot $OSX_SDKROOT" CFLAGS="-isysroot $OSX_SDKROOT  $CYTHON_OPTIONS $DEBUG" CXXFLAGS="-isysroot $OSX_SDKROOT  $CYTHON_OPTIONS $DEBUG" LDFLAGS="-isysroot $OSX_SDKROOT $DEBUG " LDSHARED="clang -v -undefined error -dynamiclib -isysroot $OSX_SDKROOT -lz -L$PREFIX -lpython3.13 -lc++ $DEBUG"  PLATFORM=macosx python3.13 setup.py build
-	env CC=clang CXX=clang++ CPPFLAGS="-isysroot $OSX_SDKROOT" CFLAGS="-isysroot $OSX_SDKROOT  $CYTHON_OPTIONS $DEBUG" CXXFLAGS="-isysroot $OSX_SDKROOT  $CYTHON_OPTIONS $DEBUG" LDFLAGS="-isysroot $OSX_SDKROOT $DEBUG " LDSHARED="clang -v -undefined error -dynamiclib -isysroot $OSX_SDKROOT -lz -L$PREFIX -lpython3.13 -lc++ $DEBUG"  PLATFORM=macosx python3.13 -m pip install . 
-	# And pip still deleted the version number:
-cp build/lib.macosx-${OSX_VERSION}-x86_64-cpython-313/wordcloud/_version.py $PREFIX/Library/lib/python3.13/site-packages/wordcloud/_version.py
-find build -name \*.so -print
-mkdir -p  $PREFIX/build/lib.macosx-${OSX_VERSION}-x86_64-3.13/wordcloud/
-cp build//lib.macosx-${OSX_VERSION}-x86_64-cpython-313/wordcloud/query_integral_image.cpython-313-darwin.so $PREFIX/build/lib.macosx-${OSX_VERSION}-x86_64-3.13/wordcloud/
+touch pygeos/*.pyx 
+env CC=clang CXX=clang++ \
+	CPPFLAGS="-isysroot $OSX_SDKROOT $CYTHON_OPTIONS -I $PREFIX/Frameworks_macosx/include" \
+	CFLAGS="-isysroot $OSX_SDKROOT $DEBUG  $CYTHON_OPTIONS -I $PREFIX/Frameworks_macosx/include/" \
+	CXXFLAGS="-isysroot $OSX_SDKROOT $DEBUG $CYTHON_OPTIONS -I $PREFIX/Frameworks_macosx/include" \
+	LDFLAGS="-isysroot $OSX_SDKROOT $DEBUG -F $PREFIX/Frameworks_macosx/ -framework libgeos_c" \
+	LDSHARED="clang -v -undefined error -dynamiclib -isysroot $OSX_SDKROOT -lz -L$PREFIX -lpython3.13 $DEBUG -F $PREFIX/Frameworks_macosx/ -framework libgeos_c" \
+	PLATFORM=macosx \
+	GEOS_INCLUDE_PATH=$PREFIX/Frameworks_macosx/include \
+	GEOS_LIBRARY_PATH=$PREFIX/Frameworks_macosx/lib \
+	python3.13 setup.py build
+# Back to pip install . to remove a pip warning
+env CC=clang CXX=clang++ \
+	CPPFLAGS="-isysroot $OSX_SDKROOT $CYTHON_OPTIONS -I $PREFIX/Frameworks_macosx/include" \
+	CFLAGS="-isysroot $OSX_SDKROOT $DEBUG  $CYTHON_OPTIONS -I $PREFIX/Frameworks_macosx/include/" \
+	CXXFLAGS="-isysroot $OSX_SDKROOT $DEBUG $CYTHON_OPTIONS -I $PREFIX/Frameworks_macosx/include" \
+	LDFLAGS="-isysroot $OSX_SDKROOT $DEBUG -F $PREFIX/Frameworks_macosx/ -framework libgeos_c" \
+	LDSHARED="clang -v -undefined error -dynamiclib -isysroot $OSX_SDKROOT -lz -L$PREFIX -lpython3.13 $DEBUG -F $PREFIX/Frameworks_macosx/ -framework libgeos_c" \
+	PLATFORM=macosx \
+	GEOS_INCLUDE_PATH=$PREFIX/Frameworks_macosx/include \
+	GEOS_LIBRARY_PATH=$PREFIX/Frameworks_macosx/lib \
+	python3.13 -m pip install . --no-deps --no-build-isolation
+for library in pygeos/_geos.cpython-313-darwin.so pygeos/lib.cpython-313-darwin.so pygeos/_geometry.cpython-313-darwin.so
+do
+	directory=$(dirname $library)
+	mkdir -p $PREFIX/build/lib.macosx-${OSX_VERSION}-x86_64-3.13/$directory
+	cp ./build/lib.macosx-${OSX_VERSION}-x86_64-cpython-313/$library $PREFIX/build/lib.macosx-${OSX_VERSION}-x86_64-3.13/$library
+done
 popd 
 popd 
 

@@ -75,33 +75,41 @@ downloadSource()
 
 # End boilerplate
 
-# Download nltk, so we can change the position for downloaded data (in data.py and in downloader.py)
+# coremltools dependencies:
+python3.13 -m pip install cattrs 
+python3.13 -m pip install tqdm 
+python3.13 -m pip install pyaml
+python3.13 -m pip install protobuf==3.19.0 --no-deps --no-build-isolation
+
+# CoreMLTools:
 pushd packages
-downloadSource nltk 
-pushd nltk* 
-rm -rf build/* 
-sed -i bak 's/return os.path.join(homedir, "nltk_data")/return os.path.join\(homedir, "Documents\/nltk_data"\)/' nltk/downloader.py
-# Not strictly necessary anymore since NLTK_DATA is used, but let's keep it.
-sed -i bak 's/path.append(os.path.expanduser("~\/nltk_data"))/path.append\(os.path.expanduser\("~\/Documents\/nltk_data"\)\)/' nltk/data.py
-python3.13 -m pip install . 
+pushd coremltools
+mkdir -p build_osx
+rm -rf  build_osx/* 
+rm -f coremltools/*.so 
+rm -f build/lib/coremltools/*.so 
+BUILD_TAG=$(python3.13 ./scripts/build_tag.py)
+pushd build_osx
+# Now compile. This is extracted from scripts/build.sh
+cmake -DCMAKE_OSX_DEPLOYMENT_TARGET=11.2 \
+-DCMAKE_BUILD_TYPE="Release" \
+-DPYTHON_EXECUTABLE:FILEPATH=$PREFIX/Library/bin/python3.13 \
+-DPYTHON_INCLUDE_DIR=$PREFIX/Library/include/python3.13 \
+-DPYTHON_LIBRARY=$PREFIX/Library/lib/libpython3.13.dylib \
+-DOVERWRITE_PB_SOURCE=0 \
+-DBUILD_TAG=$BUILD_TAG \
+..
+make
+make dist
+cp dist/coremltools*.whl dist/coremltools.zip
+pushd dist
+unzip coremltools.zip
+cp -r coremltools-*.dist-info coremltools $PREFIX/Library/lib/python3.13/site-packages/
+# copy the dynamic libraries for the frameworks later:
+mkdir -p $PREFIX/build/lib.macosx-${OSX_VERSION}-x86_64-3.13/coremltools/
+cp coremltools/*.so $PREFIX/build/lib.macosx-${OSX_VERSION}-x86_64-3.13/coremltools/
 popd 
 popd 
-# wordcloud: Cloned from github because we need to regenerate the C from Cython.
-pushd packages
-pushd word_cloud 
-rm -rf build/* 
-# Force rebuild of C file, to have Cython improved memory management:
-pushd wordcloud 
-cython query_integral_image.pyx 
-popd 
-# Now compile:
-	env CC=clang CXX=clang++ CPPFLAGS="-isysroot $OSX_SDKROOT" CFLAGS="-isysroot $OSX_SDKROOT  $CYTHON_OPTIONS $DEBUG" CXXFLAGS="-isysroot $OSX_SDKROOT  $CYTHON_OPTIONS $DEBUG" LDFLAGS="-isysroot $OSX_SDKROOT $DEBUG " LDSHARED="clang -v -undefined error -dynamiclib -isysroot $OSX_SDKROOT -lz -L$PREFIX -lpython3.13 -lc++ $DEBUG"  PLATFORM=macosx python3.13 setup.py build
-	env CC=clang CXX=clang++ CPPFLAGS="-isysroot $OSX_SDKROOT" CFLAGS="-isysroot $OSX_SDKROOT  $CYTHON_OPTIONS $DEBUG" CXXFLAGS="-isysroot $OSX_SDKROOT  $CYTHON_OPTIONS $DEBUG" LDFLAGS="-isysroot $OSX_SDKROOT $DEBUG " LDSHARED="clang -v -undefined error -dynamiclib -isysroot $OSX_SDKROOT -lz -L$PREFIX -lpython3.13 -lc++ $DEBUG"  PLATFORM=macosx python3.13 -m pip install . 
-	# And pip still deleted the version number:
-cp build/lib.macosx-${OSX_VERSION}-x86_64-cpython-313/wordcloud/_version.py $PREFIX/Library/lib/python3.13/site-packages/wordcloud/_version.py
-find build -name \*.so -print
-mkdir -p  $PREFIX/build/lib.macosx-${OSX_VERSION}-x86_64-3.13/wordcloud/
-cp build//lib.macosx-${OSX_VERSION}-x86_64-cpython-313/wordcloud/query_integral_image.cpython-313-darwin.so $PREFIX/build/lib.macosx-${OSX_VERSION}-x86_64-3.13/wordcloud/
 popd 
 popd 
 

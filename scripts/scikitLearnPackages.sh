@@ -75,33 +75,32 @@ downloadSource()
 
 # End boilerplate
 
-# Download nltk, so we can change the position for downloaded data (in data.py and in downloader.py)
+# Now scikit-learn (upgraded to 1.7.1):
+# The code is unmodified (as far as I can say), it's just that I need the 
+# Cython files, so I have to use a submodule.
+# So I resolve conflicts with "git checkout --theirs"
+python3.13 -m pip install threadpoolctl
 pushd packages
-downloadSource nltk 
-pushd nltk* 
-rm -rf build/* 
-sed -i bak 's/return os.path.join(homedir, "nltk_data")/return os.path.join\(homedir, "Documents\/nltk_data"\)/' nltk/downloader.py
-# Not strictly necessary anymore since NLTK_DATA is used, but let's keep it.
-sed -i bak 's/path.append(os.path.expanduser("~\/nltk_data"))/path.append\(os.path.expanduser\("~\/Documents\/nltk_data"\)\)/' nltk/data.py
-python3.13 -m pip install . 
+pushd scikit-learn
+mkdir -p build
+rm -rf build/*
+# force rebuilding of Cython files:
+find sklearn -name \*.pyx -exec touch {} \; -print
+env CC=clang CXX=clang++ CPPFLAGS="-isysroot $OSX_SDKROOT" CFLAGS="-isysroot $OSX_SDKROOT  $CYTHON_OPTIONS $DEBUG" CXXFLAGS="-isysroot $OSX_SDKROOT  $CYTHON_OPTIONS $DEBUG" LDFLAGS="-isysroot $OSX_SDKROOT $DEBUG " LDSHARED="clang -v -undefined error -dynamiclib -isysroot $OSX_SDKROOT -lz -L$PREFIX -lpython3.13 -lc++ $DEBUG" PLATFORM=macosx SETUPTOOLS_USE_DISTUTILS=stdlib python3.13 -m pip install . --no-deps --no-build-isolation
+echo scikit-learn libraries for OSX:
+find $PREFIX/Library/lib/python3.13/site-packages/sklearn/ -name \*.so -print 
+echo number of scikit-learn libraries for OSX:
+find $PREFIX/Library/lib/python3.13/site-packages/sklearn/ -name \*.so -print | wc -l
+# 68 libraries by the last count
+# copy them all to build/lib.macosx:
+pushd $PREFIX/Library/lib/python3.13/site-packages/
+for library in `find sklearn -name \*.so` 
+do
+	directory=$(dirname $library)
+	mkdir -p $PREFIX/build/lib.macosx-${OSX_VERSION}-x86_64-3.13/$directory
+	cp $library $PREFIX/build/lib.macosx-${OSX_VERSION}-x86_64-3.13/$library
+done
 popd 
-popd 
-# wordcloud: Cloned from github because we need to regenerate the C from Cython.
-pushd packages
-pushd word_cloud 
-rm -rf build/* 
-# Force rebuild of C file, to have Cython improved memory management:
-pushd wordcloud 
-cython query_integral_image.pyx 
-popd 
-# Now compile:
-	env CC=clang CXX=clang++ CPPFLAGS="-isysroot $OSX_SDKROOT" CFLAGS="-isysroot $OSX_SDKROOT  $CYTHON_OPTIONS $DEBUG" CXXFLAGS="-isysroot $OSX_SDKROOT  $CYTHON_OPTIONS $DEBUG" LDFLAGS="-isysroot $OSX_SDKROOT $DEBUG " LDSHARED="clang -v -undefined error -dynamiclib -isysroot $OSX_SDKROOT -lz -L$PREFIX -lpython3.13 -lc++ $DEBUG"  PLATFORM=macosx python3.13 setup.py build
-	env CC=clang CXX=clang++ CPPFLAGS="-isysroot $OSX_SDKROOT" CFLAGS="-isysroot $OSX_SDKROOT  $CYTHON_OPTIONS $DEBUG" CXXFLAGS="-isysroot $OSX_SDKROOT  $CYTHON_OPTIONS $DEBUG" LDFLAGS="-isysroot $OSX_SDKROOT $DEBUG " LDSHARED="clang -v -undefined error -dynamiclib -isysroot $OSX_SDKROOT -lz -L$PREFIX -lpython3.13 -lc++ $DEBUG"  PLATFORM=macosx python3.13 -m pip install . 
-	# And pip still deleted the version number:
-cp build/lib.macosx-${OSX_VERSION}-x86_64-cpython-313/wordcloud/_version.py $PREFIX/Library/lib/python3.13/site-packages/wordcloud/_version.py
-find build -name \*.so -print
-mkdir -p  $PREFIX/build/lib.macosx-${OSX_VERSION}-x86_64-3.13/wordcloud/
-cp build//lib.macosx-${OSX_VERSION}-x86_64-cpython-313/wordcloud/query_integral_image.cpython-313-darwin.so $PREFIX/build/lib.macosx-${OSX_VERSION}-x86_64-3.13/wordcloud/
 popd 
 popd 
 

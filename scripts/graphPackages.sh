@@ -149,7 +149,7 @@ popd
 pushd packages
 pushd matplotlib 
 mkdir -p build_osx 
-# rm -rf build_osx/* 
+rm -rf build_osx/* 
 rm -rf .eggs 
 env CC=clang CXX=clang++ CFLAGS="-I /opt/X11/include/freetype2/ -isysroot $OSX_SDKROOT" \
 	CXXFLAGS="-isysroot $OSX_SDKROOT" \
