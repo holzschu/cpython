@@ -83,13 +83,9 @@ sed -i bak "s|https://blog.alifaraji.ir|https ://Address_removed_by_request_of_t
 rm  $PREFIX/Library/lib/python3.13/site-packages/networkx/algorithms/operators/product.pybak 
 echo "Done" 
 python3.13 -m pip install pytest --upgrade
-
-exit
-
 # pysal (and mapclassify). Can't download with pip, so submodule. Pure Python, so no need to replicate for iOS and Simulator.
 #  pysal contains mapclassify.
 #  must install pointpats before pysal 
-pushd packages
 python3.13 -m pip install pointpats==2.4.0  --no-build-isolation --no-deps
 # pysal: 
 pushd packages
@@ -98,13 +94,14 @@ pushd pysal
 # segregation==v2.0.0 for the same reason
 # setup momepy version to 0.5.4 to avoid the update to Shapely
 # setup libpysal to ==4.7.0 for the same reason
-# setup pointpats to ==2.2.0 to avoid an update (we edited pointpats) 
+# setup pointpats to ==2.4.0 to avoid an update 
+# spopt to ==0.5.0
+# spaghetti to ==1.7.4
 cp ../requirements_pysal.txt ./requirements.txt
 cp ../setup_pysal.py ./setup.py 
 cp ../frozen_pysal.py ./pysal/frozen.py
 cp ../base_pysal.py ./pysal/base.py
 # Here, we need "python3.13 -m pip install .", as "python3.13 setup.py install" does not install actually
-env CC=clang CXX=clang++ CPPFLAGS="-isysroot $OSX_SDKROOT" CFLAGS="-isysroot $OSX_SDKROOT  $CYTHON_OPTIONS $DEBUG" CXXFLAGS="-isysroot $OSX_SDKROOT  $CYTHON_OPTIONS $DEBUG " LDFLAGS="-isysroot $OSX_SDKROOT $DEBUG " LDSHARED="clang -v -undefined error -dynamiclib -isysroot $OSX_SDKROOT -lz -L$PREFIX -lpython3.13 -lc++ $DEBUG" NPY_BLAS_ORDER="openblas" NPY_LAPACK_ORDER="openblas" MATHLIB="-lm" PLATFORM=macosx python3.13 -m pip install . --no-deps --no-build-isolation
+env CC=clang CXX=clang++ CPPFLAGS="-isysroot $OSX_SDKROOT" CFLAGS="-isysroot $OSX_SDKROOT  $CYTHON_OPTIONS $DEBUG" CXXFLAGS="-isysroot $OSX_SDKROOT  $CYTHON_OPTIONS $DEBUG " LDFLAGS="-isysroot $OSX_SDKROOT $DEBUG " LDSHARED="clang -v -undefined error -dynamiclib -isysroot $OSX_SDKROOT -lz -L$PREFIX -lpython3.13 -lc++ $DEBUG" NPY_BLAS_ORDER="openblas" NPY_LAPACK_ORDER="openblas" MATHLIB="-lm" PLATFORM=macosx python3.13 -m pip install . --no-build-isolation
 popd 
 popd 
-

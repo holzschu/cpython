@@ -97,23 +97,23 @@ env CC=clang CXX=clang++ CPPFLAGS="-isysroot $OSX_SDKROOT -I $PREFIX/Frameworks_
 	PLATFORM=macosx \
 	NO_GEOS_CONFIG=1 \
 	python3.13 setup.py build
-		env CC=clang CXX=clang++ CPPFLAGS="-isysroot $OSX_SDKROOT -I $PREFIX/Frameworks_macosx/include" \
-			CFLAGS="-isysroot $OSX_SDKROOT $DEBUG -I $PREFIX/Frameworks_macosx/include/" \
-			CXXFLAGS="-isysroot $OSX_SDKROOT $DEBUG -I $PREFIX/Frameworks_macosx/include" \
-			LDFLAGS="-isysroot $OSX_SDKROOT $DEBUG -F $PREFIX/Frameworks_macosx/ -framework libgeos_c" \
-			LDSHARED="clang -v -undefined error -dynamiclib -isysroot $OSX_SDKROOT -lz -L$PREFIX -lpython3.13 $DEBUG -F $PREFIX/Frameworks_macosx/ -framework libgeos_c" \
-			PLATFORM=macosx \
-			NO_GEOS_CONFIG=1 \
-			python3.13 -m pip install . --no-build-isolation
-						echo "Shapely libraries for OSX: " 
-						find . -name \*.so 
-						pushd ./build/lib.macosx-${OSX_VERSION}-x86_64-cpython-313 
-						for library in `find . -name \*.so`
-						do
-							directory=$(dirname $library)
-							mkdir -p $PREFIX/build/lib.macosx-${OSX_VERSION}-x86_64-3.13/$directory
-							cp $library $PREFIX/build/lib.macosx-${OSX_VERSION}-x86_64-3.13/$library
-						done
+env CC=clang CXX=clang++ CPPFLAGS="-isysroot $OSX_SDKROOT -I $PREFIX/Frameworks_macosx/include" \
+	CFLAGS="-isysroot $OSX_SDKROOT $DEBUG -I $PREFIX/Frameworks_macosx/include/" \
+	CXXFLAGS="-isysroot $OSX_SDKROOT $DEBUG -I $PREFIX/Frameworks_macosx/include" \
+	LDFLAGS="-isysroot $OSX_SDKROOT $DEBUG -F $PREFIX/Frameworks_macosx/ -framework libgeos_c" \
+	LDSHARED="clang -v -undefined error -dynamiclib -isysroot $OSX_SDKROOT -lz -L$PREFIX -lpython3.13 $DEBUG -F $PREFIX/Frameworks_macosx/ -framework libgeos_c" \
+	PLATFORM=macosx \
+	NO_GEOS_CONFIG=1 \
+	python3.13 -m pip install . --no-build-isolation
+echo "Shapely libraries for OSX: " 
+find . -name \*.so 
+pushd ./build/lib.macosx-${OSX_VERSION}-x86_64-cpython-313 
+for library in `find . -name \*.so`
+do
+	directory=$(dirname $library)
+	mkdir -p $PREFIX/build/lib.macosx-${OSX_VERSION}-x86_64-3.13/$directory
+	cp $library $PREFIX/build/lib.macosx-${OSX_VERSION}-x86_64-3.13/$library
+done
 popd 
 popd 
 popd 

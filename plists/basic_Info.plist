@@ -22,8 +22,6 @@
 	<array>
 		<string>iPhoneOS</string>
 	</array>
-	<key>CFBundleVersion</key>
-	<string>1</string>
 	<key>DTCompiler</key>
 	<string>com.apple.compilers.llvm.clang.1_0</string>
 	<key>DTPlatformBuild</key>
@@ -42,6 +40,8 @@
 	<string>10B61</string>
 	<key>MinimumOSVersion</key>
 	<string>14.0</string>
+	<key>CFBundleVersion</key>
+	<string>1</string>
 	<key>UIDeviceFamily</key>
 	<array>
 		<integer>1</integer>

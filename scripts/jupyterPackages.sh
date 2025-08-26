@@ -115,7 +115,8 @@ python3.13 -m pip install entrypoints --upgrade
 python3.13 -m pip install mistune --upgrade
 python3.13 -m pip install pandocfilters --upgrade
 python3.13 -m pip install defusedxml --upgrade
-python3.13 -m pip install python-dateutil --upgrade
+# Pysal requires python-dateutil <= 2.8.2
+python3.13 -m pip install python-dateutil==2.8.2 --upgrade
 python3.13 -m pip install tzdata --upgrade
 python3.13 -m pip install versioneer --upgrade
 # First, install the "standard" pyzmq: 
