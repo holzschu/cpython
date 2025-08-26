@@ -1,9 +1,5 @@
 #! /bin/sh
 
-# jupyter-something adds pandas-2.0.0 and pyzmq-25.0b1, which breaks things down 
-# So far, the "fix" is to manually remove them. Add this to the script?
-# Don't forget to edit easy-install.pth too!
-
 # Changed install prefix so multiple install coexist
 export PREFIX=$PWD
 export XCFRAMEWORKS_DIR=$PREFIX/Python-aux/
@@ -14,7 +10,8 @@ export PYTHONPYCACHEPREFIX=$PREFIX/__pycache__
 export OSX_SDKROOT=$(xcrun --sdk macosx --show-sdk-path)
 export IOS_SDKROOT=$(xcrun --sdk iphoneos --show-sdk-path)
 export DEBUG="-O3 -g -Wall"
-# export DEBUG="-g"
+export CYTHON_OPTIONS="-DCYTHON_PEP489_MULTI_PHASE_INIT=0 -DCYTHON_USE_DICT_VERSIONS=0 -DCYTHON_USE_PYTYPE_LOOKUP=0"
+# export DEBUG="-O3 -g -Wall"
 # TODO: remove -3.13 from $PREFIX/build directories, use $ARCH in directory names.
 # export ARCH=$(uname -m)
 # Loading different set of frameworks based on the Application:
@@ -184,7 +181,7 @@ env CC=clang CXX=clang++ CPP="clang -E" AR="ar" \
 	CFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -I$PREFIX/Frameworks_iphoneos/include -I$PREFIX/Frameworks_iphoneos/include/ffi -DPYEXPATNS_H" \
 	CXXFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -I$PREFIX/Frameworks_iphoneos/include -I$PREFIX/Frameworks_iphoneos/include/ffi" \
 	LDFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -lz -lbz2 -llzma -ldl -lsqlite3 -ldbm -F$PREFIX/Frameworks_iphoneos -framework ios_system -L$PREFIX/Frameworks_iphoneos/lib -lssl -lcrypto -lffi Modules/_hacl/libHacl_Hash_SHA2.a Modules/_decimal/libmpdec/libmpdec.a Modules/expat/libexpat.a" \
-	LDSHARED="clang -v -undefined error -dynamiclib -isysroot $IOS_SDKROOT -lz -lbz2 -llzma -ldl -lsqlite3 -ldbm -L. -lpython3.13  -F$PREFIX/Frameworks_iphoneos -framework ios_system -L$PREFIX/Frameworks_iphoneos/lib -lssl -lcrypto -lffi Modules/_hacl/libHacl_Hash_SHA2.a Modules/_decimal/libmpdec/libmpdec.a Modules/expat/libexpat.a" \
+	LDSHARED="clang -v -undefined error -dynamiclib -isysroot $IOS_SDKROOT -lz -lbz2 -llzma -ldl -lsqlite3 -ldbm -F $PREFIX/ios/Frameworks/arm64-iphoneos -framework Python  -F$PREFIX/Frameworks_iphoneos -framework ios_system -L$PREFIX/Frameworks_iphoneos/lib -lssl -lcrypto -lffi Modules/_hacl/libHacl_Hash_SHA2.a Modules/_decimal/libmpdec/libmpdec.a Modules/expat/libexpat.a" \
 	PLATFORM=iphoneos \
 	OPT="$DEBUG" \
 	./configure --prefix=$PREFIX/Library \
@@ -281,14 +278,13 @@ cp  $PREFIX/iOS/Frameworks/arm64-iphoneos/include/python3.13/pyconfig.h $PREFIX/
 # [tool.ruff] is the section right after [tool.scikit-build].
 cp pyproject.toml pyproject_reference.toml >> $PREFIX/make_ios.log 2>&1
 sed -i bak "s|^\[tool.ruff\]|# compiling for iOS:\n\
-cmake.verbose = true\n\
 cmake.define.CMAKE_INSTALL_PREFIX=\"@rpath\"\n\
 cmake.define.CMAKE_BUILD_TYPE=\"Release\"\n\
 cmake.define.CMAKE_OSX_SYSROOT=\"$IOS_SDKROOT\"\n\
 cmake.define.CMAKE_C_COMPILER=\"clang\"\n\
 cmake.define.CMAKE_CXX_COMPILER=\"clang++\" \n\
-cmake.define.CMAKE_C_FLAGS=\"-arch arm64 -O2 -miphoneos-version-min=14 -DCYTHON_PEP489_MULTI_PHASE_INIT=0 -DCYTHON_USE_DICT_VERSIONS=0 $DEBUG -I$PREFIX\"\n\
-cmake.define.CMAKE_CXX_FLAGS=\"-arch arm64 -O2 -miphoneos-version-min=14 -DCYTHON_PEP489_MULTI_PHASE_INIT=0 -DCYTHON_USE_DICT_VERSIONS=0  $DEBUG -I$PREFIX\"\n\
+cmake.define.CMAKE_C_FLAGS=\"-arch arm64 -O2 -miphoneos-version-min=14 $CYTHON_OPTIONS $DEBUG -I$PREFIX\"\n\
+cmake.define.CMAKE_CXX_FLAGS=\"-arch arm64 -O2 -miphoneos-version-min=14 $CYTHON_OPTIONS  $DEBUG -I$PREFIX\"\n\
 cmake.define.CMAKE_MODULE_LINKER_FLAGS=\"-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -F$PREFIX/Frameworks_iphoneos -framework ios_system -L$PREFIX/Frameworks_iphoneos/lib -F $PREFIX/ios/Frameworks/arm64-iphoneos -framework Python -lzmq\"\n\
 cmake.define.CMAKE_SHARED_LINKER_FLAGS=\"-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -F$PREFIX/Frameworks_iphoneos -framework ios_system -L$PREFIX/Frameworks_iphoneos/lib -F $PREFIX/ios/Frameworks/arm64-iphoneos -framework Python -lzmq\"\n\
 cmake.define.CMAKE_EXE_LINKER_FLAGS=\"-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -F$PREFIX/Frameworks_iphoneos -framework ios_system -L$PREFIX/Frameworks_iphoneos/lib -F $PREFIX/ios/Frameworks/arm64-iphoneos -framework Python -lzmq\"\n\
@@ -302,8 +298,8 @@ mv pyproject.toml pyproject_debug.toml >> $PREFIX/make_ios.log 2>&1
 mv pyproject_reference.toml pyproject.toml >> $PREFIX/make_ios.log 2>&1
 pushd dist >> $PREFIX/make_ios.log 2>&1
 echo PyZMQ libraries for iOS: >> $PREFIX/make_ios.log 2>&1
-unzip -l pyzmq-26.2.0-cp313-cp313-macosx_14_0_x86_64.whl | grep darwin.so >> $PREFIX/make_ios.log 2>&1
-unzip -o pyzmq-26.2.0-cp313-cp313-macosx_14_0_x86_64.whl zmq/backend/cffi/_cffi.cpython-313-darwin.so >> $PREFIX/make_ios.log 2>&1
+unzip -l pyzmq-26.2.0-cp313-cp313-macosx_15_0_x86_64.whl | grep darwin.so >> $PREFIX/make_ios.log 2>&1
+unzip -o pyzmq-26.2.0-cp313-cp313-macosx_15_0_x86_64.whl zmq/backend/cffi/_cffi.cpython-313-darwin.so >> $PREFIX/make_ios.log 2>&1
 install_site_package zmq/backend/cffi/_cffi zmq/backend/cffi/_cffi.cpython-313-darwin.so >> $PREFIX/make_ios.log 2>&1
 popd  >> $PREFIX/make_ios.log 2>&1
 popd  >> $PREFIX/make_ios.log 2>&1
@@ -328,9 +324,9 @@ pushd packages >> $PREFIX/make_ios.log 2>&1
 pushd lxml*  >> $PREFIX/make_ios.log 2>&1
 rm -rf build/* >> $PREFIX/make_ios.log 2>&1
 env CC=clang CXX=clang++ \
-CPPFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -I$PREFIX -I$PREFIX/Frameworks_iphoneos/include/ $DEBUG  -DCYTHON_PEP489_MULTI_PHASE_INIT=0 -DCYTHON_USE_DICT_VERSIONS=0" \
-CFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -I$PREFIX -I$PREFIX/Frameworks_iphoneos/include/ -DCYTHON_PEP489_MULTI_PHASE_INIT=0 -DCYTHON_USE_DICT_VERSIONS=0 $DEBUG" \
-CXXFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -DCYTHON_PEP489_MULTI_PHASE_INIT=0 -DCYTHON_USE_DICT_VERSIONS=0 $DEBUG" \
+CPPFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -I$PREFIX -I$PREFIX/Frameworks_iphoneos/include/ $DEBUG  $CYTHON_OPTIONS" \
+CFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -I$PREFIX -I$PREFIX/Frameworks_iphoneos/include/ $CYTHON_OPTIONS $DEBUG" \
+CXXFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT $CYTHON_OPTIONS $DEBUG" \
 LDFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -F$PREFIX/Frameworks_iphoneos -framework ios_system -L$PREFIX/Frameworks_iphoneos/lib $DEBUG" \
 LDSHARED="clang -v -undefined error -dynamiclib -isysroot $IOS_SDKROOT -lz -F $PREFIX/ios/Frameworks/arm64-iphoneos -framework Python  -F$PREFIX/Frameworks_iphoneos -framework ios_system -L$PREFIX/Frameworks_iphoneos/lib -L$PREFIX/build/lib.darwin-arm64-3.13 $DEBUG" \
 PLATFORM=iphoneos python3.13 setup.py build  --with-cython >> $PREFIX/make_ios.log 2>&1
@@ -386,6 +382,56 @@ install_site_package cryptography/hazmat/bindings/_padding build/lib.macosx-11.5
 install_site_package cryptography/hazmat/bindings/_openssl build/lib.macosx-11.5-x86_64-cpython-313/cryptography/hazmat/bindings/_openssl.abi3.so >> $PREFIX/make_ios.log 2>&1
 popd  >> $PREFIX/make_ios.log 2>&1
 popd  >> $PREFIX/make_ios.log 2>&1
+# pycryptodome:
+# pycryptodome (a-Shell only, 80 frameworks total (40 for Crypto, 40 for Cryptodome):
+# Carnets has hit the maximum number of embedded frameworks, adding 320 (4 * 80) frameworks 
+# would be excessive.
+if [ $APP != "Carnets" ]; 
+then
+	pushd packages >> $PREFIX/make_ios.log 2>&1
+	pushd pycryptodome-* >> $PREFIX/make_ios.log 2>&1
+	rm -rf build/* >> $PREFIX/make_ios.log 2>&1
+	rm .separate_namespace >> $PREFIX/make_ios.log 2>&1
+	env CC=clang CXX=clang++ \
+		CPPFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -I$PREFIX  -I$PREFIX/Frameworks_iphoneos/include/" \
+		CFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -I$PREFIX  -I$PREFIX/Frameworks_iphoneos/include/" \
+		CXXFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -I$PREFIX  -I$PREFIX/Frameworks_iphoneos/include/" \
+		LDFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -F$PREFIX/Frameworks_iphoneos -framework ios_system -L$PREFIX/build/lib.darwin-arm64-3.13 -L$PREFIX/Frameworks_iphoneos/lib/" \
+		LDSHARED="clang -v -undefined error -dynamiclib -isysroot $IOS_SDKROOT -F$PREFIX/Frameworks_iphoneos -framework ios_system -L$PREFIX/build/lib.darwin-arm64-3.13 -lz  -F $PREFIX/ios/Frameworks/arm64-iphoneos -framework Python $DEBUG" \
+		PLATFORM=iphoneos python3.13 setup.py build  >> $PREFIX/make_ios.log 2>&1
+	echo pycryptodome libraries for iOS: >> $PREFIX/make_ios.log 2>&1
+	find build -name \*.so -print  >> $PREFIX/make_ios.log 2>&1
+	pushd build/lib.macosx-*-cpython-313 >> $PREFIX/make_ios.log 2>&1
+	for library in `find Crypto -name \*.so`
+	do
+		directory=`dirname $library`
+		libname=`basename $library .abi3.so`
+		install_site_package $directory/$libname $library  >> $PREFIX/make_ios.log 2>&1
+	done
+	popd  >> $PREFIX/make_ios.log 2>&1
+	# pycryptodomex:
+	rm -rf build/* >> $PREFIX/make_ios.log 2>&1
+	touch .separate_namespace  >> $PREFIX/make_ios.log 2>&1
+	env CC=clang CXX=clang++ \
+		CPPFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -I$PREFIX  -I$PREFIX/Frameworks_iphoneos/include/" \
+		CFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -I$PREFIX  -I$PREFIX/Frameworks_iphoneos/include/" \
+		CXXFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -I$PREFIX  -I$PREFIX/Frameworks_iphoneos/include/" \
+		LDFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -F$PREFIX/Frameworks_iphoneos -framework ios_system -L$PREFIX/build/lib.darwin-arm64-3.13 -L$PREFIX/Frameworks_iphoneos/lib/" \
+		LDSHARED="clang -v -undefined error -dynamiclib -isysroot $IOS_SDKROOT -F$PREFIX/Frameworks_iphoneos -framework ios_system -L$PREFIX/build/lib.darwin-arm64-3.13 -lz  -F $PREFIX/ios/Frameworks/arm64-iphoneos -framework Python $DEBUG" \
+		PLATFORM=iphoneos python3.13 setup.py build  >> $PREFIX/make_ios.log 2>&1
+	echo pycryptodomex libraries for iOS: >> $PREFIX/make_ios.log 2>&1
+	find build -name \*.so -print  >> $PREFIX/make_ios.log 2>&1
+	pushd build/lib.macosx-*-cpython-313 >> $PREFIX/make_ios.log 2>&1
+	for library in `find Cryptodome -name \*.so`
+	do
+		directory=`dirname $library`
+		libname=`basename $library .abi3.so`
+		install_site_package $directory/$libname $library  >> $PREFIX/make_ios.log 2>&1
+	done
+	popd  >> $PREFIX/make_ios.log 2>&1
+	popd  >> $PREFIX/make_ios.log 2>&1
+	popd  >> $PREFIX/make_ios.log 2>&1
+fi # !Carnets (pycryptodome)
 # regex (for nltk)
 pushd packages >> $PREFIX/make_ios.log 2>&1
 pushd regex*  >> $PREFIX/make_ios.log 2>&1
@@ -419,122 +465,134 @@ install_site_package psutil/_psutil_posix build/lib.macosx-11.5-x86_64-cpython-3
 install_site_package psutil/_psutil_ios build/lib.macosx-11.5-x86_64-cpython-313/psutil/_psutil_ios.cpython-313-darwin.so  >> $PREFIX/make_ios.log 2>&1
 popd  >> $PREFIX/make_ios.log 2>&1
 popd  >> $PREFIX/make_ios.log 2>&1
-
-exit 0
-
 # Numpy:
 pushd packages >> $PREFIX/make_ios.log 2>&1
+# Because meson cannot handle environment variables
+cp iphone-osx_basis.meson iphone-osx.meson  >> $PREFIX/make_ios.log 2>&1
+sed -i bak "s|__prefix__|${PREFIX}|" iphone-osx.meson >> $PREFIX/make_ios.log 2>&1
+#
 pushd numpy >> $PREFIX/make_ios.log 2>&1
-rm -rf build/*  >> $PREFIX/make_ios.log 2>&1
-if [ $USE_FORTRAN == 0 ];
-then
-	rm -f site.cfg  >> $PREFIX/make_ios.log 2>&1
-	env CC="clang -arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -DCYTHON_PEP489_MULTI_PHASE_INIT=0 -DCYTHON_USE_DICT_VERSIONS=0 -I$PREFIX $DEBUG"\
-	CXX="clang++ -arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -DCYTHON_PEP489_MULTI_PHASE_INIT=0 -DCYTHON_USE_DICT_VERSIONS=0 -I$PREFIX $DEBUG" \
-	LDFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -F$PREFIX/Frameworks_iphoneos -framework ios_system -L$PREFIX/Frameworks_iphoneos/lib $DEBUG" \
-	LDSHARED="clang -v -undefined error -dynamiclib -isysroot $IOS_SDKROOT -lz -lpython3.13  -F$PREFIX/Frameworks_iphoneos -framework ios_system -L$PREFIX/Frameworks_iphoneos/lib -L$PREFIX/build/lib.darwin-arm64-3.13 $DEBUG"\
-	PLATFORM=iphoneos NPY_BLAS_ORDER="" NPY_LAPACK_ORDER="" BLAS=None LAPACK=None ATLAS=None \
-	SETUPTOOLS_USE_DISTUTILS=stdlib python3.13 setup.py build  >> $PREFIX/make_ios.log 2>&1
-else 
-	cp site_original.cfg site.cfg >> $PREFIX/make_ios.log 2>&1
-	sed -i bak "s|__main_directory__|${PREFIX}/Frameworks_iphoneos|" site.cfg >> $PREFIX/make_ios.log 2>&1
-
-	env CC="clang -arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -I$PREFIX -DCYTHON_PEP489_MULTI_PHASE_INIT=0 -DCYTHON_USE_DICT_VERSIONS=0 $DEBUG"\
-		CXX="clang++ -arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -DCYTHON_PEP489_MULTI_PHASE_INIT=0 -DCYTHON_USE_DICT_VERSIONS=0 $DEBUG"\
+mkdir -p build_ios  >> $PREFIX/make_ios.log 2>&1
+rm -rf build_ios/*  >> $PREFIX/make_ios.log 2>&1
+# TODO: this is only the numpy-with-fortran version. 
+# I don't have the manpower to maintain the numpy-without-fortran anymore.
+# If you don't have fortran, you need something like: NPY_BLAS_ORDER= NPY_LAPACK_ORDER= 
+# but maybe something else as well.
+#
+env CC="clang -arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -I$PREFIX $CYTHON_OPTIONS $DEBUG"\
+		CXX="clang++ -arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT $CYTHON_OPTIONS $DEBUG"\
 		LDFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -F$PREFIX/Frameworks_iphoneos -framework ios_system -L$PREFIX/Frameworks_iphoneos/lib $DEBUG" \
-		LDSHARED="clang -v -undefined error -dynamiclib -isysroot $IOS_SDKROOT -lz -lpython3.13  -F$PREFIX/Frameworks_iphoneos -framework ios_system -L$PREFIX/Frameworks_iphoneos/lib -L$PREFIX/build/lib.darwin-arm64-3.13 $DEBUG" \
+		LDSHARED="clang -v -undefined error -dynamiclib -isysroot $IOS_SDKROOT -lz -F $PREFIX/ios/Frameworks/arm64-iphoneos -framework Python  -F$PREFIX/Frameworks_iphoneos -framework ios_system -L$PREFIX/Frameworks_iphoneos/lib -L$PREFIX/build/lib.darwin-arm64-3.13 $DEBUG" \
 		PLATFORM=iphoneos NPY_BLAS_ORDER="openblas" NPY_LAPACK_ORDER="openblas" \
-		SETUPTOOLS_USE_DISTUTILS=stdlib python3.13 setup.py build >> $PREFIX/make_ios.log 2>&1
-	# Copy *.a libraries so scipy can find them:
-	echo Where are the numpy libraries? >> $PREFIX/make_ios.log 2>&1
-	find build -name \*.a >> $PREFIX/make_ios.log 2>&1
-    # copy the two libraries so scipy can find them
-	mkdir -p $PREFIX/build/lib.darwin-arm64-3.13/numpy >> $PREFIX/make_ios.log 2>&1
-	cp build/temp.macosx-${OSX_VERSION}-arm64-3.13/libnpyrandom.a $PREFIX/build/lib.darwin-arm64-3.13/numpy/libnpyrandom.a >> $PREFIX/make_ios.log 2>&1
-	cp build/temp.macosx-${OSX_VERSION}-arm64-3.13/libnpymath.a  $PREFIX/build/lib.darwin-arm64-3.13/numpy/libnpymath.a >> $PREFIX/make_ios.log 2>&1
-fi
-echo numpy libraries for iOS: >> $PREFIX/make_ios.log 2>&1
-find build -name \*.so -print  >> $PREFIX/make_ios.log 2>&1
-pushd build/lib.macosx-${OSX_VERSION}-arm64-3.13 >> $PREFIX/make_ios.log 2>&1
-for library in `find numpy -name \*.so`
-do
-	directory=$(dirname $library)
-	mkdir -p $PREFIX/build/lib.darwin-arm64-3.13/$directory >> $PREFIX/make_ios.log 2>&1
-	cp $library $PREFIX/build/lib.darwin-arm64-3.13/$library >> $PREFIX/make_ios.log 2>&1
-done
+		SETUPTOOLS_USE_DISTUTILS=stdlib \
+		FC=aarch64-apple-darwin20-gfortran \
+		vendored-meson/meson/meson.py . build_ios --cross-file ../iphone-osx.meson \
+		-Dblas=openblas -Dlapack=openblas  >> $PREFIX/make_ios.log 2>&1
+pushd build_ios  >> $PREFIX/make_ios.log 2>&1
+# We don't need the line with "s/bundle/shared/" with numpy because it uses its own vendored-meson, but we had to edit vendored-meson to prevent ninja from rebuilding the packages 
+echo Done configuring numpy. Now we build. >> $PREFIX/make_ios.log 2>&1
+ninja  >> $PREFIX/make_ios.log 2>&1
 popd  >> $PREFIX/make_ios.log 2>&1
+echo Done building numpy.  >> $PREFIX/make_ios.log 2>&1
+# Copy *.a libraries so scipy can find them:
+echo Where are the numpy libraries? >> $PREFIX/make_ios.log 2>&1
+find build_ios -name \*.a >> $PREFIX/make_ios.log 2>&1
+   # copy the two libraries so scipy can find them
+mkdir -p $PREFIX/build/lib.darwin-arm64-3.13/numpy >> $PREFIX/make_ios.log 2>&1
+cp build_ios/numpy/random/libnpyrandom.a $PREFIX/build/lib.darwin-arm64-3.13/numpy/libnpyrandom.a >> $PREFIX/make_ios.log 2>&1
+cp build_ios/numpy/_core/libnpymath.a  $PREFIX/build/lib.darwin-arm64-3.13/numpy/libnpymath.a >> $PREFIX/make_ios.log 2>&1
+echo numpy dynamic libraries for iOS: >> $PREFIX/make_ios.log 2>&1
+find build_ios -name \*.so -print  >> $PREFIX/make_ios.log 2>&1
 # Making a single numpy dynamic library:
-echo Makign a single numpy library for iOS: >> $PREFIX/make_ios.log 2>&1
-if [ $USE_FORTRAN == 1 ];
-then
-	OPENBLAS="-L $PREFIX/Frameworks_iphoneos/lib -lopenblas"
-	mv build/temp.macosx-${OSX_VERSION}-arm64-3.13/numpy/core/src/common/python_xerbla.o build/temp.macosx-${OSX_VERSION}-arm64-3.13/numpy/core/src/common/python_xerbla.op
-else
-	OPENBLAS=""
-fi
+echo Making a single numpy library for iOS: >> $PREFIX/make_ios.log 2>&1
+OPENBLAS="-L $PREFIX/Frameworks_iphoneos/lib -lopenblas"
+# Remove duplicate files:
+mkdir -p temp_ios/numpy/linalg/lapack_lite.cpython-313-darwin.so.p >> $PREFIX/make_ios.log 2>&1
+mv build_ios/numpy/linalg/lapack_lite.cpython-313-darwin.so.p/lapack_lite_f2c*.c.o temp_ios/numpy/linalg/lapack_lite.cpython-313-darwin.so.p/ >> $PREFIX/make_ios.log 2>&1
+mv build_ios/numpy/linalg/lapack_lite.cpython-313-darwin.so.p/lapack_lite_python_xerbla.c.o temp_ios/numpy/linalg/lapack_lite.cpython-313-darwin.so.p/ >> $PREFIX/make_ios.log 2>&1
+mkdir -p temp_ios/numpy/linalg/_umath_linalg.cpython-313-darwin.so.p  >> $PREFIX/make_ios.log 2>&1
+mv build_ios/numpy/linalg/_umath_linalg.cpython-313-darwin.so.p/lapack_lite_python_xerbla.c.o temp_ios/numpy/linalg/_umath_linalg.cpython-313-darwin.so.p/ >> $PREFIX/make_ios.log 2>&1
+mkdir -p temp_ios/numpy/random/libnpyrandom.a.p  >> $PREFIX/make_ios.log 2>&1
+mv build_ios/numpy/random/libnpyrandom.a.p/src_distributions_distributions.c.o temp_ios/numpy/random/libnpyrandom.a.p/src_distributions_distributions.c.o  >> $PREFIX/make_ios.log 2>&1
+mkdir -p temp_ios/numpy/_core/_multiarray_tests.cpython-313-darwin.so.p >> $PREFIX/make_ios.log 2>&1
+mv build_ios/numpy/_core/_multiarray_tests.cpython-313-darwin.so.p/src_common_*.o temp_ios/numpy/_core/_multiarray_tests.cpython-313-darwin.so.p/ >> $PREFIX/make_ios.log 2>&1
+mkdir -p temp_ios/numpy/_core/_umath_tests.cpython-313-darwin.so.p >> $PREFIX/make_ios.log 2>&1
+mv build_ios/numpy/_core/_umath_tests.cpython-313-darwin.so.p/src_common_*.o temp_ios/numpy/_core/_umath_tests.cpython-313-darwin.so.p >> $PREFIX/make_ios.log 2>&1
+mkdir -p build_ios/numpy/_core/_simd.cpython-313-darwin.so.p >> $PREFIX/make_ios.log 2>&1
+mv build_ios/numpy/_core/_simd.cpython-313-darwin.so.p/src_common_*.o temp_ios/numpy/_core/_simd.cpython-313-darwin.so.p >> $PREFIX/make_ios.log 2>&1
 clang -v -undefined error -dynamiclib \
 -isysroot $IOS_SDKROOT \
--lz -lm \
--lpython3.13 \
+-lz -lm -lc++ \
+-F $PREFIX/ios/Frameworks/arm64-iphoneos -framework Python \
  -F$PREFIX/Frameworks_iphoneos -framework ios_system \
 -L$PREFIX/Frameworks_iphoneos/lib \
--L$PREFIX/build/lib.darwin-arm64-3.13 \
 -O3 -Wall -arch arm64 \
 -miphoneos-version-min=14.0 \
-`find build -name \*.o` \
+`find build_ios -name \*.o` \
 -L$PREFIX/Library/lib \
--Lbuild/temp.macosx-${OSX_VERSION}-arm64-3.13 \
--lnpymath \
+-Lbuild_ios/numpy/random \
 -lnpyrandom \
+-Lbuild_ios/numpy/_core \
+-lnpymath \
 $OPENBLAS \
--o build/numpy.so  >> $PREFIX/make_ios.log 2>&1
-cp build/numpy.so $PREFIX/build/lib.darwin-arm64-3.13 >> $PREFIX/make_ios.log 2>&1
-popd  >> $PREFIX/make_ios.log 2>&1
-popd  >> $PREFIX/make_ios.log 2>&1
-if [ $USE_FORTRAN == 1 ];
-then
-	# change references to openblas back to the framework:
-	install_name_tool -change $PREFIX/Frameworks_iphoneos/lib/libopenblas.dylib @rpath/openblas.framework/openblas   build/lib.darwin-arm64-3.13/numpy/core/_multiarray_umath.cpython-313-darwin.so  >> $PREFIX/make_ios.log 2>&1
-	install_name_tool -change $PREFIX/Frameworks_iphoneos/lib/libopenblas.dylib @rpath/openblas.framework/openblas   build/lib.darwin-arm64-3.13/numpy/linalg/_umath_linalg.cpython-313-darwin.so  >> $PREFIX/make_ios.log 2>&1
-	install_name_tool -change $PREFIX/Frameworks_iphoneos/lib/libopenblas.dylib @rpath/openblas.framework/openblas   build/lib.darwin-arm64-3.13/numpy/linalg/lapack_lite.cpython-313-darwin.so  >> $PREFIX/make_ios.log 2>&1
-	install_name_tool -change $PREFIX/Frameworks_iphoneos/lib/libopenblas.dylib @rpath/openblas.framework/openblas   build/lib.darwin-arm64-3.13/numpy.so  >> $PREFIX/make_ios.log 2>&1
-fi
-# Matplotlib
-## kiwisolver
+-o build_ios/numpy.so  >> $PREFIX/make_ios.log 2>&1
+install_site_package numpy/numpy build_ios/numpy.so >> $PREFIX/make_ios.log 2>&1
+# Now copy that numpy.fwork for all the dynamic libraries.
+pushd build_ios >> $PREFIX/make_ios.log 2>&1
+for library in `find numpy -name \*.so`
+do
+	directory=`dirname $library`
+	libname=`basename $library .cpython-313-darwin.so`
+	cp $PREFIX/Library/lib/python3.13/site-packages/numpy/numpy.cpython-313-iphoneos.fwork $PREFIX/Library/lib/python3.13/site-packages/$directory/$libname.cpython-313-iphoneos.fwork >> $PREFIX/make_ios.log 2>&1
+done
+# ...and change the reference to openblas back to a framework:
+install_name_tool -change $PREFIX/Frameworks_iphoneos/lib/libopenblas.dylib @rpath/openblas.framework/openblas $PREFIX/iOS/Frameworks/Python-numpy.numpy.framework/Python-numpy.numpy >> $PREFIX/make_ios.log 2>&1
+popd >> $PREFIX/make_ios.log 2>&1
+popd >> $PREFIX/make_ios.log 2>&1
+popd >> $PREFIX/make_ios.log 2>&1
+# 
+# For matplotlib
+## kiwisolver 
 pushd packages >> $PREFIX/make_ios.log 2>&1
 pushd kiwisolver* >> $PREFIX/make_ios.log 2>&1
 rm -rf build/*  >> $PREFIX/make_ios.log 2>&1
-env CC=clang CXX=clang++ CPPFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -I$PREFIX" CFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -I$PREFIX" CXXFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -I$PREFIX" LDFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -F$PREFIX/Frameworks_iphoneos -framework ios_system -L$PREFIX/build/lib.darwin-arm64-3.13 " LDSHARED="clang -v -undefined error -dynamiclib -isysroot $IOS_SDKROOT -F$PREFIX/Frameworks_iphoneos -framework ios_system -L$PREFIX/build/lib.darwin-arm64-3.13 -lz -lpython3.13" PLATFORM=iphoneos python3.13 setup.py build  >> $PREFIX/make_ios.log 2>&1
-mkdir -p $PREFIX/build/lib.darwin-arm64-3.13/kiwisolver/  >> $PREFIX/make_ios.log 2>&1
-cp ./build/lib.macosx-${OSX_VERSION}-arm64-cpython-313/kiwisolver/_cext.cpython-313-darwin.so $PREFIX/build/lib.darwin-arm64-3.13/kiwisolver/  >> $PREFIX/make_ios.log 2>&1
+env CC=clang CXX=clang++ \
+	CPPFLAGS="-g -arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -I$PREFIX" \
+	CFLAGS="-g -arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -I$PREFIX" \
+	CXXFLAGS="-g -arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -I$PREFIX" \
+	LDFLAGS="-g -arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -F$PREFIX/Frameworks_iphoneos -framework ios_system -F $PREFIX/ios/Frameworks/arm64-iphoneos -framework Python" \
+	LDSHARED="clang -v -g -undefined error -dynamiclib -isysroot $IOS_SDKROOT -F$PREFIX/Frameworks_iphoneos -framework ios_system -lz -F $PREFIX/ios/Frameworks/arm64-iphoneos -framework Python" \
+	LDCXXSHARED="clang -v -g -undefined error -dynamiclib -isysroot $IOS_SDKROOT -F$PREFIX/Frameworks_iphoneos -framework ios_system -lz -F $PREFIX/ios/Frameworks/arm64-iphoneos -framework Python" \
+	PLATFORM=iphoneos python3.13 setup.py build  >> $PREFIX/make_ios.log 2>&1
 echo kiwisolver libraries for iOS: >> $PREFIX/make_ios.log 2>&1
+# build/lib.macosx-11.5-x86_64-cpython-313/kiwisolver/_cext.cpython-313-darwin.so
 find build -name \*.so -print  >> $PREFIX/make_ios.log 2>&1
+install_site_package kiwisolver/_cext  ./build/lib.macosx-11.5-x86_64-cpython-313/kiwisolver/_cext.cpython-313-darwin.so >> $PREFIX/make_ios.log 2>&1
 popd  >> $PREFIX/make_ios.log 2>&1
 popd  >> $PREFIX/make_ios.log 2>&1
 ## Pillow
 pushd packages >> $PREFIX/make_ios.log 2>&1
-pushd Pillow* >> $PREFIX/make_ios.log 2>&1
+pushd pillow* >> $PREFIX/make_ios.log 2>&1
 rm -rf build/*  >> $PREFIX/make_ios.log 2>&1
 env CC=clang CXX=clang++ CPPFLAGS="-arch arm64 -miphoneos-version-min=14.0 -I$PREFIX -I$PREFIX/Frameworks_iphoneos/include/" \
 	CFLAGS="-arch arm64 -miphoneos-version-min=14.0 -I$PREFIX -I$PREFIX/Frameworks_iphoneos/include/" \
 	CXXFLAGS="-arch arm64 -miphoneos-version-min=14.0 -I$PREFIX -I$PREFIX/Frameworks_iphoneos/include/" \
-	LDFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -F$PREFIX/Frameworks_iphoneos -framework ios_system -framework freetype -L$PREFIX/Frameworks_iphoneos/lib/ -L$PREFIX/build/lib.darwin-arm64-3.13 " \
-	LDSHARED="clang -v -undefined error -dynamiclib -isysroot $IOS_SDKROOT -F$PREFIX/Frameworks_iphoneos -framework ios_system -framework freetype -L$PREFIX/build/lib.darwin-arm64-3.13 -lz -lpython3.13 -L$PREFIX/Frameworks_iphoneos/lib/ -ljpeg -ltiff" PLATFORM=iphoneos python3.13 setup.py build  >> $PREFIX/make_ios.log 2>&1
+	LDFLAGS="-arch arm64 -miphoneos-version-min=14.0 -F$PREFIX/Frameworks_iphoneos -framework ios_system -framework freetype -L$PREFIX/Frameworks_iphoneos/lib/ -F $PREFIX/ios/Frameworks/arm64-iphoneos -framework Python" \
+	LDSHARED="clang -v -undefined error -dynamiclib -F$PREFIX/Frameworks_iphoneos -framework ios_system -framework freetype -F$PREFIX/ios/Frameworks/arm64-iphoneos -framework Python -L$PREFIX/Frameworks_iphoneos/lib/" \
+	PLATFORM=ios python3.13 setup.py build  >> $PREFIX/make_ios.log 2>&1
 echo Pillow libraries for iOS: >> $PREFIX/make_ios.log 2>&1
 find build -name \*.so -print  >> $PREFIX/make_ios.log 2>&1
-mkdir -p $PREFIX/build/lib.darwin-arm64-3.13/PIL/  >> $PREFIX/make_ios.log 2>&1
-cp ./build/lib.macosx-${OSX_VERSION}-arm64-cpython-313/PIL/*.so  $PREFIX/build/lib.darwin-arm64-3.13/PIL/ >> $PREFIX/make_ios.log 2>&1
 # _imagingmath.cpython-313-darwin.so
-# _imagingft.cpython-313-darwin.so
-# _imagingtk.cpython-313-darwin.so
-# _imagingmorph.cpython-313-darwin.so
 # _imaging.cpython-313-darwin.so
+# _imagingft.cpython-313-darwin.so
+# _imagingmorph.cpython-313-darwin.so
+# _imagingtk.cpython-313-darwin.so
 #
 # Single library PIL.so
 clang -v -undefined error -dynamiclib \
 	-isysroot $IOS_SDKROOT \
 	-lz -lm \
-	-lpython3.13 \
+	-F$PREFIX/ios/Frameworks/arm64-iphoneos -framework Python \
 	-F$PREFIX/Frameworks_iphoneos -framework ios_system -framework freetype \
 	-L$PREFIX/Frameworks_iphoneos/lib -ljpeg -ltiff \
 	-L$PREFIX/build/lib.darwin-arm64-3.13 \
@@ -543,10 +601,18 @@ clang -v -undefined error -dynamiclib \
 	`find build -name \*.o` \
 	-L$PREFIX/Library/lib \
 	-o build/PIL.so  >> $PREFIX/make_ios.log 2>&1
-cp build/PIL.so $PREFIX/build/lib.darwin-arm64-3.13 >> $PREFIX/make_ios.log 2>&1
+install_site_package PIL/PIL build/PIL.so >> $PREFIX/make_ios.log 2>&1
+# Now copy that PIL.fwork for all the dynamic libraries.
+pushd build/lib.macosx-11.5-x86_64-cpython-313 >> $PREFIX/make_ios.log 2>&1
+for library in `find PIL -name \*.so`
+do
+	directory=`dirname $library`
+	libname=`basename $library .cpython-313-darwin.so`
+	cp $PREFIX/Library/lib/python3.13/site-packages/PIL/PIL.cpython-313-iphoneos.fwork $PREFIX/Library/lib/python3.13/site-packages/$directory/$libname.cpython-313-iphoneos.fwork >> $PREFIX/make_ios.log 2>&1
+done
 popd  >> $PREFIX/make_ios.log 2>&1
 popd  >> $PREFIX/make_ios.log 2>&1
-
+popd  >> $PREFIX/make_ios.log 2>&1
 ## contourpy: 
 pushd packages >> $PREFIX/make_ios.log 2>&1
 # Because meson cannot handle environment variables
@@ -565,157 +631,83 @@ popd  >> $PREFIX/make_ios.log 2>&1
 mkdir -p $PREFIX/build/lib.darwin-arm64-3.13/contourpy/  >> $PREFIX/make_ios.log 2>&1
 echo contourpy libraries for iOS: >> $PREFIX/make_ios.log 2>&1
 find build -name \*.so -print  >> $PREFIX/make_ios.log 2>&1
-cp ./build/src/*.so  $PREFIX/build/lib.darwin-arm64-3.13/contourpy/ >> $PREFIX/make_ios.log 2>&1
+install_site_package contourpy/_contourpy build/src/_contourpy.cpython-313-darwin.so  >> $PREFIX/make_ios.log 2>&1
 popd  >> $PREFIX/make_ios.log 2>&1
 popd  >> $PREFIX/make_ios.log 2>&1
+#
 ## matplotlib
+#
 pushd packages >> $PREFIX/make_ios.log 2>&1
 pushd matplotlib  >> $PREFIX/make_ios.log 2>&1
-rm -rf build/*  >> $PREFIX/make_ios.log 2>&1
-env CC=clang CXX=clang++ CPPFLAGS="-arch arm64 -miphoneos-version-min=14.0 -I$PREFIX -I$PREFIX/Frameworks_iphoneos/include/" \
-	CFLAGS="-arch arm64 -miphoneos-version-min=14.0 -I$PREFIX -I$PREFIX/Frameworks_iphoneos/include/" \
-	CXXFLAGS="-arch arm64 -miphoneos-version-min=14.0 -I$PREFIX -I$PREFIX/Frameworks_iphoneos/include/" \
-	LDFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -F$PREFIX/Frameworks_iphoneos -framework ios_system -framework freetype -L$PREFIX/Frameworks_iphoneos/lib/ -L$PREFIX/build/lib.darwin-arm64-3.13 " \
-	LDSHARED="clang -v -undefined error -dynamiclib -isysroot $IOS_SDKROOT -F$PREFIX/Frameworks_iphoneos -framework ios_system -framework freetype -L$PREFIX/build/lib.darwin-arm64-3.13 -lz -lpython3.13 -L$PREFIX/Frameworks_iphoneos/lib/ -ljpeg -ltiff" PLATFORM=iphoneos python3.13 setup.py build  >> $PREFIX/make_ios.log 2>&1
+mkdir -p build_ios >> $PREFIX/make_ios.log 2>&1
+# rm -rf build_ios/*  >> $PREFIX/make_ios.log 2>&1
+env CC=clang CXX=clang++ CFLAGS="-I /opt/X11/include/freetype2/ -isysroot $OSX_SDKROOT" \
+	CXXFLAGS="-isysroot $OSX_SDKROOT" \
+	LDFLAGS="-L/opt/X11/lib -isysroot $OSX_SDKROOT" \
+	LDSHARED="clang -v -undefined error -dynamiclib -isysroot $OSX_SDKROOT -lz -F $PREFIX/ios/Frameworks/arm64-iphoneos -framework Python -lc++ " \
+	$PREFIX/Library/bin/meson build_ios -Dmacosx=false --cross-file ../iphone-osx.meson >> $PREFIX/make_ios.log 2>&1
+pushd build_ios  >> $PREFIX/make_ios.log 2>&1
+# Something between ninja and meson is preventing the creation of dynamic libraries, creates bundles instead:
+sed -i bak "s/bundle/shared/" build.ninja >> $PREFIX/make_ios.log 2>&1
+ninja  >> $PREFIX/make_ios.log 2>&1
+popd >> $PREFIX/make_ios.log 2>&1
 echo matplotlib libraries for iOS: >> $PREFIX/make_ios.log 2>&1
-find build -name \*.so -print  >> $PREFIX/make_ios.log 2>&1
-pushd build/lib.macosx-${OSX_VERSION}-arm64-cpython-313 >> $PREFIX/make_ios.log 2>&1
-for library in `find matplotlib -name \*.so`
+find build_ios -name \*.so -print  >> $PREFIX/make_ios.log 2>&1
+# _tkagg.cpython-313-darwin.so
+# _image.cpython-313-darwin.so
+# _ttconv.cpython-313-darwin.so
+# _backend_agg.cpython-313-darwin.so
+# _tri.cpython-313-darwin.so
+# _qhull.cpython-313-darwin.so
+# _path.cpython-313-darwin.so
+# ft2font.cpython-313-darwin.so
+# _c_internal_utils.cpython-313-darwin.so
+for library in `find build_ios -name \*.so`
 do
-	directory=$(dirname $library)
-	mkdir -p $PREFIX/build/lib.darwin-arm64-3.13/$directory >> $PREFIX/make_ios.log 2>&1
-	cp $library $PREFIX/build/lib.darwin-arm64-3.13/$library >> $PREFIX/make_ios.log 2>&1
+	directory=`dirname $library`
+	libname=`basename $library .cpython-313-darwin.so`
+	install_site_package matplotlib/$libname $library  >> $PREFIX/make_ios.log 2>&1
 done
 popd  >> $PREFIX/make_ios.log 2>&1
 popd  >> $PREFIX/make_ios.log 2>&1
-popd  >> $PREFIX/make_ios.log 2>&1
-# lxml:
-pushd packages >> $PREFIX/make_ios.log 2>&1
-pushd lxml*  >> $PREFIX/make_ios.log 2>&1
-rm -rf build/* >> $PREFIX/make_ios.log 2>&1
-env CC=clang CXX=clang++ \
-env CC=clang CXX=clang++ CPPFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -I$PREFIX -I$PREFIX/Frameworks_iphoneos/include/ $DEBUG  -DCYTHON_PEP489_MULTI_PHASE_INIT=0 -DCYTHON_USE_DICT_VERSIONS=0" CFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -I$PREFIX -I$PREFIX/Frameworks_iphoneos/include/ -DCYTHON_PEP489_MULTI_PHASE_INIT=0 -DCYTHON_USE_DICT_VERSIONS=0 $DEBUG" CXXFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -DCYTHON_PEP489_MULTI_PHASE_INIT=0 -DCYTHON_USE_DICT_VERSIONS=0 $DEBUG" LDFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -F$PREFIX/Frameworks_iphoneos -framework ios_system -L$PREFIX/Frameworks_iphoneos/lib $DEBUG" LDSHARED="clang -v -undefined error -dynamiclib -isysroot $IOS_SDKROOT -lz -lpython3.13  -F$PREFIX/Frameworks_iphoneos -framework ios_system -L$PREFIX/Frameworks_iphoneos/lib -L$PREFIX/build/lib.darwin-arm64-3.13 $DEBUG" PLATFORM=iphoneos python3.13 setup.py build  --with-cython >> $PREFIX/make_ios.log 2>&1
-echo lxml libraries for iOS: >> $PREFIX/make_ios.log 2>&1
-find build -name \*.so -print  >> $PREFIX/make_ios.log 2>&1
-mkdir -p $PREFIX/build/lib.darwin-arm64-3.13/lxml/  >> $PREFIX/make_ios.log 2>&1
-mkdir -p $PREFIX/build/lib.darwin-arm64-3.13/lxml/html/  >> $PREFIX/make_ios.log 2>&1
-cp ./build/lib.macosx-${OSX_VERSION}-arm64-cpython-313/lxml/*.so  $PREFIX/build/lib.darwin-arm64-3.13/lxml/ >> $PREFIX/make_ios.log 2>&1
-cp ./build/lib.macosx-${OSX_VERSION}-arm64-cpython-313/lxml/html/*.so  $PREFIX/build/lib.darwin-arm64-3.13/lxml/html/ >> $PREFIX/make_ios.log 2>&1
-# Single library for lxml:
-clang -v -undefined error -dynamiclib \
-	-arch arm64 -miphoneos-version-min=14.0 \
-	-isysroot $IOS_SDKROOT \
-	-lz -lm -lc++ -lpython3.13 \
-	-F$PREFIX/Frameworks_iphoneos -framework ios_system  \
-	-L$PREFIX/Frameworks_iphoneos/lib -lxslt -lexslt \
-	-L$PREFIX/build/lib.darwin-arm64-3.13 \
-	-O3 -Wall \
-	`find build -name \*.o` \
-	-L$PREFIX/Library/lib \
-	-lxml2  \
-	-o build/lxml.so >> $PREFIX/make_ios.log 2>&1
-cp build/lxml.so $PREFIX/build/lib.darwin-arm64-3.13 >> $PREFIX/make_ios.log 2>&1
-popd  >> $PREFIX/make_ios.log 2>&1
-popd  >> $PREFIX/make_ios.log 2>&1
-# cryptography:
-pushd packages >> $PREFIX/make_ios.log 2>&1
-pushd cryptography* >> $PREFIX/make_ios.log 2>&1
-rm -rf build/* >> $PREFIX/make_ios.log 2>&1
-# As of Feb. 11, 2021, rustc is unable to cross-compile a dynamic library for iOS. We stick to the old version.
-env CRYPTOGRAPHY_DONT_BUILD_RUST=1 CC=clang CXX=clang++ \
-CPPFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -I$PREFIX  -I$PREFIX/Frameworks_iphoneos/include/ -DCRYPTOGRAPHY_OSRANDOM_ENGINE=CRYPTOGRAPHY_OSRANDOM_ENGINE_DEV_URANDOM" \
-CFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -I$PREFIX  -I$PREFIX/Frameworks_iphoneos/include/  -DCRYPTOGRAPHY_OSRANDOM_ENGINE=CRYPTOGRAPHY_OSRANDOM_ENGINE_DEV_URANDOM " \
-CXXFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -I$PREFIX  -I$PREFIX/Frameworks_iphoneos/include/  -DCRYPTOGRAPHY_OSRANDOM_ENGINE=CRYPTOGRAPHY_OSRANDOM_ENGINE_DEV_URANDOM" \
-LDFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -F$PREFIX/Frameworks_iphoneos -framework ios_system -L$PREFIX/build/lib.darwin-arm64-3.13 -L$PREFIX/Frameworks_iphoneos/lib/" \
-LDSHARED="clang -v -undefined error -dynamiclib -isysroot $IOS_SDKROOT -F$PREFIX/Frameworks_iphoneos -framework ios_system -L$PREFIX/build/lib.darwin-arm64-3.13 -lz -lpython3.13 -L$PREFIX/Frameworks_iphoneos/lib/" \
-PLATFORM=iphoneos python3.13 setup.py build --verbose >> $PREFIX/make_ios.log 2>&1
-echo cryptography libraries for iOS: >> $PREFIX/make_ios.log 2>&1
-find build -name \*.so -print  >> $PREFIX/make_ios.log 2>&1
-mkdir -p $PREFIX/build/lib.darwin-arm64-3.13/cryptography/  >> $PREFIX/make_ios.log 2>&1
-mkdir -p $PREFIX/build/lib.darwin-arm64-3.13/cryptography/hazmat  >> $PREFIX/make_ios.log 2>&1
-mkdir -p $PREFIX/build/lib.darwin-arm64-3.13/cryptography/hazmat/bindings  >> $PREFIX/make_ios.log 2>&1
-cp build/lib.macosx-${OSX_VERSION}-arm64-cpython-313/cryptography/hazmat/bindings/*.so $PREFIX/build/lib.darwin-arm64-3.13/cryptography/hazmat/bindings  >> $PREFIX/make_ios.log 2>&1
-popd  >> $PREFIX/make_ios.log 2>&1
-popd  >> $PREFIX/make_ios.log 2>&1
-# pycryptodome:
-if [ $APP == "a-Shell" ]; 
-then
-	pushd packages >> $PREFIX/make_ios.log 2>&1
-	pushd pycryptodome-* >> $PREFIX/make_ios.log 2>&1
-	rm -rf build/* >> $PREFIX/make_ios.log 2>&1
-	rm .separate_namespace >> $PREFIX/make_ios.log 2>&1
-	env CC=clang CXX=clang++ \
-		CPPFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -I$PREFIX  -I$PREFIX/Frameworks_iphoneos/include/" \
-		CFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -I$PREFIX  -I$PREFIX/Frameworks_iphoneos/include/" \
-		CXXFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -I$PREFIX  -I$PREFIX/Frameworks_iphoneos/include/" \
-		LDFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -F$PREFIX/Frameworks_iphoneos -framework ios_system -L$PREFIX/build/lib.darwin-arm64-3.13 -L$PREFIX/Frameworks_iphoneos/lib/" \
-		LDSHARED="clang -v -undefined error -dynamiclib -isysroot $IOS_SDKROOT -F$PREFIX/Frameworks_iphoneos -framework ios_system -L$PREFIX/build/lib.darwin-arm64-3.13 -lz -lpython3.13 $DEBUG" \
-		PLATFORM=iphoneos python3.13 setup.py build  >> $PREFIX/make_ios.log 2>&1
-	echo pycryptodome libraries for iOS: >> $PREFIX/make_ios.log 2>&1
-	find build -name \*.so -print  >> $PREFIX/make_ios.log 2>&1
-	pushd build/lib.macosx-${OSX_VERSION}-arm64-cpython-313 >> $PREFIX/make_ios.log 2>&1
-	for library in `find Crypto -name \*.so`
-	do
-		directory=$(dirname $library)
-		mkdir -p $PREFIX/build/lib.darwin-arm64-3.13/$directory >> $PREFIX/make_ios.log 2>&1
-		cp $library $PREFIX/build/lib.darwin-arm64-3.13/$library >> $PREFIX/make_ios.log 2>&1
-	done
-	popd  >> $PREFIX/make_ios.log 2>&1
-	# pycryptodomex:
-	rm -rf build/* >> $PREFIX/make_ios.log 2>&1
-	touch .separate_namespace  >> $PREFIX/make_ios.log 2>&1
-	env CC=clang CXX=clang++ \
-		CPPFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -I$PREFIX  -I$PREFIX/Frameworks_iphoneos/include/" \
-		CFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -I$PREFIX  -I$PREFIX/Frameworks_iphoneos/include/" \
-		CXXFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -I$PREFIX  -I$PREFIX/Frameworks_iphoneos/include/" \
-		LDFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -F$PREFIX/Frameworks_iphoneos -framework ios_system -L$PREFIX/build/lib.darwin-arm64-3.13 -L$PREFIX/Frameworks_iphoneos/lib/" \
-		LDSHARED="clang -v -undefined error -dynamiclib -isysroot $IOS_SDKROOT -F$PREFIX/Frameworks_iphoneos -framework ios_system -L$PREFIX/build/lib.darwin-arm64-3.13 -lz -lpython3.13 $DEBUG" \
-		PLATFORM=iphoneos python3.13 setup.py build  >> $PREFIX/make_ios.log 2>&1
-	echo pycryptodomex libraries for iOS: >> $PREFIX/make_ios.log 2>&1
-	find build -name \*.so -print  >> $PREFIX/make_ios.log 2>&1
-	pushd build/lib.macosx-${OSX_VERSION}-arm64-cpython-313 >> $PREFIX/make_ios.log 2>&1
-	for library in `find Cryptodome -name \*.so`
-	do
-		directory=$(dirname $library)
-		mkdir -p $PREFIX/build/lib.darwin-arm64-3.13/$directory >> $PREFIX/make_ios.log 2>&1
-		cp $library $PREFIX/build/lib.darwin-arm64-3.13/$library >> $PREFIX/make_ios.log 2>&1
-	done
-	popd  >> $PREFIX/make_ios.log 2>&1
-	popd  >> $PREFIX/make_ios.log 2>&1
-	popd  >> $PREFIX/make_ios.log 2>&1
-fi # a-Shell (pycryptodome)
 # wordcloud
 pushd packages >> $PREFIX/make_ios.log 2>&1
 pushd word_cloud  >> $PREFIX/make_ios.log 2>&1
 rm -rf build/*  >> $PREFIX/make_ios.log 2>&1
 env CC=clang CXX=clang++ \
-	CPPFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -I$PREFIX -I$PREFIX/Frameworks_iphoneos/include/ $DEBUG  -DCYTHON_PEP489_MULTI_PHASE_INIT=0 -DCYTHON_USE_DICT_VERSIONS=0" \
-	CFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -I$PREFIX -I$PREFIX/Frameworks_iphoneos/include/ -DCYTHON_PEP489_MULTI_PHASE_INIT=0 -DCYTHON_USE_DICT_VERSIONS=0 $DEBUG" \
-	CXXFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -DCYTHON_PEP489_MULTI_PHASE_INIT=0 -DCYTHON_USE_DICT_VERSIONS=0 $DEBUG"\
+	CPPFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -I$PREFIX -I$PREFIX/Frameworks_iphoneos/include/ $DEBUG  $CYTHON_OPTIONS" \
+	CFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -I$PREFIX -I$PREFIX/Frameworks_iphoneos/include/ $CYTHON_OPTIONS $DEBUG" \
+	CXXFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT $CYTHON_OPTIONS $DEBUG"\
 	LDFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -F$PREFIX/Frameworks_iphoneos -framework ios_system -L$PREFIX/Frameworks_iphoneos/lib $DEBUG" \
-	LDSHARED="clang -v -undefined error -dynamiclib -isysroot $IOS_SDKROOT -lz -lpython3.13  -F$PREFIX/Frameworks_iphoneos -framework ios_system -L$PREFIX/Frameworks_iphoneos/lib -L$PREFIX/build/lib.darwin-arm64-3.13 $DEBUG"\
+	LDSHARED="clang -v -undefined error -dynamiclib -isysroot $IOS_SDKROOT -lz  -F $PREFIX/ios/Frameworks/arm64-iphoneos -framework Python  -F$PREFIX/Frameworks_iphoneos -framework ios_system -L$PREFIX/Frameworks_iphoneos/lib -L$PREFIX/build/lib.darwin-arm64-3.13 $DEBUG"\
 	PLATFORM=iphoneos python3.13 setup.py build >> $PREFIX/make_ios.log 2>&1
+echo Libraries for wordcloud: >>  $PREFIX/make_ios.log 2>&1
 find build -name \*.so -print  >>  $PREFIX/make_ios.log 2>&1
-mkdir -p  $PREFIX/build/lib.darwin-arm64-3.13/wordcloud/ >> $PREFIX/make_ios.log 2>&1
-cp build//lib.macosx-${OSX_VERSION}-arm64-cpython-313/wordcloud/query_integral_image.cpython-313-darwin.so $PREFIX/build/lib.darwin-arm64-3.13/wordcloud/ >> $PREFIX/make_ios.log 2>&1
+install_site_package wordcloud/query_integral_image build/lib.macosx-*-cpython-313/wordcloud/query_integral_image.cpython-313-darwin.so  >> $PREFIX/make_ios.log 2>&1
 popd  >> $PREFIX/make_ios.log 2>&1
 popd  >> $PREFIX/make_ios.log 2>&1
+#
 # pyfftw: uses libfftw. (not in mini)
 pushd packages >> $PREFIX/make_ios.log 2>&1
-pushd pyFFTW-*  >> $PREFIX/make_ios.log 2>&1
+pushd pyfftw-*  >> $PREFIX/make_ios.log 2>&1
 rm -rf build/*  >> $PREFIX/make_ios.log 2>&1
 # pyfftw build system ignores CFLAGS and LDFLAGS, so we put everything inside CC.
 env SDKROOT=$IOS_SDKROOT \
-	CC="clang -arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -I$PREFIX -I$PREFIX/Frameworks_iphoneos/include/ -Wno-error=implicit-function-declaration $DEBUG  -DCYTHON_PEP489_MULTI_PHASE_INIT=0 -DCYTHON_USE_DICT_VERSIONS=0" \
-	CXX="clang++ -arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -I$PREFIX -I$PREFIX/Frameworks_iphoneos/include/ -Wno-error=implicit-function-declaration $DEBUG  -DCYTHON_PEP489_MULTI_PHASE_INIT=0 -DCYTHON_USE_DICT_VERSIONS=0" \
+	CC="clang -arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -I$PREFIX -I$PREFIX/Frameworks_iphoneos/include/ -Wno-error=implicit-function-declaration $DEBUG  $CYTHON_OPTIONS" \
+	CXX="clang++ -arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -I$PREFIX -I$PREFIX/Frameworks_iphoneos/include/ -Wno-error=implicit-function-declaration $DEBUG  $CYTHON_OPTIONS" \
 	LDFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -F$PREFIX/Frameworks_iphoneos -framework ios_system -L$PREFIX/Frameworks_iphoneos/lib $DEBUG" \
-	LDSHARED="clang -v -undefined error -dynamiclib -isysroot $IOS_SDKROOT -lz -lpython3.13  -F$PREFIX/Frameworks_iphoneos -framework ios_system -L$PREFIX/Frameworks_iphoneos/lib -L$PREFIX/build/lib.darwin-arm64-3.13 $DEBUG"\
+	LDSHARED="clang -v -undefined error -dynamiclib -isysroot $IOS_SDKROOT -lz  -F $PREFIX/ios/Frameworks/arm64-iphoneos -framework Python  -F$PREFIX/Frameworks_iphoneos -framework ios_system -L$PREFIX/Frameworks_iphoneos/lib -L$PREFIX/build/lib.darwin-arm64-3.13 $DEBUG"\
 	PLATFORM=iphoneos PYFFTW_INCLUDE=$PREFIX/Frameworks_iphoneos/include/ \
 	PYFFTW_LIB_DIR=$PREFIX/Frameworks_iphoneos/lib python3.13 setup.py build >> $PREFIX/make_ios.log 2>&1
 # ./build/lib.macosx-11.3-arm64-3.13/pyfftw/pyfftw.cpython-313-darwin.so
-find . -name \*.so  >> $PREFIX/make_ios.log 2>&1
-mkdir -p  $PREFIX/build/lib.darwin-arm64-3.13/pyfftw/ >> $PREFIX/make_ios.log 2>&1
-cp ./build/lib.macosx-${OSX_VERSION}-arm64-cpython-313/pyfftw/pyfftw.cpython-313-darwin.so $PREFIX/build/lib.darwin-arm64-3.13/pyfftw/  >> $PREFIX/make_ios.log 2>&1
+echo pyFFTW libraries for iOS:  >> $PREFIX/make_ios.log 2>&1
+find build -name \*.so  >> $PREFIX/make_ios.log 2>&1
+for library in `find build -name \*.so`
+do
+	directory=`dirname $library`
+	libname=`basename $library .cpython-313-darwin.so`
+	install_site_package pyfftw/$libname $library  >> $PREFIX/make_ios.log 2>&1
+done
 popd  >> $PREFIX/make_ios.log 2>&1
 popd  >> $PREFIX/make_ios.log 2>&1
 # cvxopt: Requires BLAS, Lapack, uses libfftw3.a if present, uses SuiteSparse source (new submodule)
@@ -729,8 +721,8 @@ then
 		CFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -I$PREFIX -I$PREFIX/Frameworks_iphoneos/include/ $DEBUG" \
 		CXXFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -I$PREFIX -I$PREFIX/Frameworks_iphoneos/include/ $DEBUG" \
 		LDFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -F$PREFIX/Frameworks_iphoneos -framework ios_system -L$PREFIX/Frameworks_iphoneos/lib" \
-		LDSHARED="clang -v -undefined error -dynamiclib -isysroot $IOS_SDKROOT -lz -lpython3.13  -F$PREFIX/Frameworks_iphoneos -framework ios_system -L$PREFIX/Frameworks_iphoneos/lib -L$PREFIX/build/lib.darwin-arm64-3.13 $DEBUG" \
-		PLATFORM=macosx \
+		LDSHARED="clang -v -undefined error -dynamiclib -isysroot $IOS_SDKROOT -lz  -F $PREFIX/ios/Frameworks/arm64-iphoneos -framework Python  -F$PREFIX/Frameworks_iphoneos -framework ios_system -L$PREFIX/Frameworks_iphoneos/lib -L$PREFIX/build/lib.darwin-arm64-3.13 $DEBUG" \
+		PLATFORM=iphoneos \
 		CVXOPT_BLAS_LIB=openblas \
 		CVXOPT_BLAS_LIB_DIR=$PREFIX/Frameworks_iphoneos/lib \
 		CVXOPT_LAPACK_LIB=openblas \
@@ -750,16 +742,16 @@ then
     # cvxopt/fftw.cpython-313-darwin.so
     # cvxopt/blas.cpython-313-darwin.so
     # cvxopt/lapack.cpython-313-darwin.so
-    for library in cvxopt/cholmod.cpython-313-darwin.so cvxopt/misc_solvers.cpython-313-darwin.so cvxopt/amd.cpython-313-darwin.so cvxopt/base.cpython-313-darwin.so cvxopt/umfpack.cpython-313-darwin.so cvxopt/fftw.cpython-313-darwin.so cvxopt/blas.cpython-313-darwin.so cvxopt/lapack.cpython-313-darwin.so
+	for library in `find build -name \*.so`
 	do
-		directory=$(dirname $library)
-		mkdir -p $PREFIX/build/lib.darwin-arm64-3.13/$directory >> $PREFIX/make_ios.log 2>&1
-		cp ./build/lib.macosx-${OSX_VERSION}-arm64-cpython-313/$library $PREFIX/build/lib.darwin-arm64-3.13/$library >> $PREFIX/make_ios.log 2>&1
 		# Fix the reference to libopenblas.dylib -> openblas.framework
-		if [[ $(otool -l $PREFIX/build/lib.darwin-arm64-3.13/$library | grep libopenblas) ]];
+		if [[ $(otool -l $library | grep libopenblas) ]];
 		then 
-			install_name_tool -change $PREFIX/Frameworks_iphoneos/lib/libopenblas.dylib @rpath/openblas.framework/openblas  $PREFIX/build/lib.darwin-arm64-3.13/$library  >> $PREFIX/make_ios.log 2>&1
-		fi		
+			install_name_tool -change $PREFIX/Frameworks_iphoneos/lib/libopenblas.dylib @rpath/openblas.framework/openblas  $library  >> $PREFIX/make_ios.log 2>&1
+		fi
+		directory=`dirname $library`
+		libname=`basename $library .cpython-313-darwin.so`
+		install_site_package cvxopt/$libname $library  >> $PREFIX/make_ios.log 2>&1
 	done
 	popd  >> $PREFIX/make_ios.log 2>&1
 	popd  >> $PREFIX/make_ios.log 2>&1
@@ -767,110 +759,123 @@ fi
 # Pandas:
 pushd packages >> $PREFIX/make_ios.log 2>&1
 pushd pandas*  >> $PREFIX/make_ios.log 2>&1
-rm -rf build/*  >> $PREFIX/make_ios.log 2>&1
+mkdir -p build_ios >> $PREFIX/make_ios.log 2>&1
+rm -rf build_ios/* >> $PREFIX/make_ios.log 2>&1
 # Needed to load parser/tokenizer.h before Parser/tokenizer.h:
 PANDAS=$PWD
-env CC=clang CXX=clang++ CPPFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -I$PANDAS/pandas/_libs/src/ -I$PREFIX $DEBUG -DCYTHON_PEP489_MULTI_PHASE_INIT=0 -DCYTHON_USE_DICT_VERSIONS=0" CFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -I$PANDAS/pandas/_libs/src/ -I$PREFIX -DCYTHON_PEP489_MULTI_PHASE_INIT=0 -DCYTHON_USE_DICT_VERSIONS=0 $DEBUG" CXXFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -DCYTHON_PEP489_MULTI_PHASE_INIT=0 -DCYTHON_USE_DICT_VERSIONS=0 $DEBUG" LDFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -F$PREFIX/Frameworks_iphoneos -framework ios_system -L$PREFIX/Frameworks_iphoneos/lib $DEBUG" LDSHARED="clang -v -undefined error -dynamiclib -isysroot $IOS_SDKROOT -lz -lpython3.13  -F$PREFIX/Frameworks_iphoneos -framework ios_system -L$PREFIX/Frameworks_iphoneos/lib -L$PREFIX/build/lib.darwin-arm64-3.13 $DEBUG" PLATFORM=iphoneos NPY_BLAS_ORDER="" NPY_LAPACK_ORDER="" python3.13 setup.py build  >> $PREFIX/make_ios.log 2>&1
+env CC=clang CXX=clang++ \
+	CPPFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -I$PANDAS/pandas/_libs/include/pandas/ -I$PREFIX $DEBUG $CYTHON_OPTIONS" \
+	CFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -I$PANDAS/pandas/_libs/include/pandas/ -I$PREFIX $CYTHON_OPTIONS $DEBUG" \
+	CXXFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT $CYTHON_OPTIONS $DEBUG" \
+	LDFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -F$PREFIX/Frameworks_iphoneos -framework ios_system -L$PREFIX/Frameworks_iphoneos/lib $DEBUG" \
+	LDSHARED="clang -v -undefined error -dynamiclib -isysroot $IOS_SDKROOT -lz  -F $PREFIX/ios/Frameworks/arm64-iphoneos -framework Python -F$PREFIX/Frameworks_iphoneos -framework ios_system -L$PREFIX/Frameworks_iphoneos/lib -L$PREFIX/build/lib.darwin-arm64-3.13 $DEBUG" \
+	PLATFORM=iphoneos NPY_BLAS_ORDER="" NPY_LAPACK_ORDER="" \
+	$PREFIX/Library/bin/meson build_ios --cross-file ../iphone-osx.meson  >> $PREFIX/make_ios.log 2>&1
+pushd build_ios  >> $PREFIX/make_ios.log 2>&1
+# Something between ninja and meson is preventing the creation of dynamic libraries, creates bundles instead:
+sed -i bak "s/bundle/shared/" build.ninja >> $PREFIX/make_ios.log 2>&1
+ninja  >> $PREFIX/make_ios.log 2>&1
+popd  >> $PREFIX/make_ios.log 2>&1
 echo pandas libraries for iOS: >> $PREFIX/make_ios.log 2>&1
-find build -name \*.so -print  >> $PREFIX/make_ios.log 2>&1
-mkdir -p $PREFIX/build/lib.darwin-arm64-3.13/pandas/  >> $PREFIX/make_ios.log 2>&1
-mkdir -p $PREFIX/build/lib.darwin-arm64-3.13/pandas/io  >> $PREFIX/make_ios.log 2>&1
-mkdir -p $PREFIX/build/lib.darwin-arm64-3.13/pandas/io/sas  >> $PREFIX/make_ios.log 2>&1
-mkdir -p $PREFIX/build/lib.darwin-arm64-3.13/pandas/_libs  >> $PREFIX/make_ios.log 2>&1
-mkdir -p $PREFIX/build/lib.darwin-arm64-3.13/pandas/_libs/window  >> $PREFIX/make_ios.log 2>&1
-mkdir -p $PREFIX/build/lib.darwin-arm64-3.13/pandas/_libs/tslibs  >> $PREFIX/make_ios.log 2>&1
-cp build/lib.macosx-${OSX_VERSION}-arm64-cpython-313/pandas/io/sas/_sas.cpython-313-darwin.so $PREFIX/build/lib.darwin-arm64-3.13/pandas/io/sas >> $PREFIX/make_ios.log 2>&1
-cp build/lib.macosx-${OSX_VERSION}-arm64-cpython-313/pandas/_libs/*.so $PREFIX/build/lib.darwin-arm64-3.13/pandas/_libs >> $PREFIX/make_ios.log 2>&1
-cp build/lib.macosx-${OSX_VERSION}-arm64-cpython-313/pandas/_libs/window/*.so $PREFIX/build/lib.darwin-arm64-3.13/pandas/_libs/window >> $PREFIX/make_ios.log 2>&1
-cp build/lib.macosx-${OSX_VERSION}-arm64-cpython-313/pandas/_libs/tslibs/*.so $PREFIX/build/lib.darwin-arm64-3.13/pandas/_libs/tslibs >> $PREFIX/make_ios.log 2>&1
+find build_ios -name \*.so -print  >> $PREFIX/make_ios.log 2>&1
+# Making a single pandas dynamic library:
+echo Making a single pandas library for iOS: >> $PREFIX/make_ios.log 2>&1
+mkdir -p tmp_ios/pandas/_libs/lib.cpython-313-darwin.so.p >> $PREFIX/make_ios.log 2>&1
+mkdir -p tmp_ios/pandas/_libs/parsers.cpython-313-darwin.so.p >> $PREFIX/make_ios.log 2>&1
+mkdir -p tmp_ios/pandas/_libs/pandas_parser.cpython-313-darwin.so.p >> $PREFIX/make_ios.log 2>&1
+mv build_ios/pandas/_libs/lib.cpython-313-darwin.so.p/src_parser_tokenizer.c.o  tmp_ios/pandas/_libs/lib.cpython-313-darwin.so.p/  >> $PREFIX/make_ios.log 2>&1
+mv build_ios/pandas/_libs/parsers.cpython-313-darwin.so.p/src_parser_tokenizer.c.o tmp_ios/pandas/_libs/parsers.cpython-313-darwin.so.p  >> $PREFIX/make_ios.log 2>&1
+mv build_ios/pandas/_libs/pandas_parser.cpython-313-darwin.so.p/src_parser_tokenizer.c.o tmp_ios/pandas/_libs/pandas_parser.cpython-313-darwin.so.p/src_parser_tokenizer.c.o  >> $PREFIX/make_ios.log 2>&1
+mv build_ios/pandas/_libs/parsers.cpython-313-darwin.so.p/src_parser_io.c.o tmp_ios/pandas/_libs/parsers.cpython-313-darwin.so.p/  >> $PREFIX/make_ios.log 2>&1
+#
 # Making a single pandas dynamic library:
 echo Making a single pandas library for iOS: >> $PREFIX/make_ios.log 2>&1
 clang -v -undefined error -dynamiclib \
 -isysroot $IOS_SDKROOT \
 -lz -lm -lc++ \
--lpython3.13 \
+ -F $PREFIX/ios/Frameworks/arm64-iphoneos -framework Python \
  -F$PREFIX/Frameworks_iphoneos -framework ios_system \
 -L$PREFIX/Frameworks_iphoneos/lib \
--L$PREFIX/build/lib.darwin-arm64-3.13 \
 -O3 -Wall -arch arm64 \
 -miphoneos-version-min=14.0 \
-`find build -name \*.o` \
+`find build_ios -name \*.o` \
 -L$PREFIX/Library/lib \
--Lbuild/temp.macosx-${OSX_VERSION}-arm64-cpython-313 \
--o build/pandas.so  >> $PREFIX/make_ios.log 2>&1
-cp build/pandas.so $PREFIX/build/lib.darwin-arm64-3.13 >> $PREFIX/make_ios.log 2>&1
+-o build_ios/pandas.so  >> $PREFIX/make_ios.log 2>&1
+install_site_package pandas/pandas build_ios/pandas.so >> $PREFIX/make_ios.log 2>&1
+# Now copy that pandas.fwork for all the dynamic libraries.
+pushd build_ios >> $PREFIX/make_ios.log 2>&1
+for library in `find pandas -name \*.so`
+do
+	directory=`dirname $library`
+	libname=`basename $library .cpython-313-darwin.so`
+	cp $PREFIX/Library/lib/python3.13/site-packages/pandas/pandas.cpython-313-iphoneos.fwork $PREFIX/Library/lib/python3.13/site-packages/$directory/$libname.cpython-313-iphoneos.fwork >> $PREFIX/make_ios.log 2>&1
+done
 popd  >> $PREFIX/make_ios.log 2>&1
 popd  >> $PREFIX/make_ios.log 2>&1
-	# bokeh, dill: pure Python installs
-	# pyerfa (for astropy)
-	pushd packages >> $PREFIX/make_ios.log 2>&1
-	pushd pyerfa-*  >> $PREFIX/make_ios.log 2>&1
-	rm -rf build/*  >> $PREFIX/make_ios.log 2>&1
-	env CC=clang CXX=clang++ CPPFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -I$PREFIX $DEBUG" CFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -I$PREFIX $DEBUG" CXXFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT $DEBUG" LDFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -F$PREFIX/Frameworks_iphoneos -framework ios_system -L$PREFIX/Frameworks_iphoneos/lib $DEBUG" LDSHARED="clang -v -undefined error -dynamiclib -isysroot $IOS_SDKROOT -lz -lpython3.13  -F$PREFIX/Frameworks_iphoneos -framework ios_system -L$PREFIX/Frameworks_iphoneos/lib -L$PREFIX/build/lib.darwin-arm64-3.13 $DEBUG" PLATFORM=iphoneos python3.13 setup.py build >> $PREFIX/make_ios.log 2>&1
-	echo pyerfa libraries for iOS: >> $PREFIX/make_ios.log 2>&1
-	find build -name \*.so -print  >> $PREFIX/make_ios.log 2>&1
-	mkdir -p $PREFIX/build/lib.darwin-arm64-3.13/erfa/  >> $PREFIX/make_ios.log 2>&1
-    cp  build/lib.macosx-${OSX_VERSION}-arm64-cpython-313/erfa/ufunc.cpython-313-darwin.so \
-$PREFIX/build/lib.darwin-arm64-3.13/erfa/ >> $PREFIX/make_ios.log 2>&1
-	popd  >> $PREFIX/make_ios.log 2>&1
-	popd  >> $PREFIX/make_ios.log 2>&1	
-	# astropy
-	pushd packages >> $PREFIX/make_ios.log 2>&1
-	pushd astropy*  >> $PREFIX/make_ios.log 2>&1
-	rm -rf build/*  >> $PREFIX/make_ios.log 2>&1
-	env CC=clang CXX=clang++ CPPFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -I$PREFIX $DEBUG" CFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -I$PANDAS/pandas/_libs/src/ -I$PREFIX -DCYTHON_PEP489_MULTI_PHASE_INIT=0 -DCYTHON_USE_DICT_VERSIONS=0 $DEBUG" CXXFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -DCYTHON_PEP489_MULTI_PHASE_INIT=0 -DCYTHON_USE_DICT_VERSIONS=0 $DEBUG" LDFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -F$PREFIX/Frameworks_iphoneos -framework ios_system -L$PREFIX/Frameworks_iphoneos/lib $DEBUG" LDSHARED="clang -v -undefined error -dynamiclib -isysroot $IOS_SDKROOT -lz -lpython3.13  -F$PREFIX/Frameworks_iphoneos -framework ios_system -L$PREFIX/Frameworks_iphoneos/lib -L$PREFIX/build/lib.darwin-arm64-3.13 $DEBUG" PLATFORM=iphoneos NPY_BLAS_ORDER="" NPY_LAPACK_ORDER="" python3.13 setup.py build  >> $PREFIX/make_ios.log 2>&1
-	echo astropy libraries for iOS: >> $PREFIX/make_ios.log 2>&1
-	find build -name \*.so -print  >> $PREFIX/make_ios.log 2>&1
-	pushd build/lib.macosx-${OSX_VERSION}-arm64-cpython-313 >> $PREFIX/make_ios.log 2>&1
-	for library in `find astropy -name \*.so`
-	do
-		directory=$(dirname $library)
-		mkdir -p $PREFIX/build/lib.darwin-arm64-3.13/$directory >> $PREFIX/make_ios.log 2>&1
-		cp $library $PREFIX/build/lib.darwin-arm64-3.13/$library >> $PREFIX/make_ios.log 2>&1
-	done
-	popd >> $PREFIX/make_ios.log 2>&1
-	  # Making a single astropy dynamic library:
-	  echo Making a single astropy library for iOS: >> $PREFIX/make_ios.log 2>&1
-	  clang -v -undefined error -dynamiclib \
-		  -isysroot $IOS_SDKROOT \
-		  -lz -lm -lc++ \
-		  -lpython3.13 \
-		  -F$PREFIX/Frameworks_iphoneos -framework ios_system \
-		  -L$PREFIX/Frameworks_iphoneos/lib \
-		  -L$PREFIX/build/lib.darwin-arm64-3.13 \
-		  -O3 -Wall -arch arm64 \
-		  -miphoneos-version-min=14.0 \
-		  `find build -name \*.o` \
-		  -L$PREFIX/Library/lib \
-		  -Lbuild/temp.macosx-${OSX_VERSION}-arm64-cpython-313 \
-		  -o build/astropy.so  >> $PREFIX/make_ios.log 2>&1
-	cp build/astropy.so $PREFIX/build/lib.darwin-arm64-3.13 >> $PREFIX/make_ios.log 2>&1
-	popd  >> $PREFIX/make_ios.log 2>&1
-	popd  >> $PREFIX/make_ios.log 2>&1
+popd  >> $PREFIX/make_ios.log 2>&1
+# bokeh, dill: pure Python installs
+# pyerfa (for astropy)
+pushd packages >> $PREFIX/make_ios.log 2>&1
+pushd pyerfa-*  >> $PREFIX/make_ios.log 2>&1
+rm -rf build/*  >> $PREFIX/make_ios.log 2>&1
+env CC=clang CXX=clang++ CPPFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -I$PREFIX $DEBUG" CFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -I$PREFIX $DEBUG" CXXFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT $DEBUG" LDFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -F$PREFIX/Frameworks_iphoneos -framework ios_system -L$PREFIX/Frameworks_iphoneos/lib $DEBUG" LDSHARED="clang -v -undefined error -dynamiclib -isysroot $IOS_SDKROOT -lz  -F $PREFIX/ios/Frameworks/arm64-iphoneos -framework Python  -F$PREFIX/Frameworks_iphoneos -framework ios_system -L$PREFIX/Frameworks_iphoneos/lib -L$PREFIX/build/lib.darwin-arm64-3.13 $DEBUG" PLATFORM=iphoneos python3.13 setup.py build >> $PREFIX/make_ios.log 2>&1
+echo pyerfa libraries for iOS: >> $PREFIX/make_ios.log 2>&1
+find build -name \*.so -print  >> $PREFIX/make_ios.log 2>&1
+install_site_package erfa/ufunc build/lib.macosx-11.5-x86_64-cpython-313/erfa/ufunc.abi3.so >> $PREFIX/make_ios.log 2>&1
+popd  >> $PREFIX/make_ios.log 2>&1
+popd  >> $PREFIX/make_ios.log 2>&1	
+# 
+# astropy
+pushd packages >> $PREFIX/make_ios.log 2>&1
+pushd astropy*  >> $PREFIX/make_ios.log 2>&1
+rm -rf build/*  >> $PREFIX/make_ios.log 2>&1
+env CC=clang CXX=clang++ CPPFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -I$PREFIX $DEBUG" CFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -I$PANDAS/pandas/_libs/src/ -I$PREFIX $CYTHON_OPTIONS $DEBUG" CXXFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT $CYTHON_OPTIONS $DEBUG" LDFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -F$PREFIX/Frameworks_iphoneos -framework ios_system -L$PREFIX/Frameworks_iphoneos/lib $DEBUG" LDSHARED="clang -v -undefined error -dynamiclib -isysroot $IOS_SDKROOT -lz  -F $PREFIX/ios/Frameworks/arm64-iphoneos -framework Python -F$PREFIX/Frameworks_iphoneos -framework ios_system -L$PREFIX/Frameworks_iphoneos/lib -L$PREFIX/build/lib.darwin-arm64-3.13 $DEBUG" PLATFORM=iphoneos NPY_BLAS_ORDER="" NPY_LAPACK_ORDER="" python3.13 setup.py build  >> $PREFIX/make_ios.log 2>&1
+echo astropy libraries for iOS: >> $PREFIX/make_ios.log 2>&1
+find build -name \*.so -print  >> $PREFIX/make_ios.log 2>&1
+# Making a single astropy dynamic library:
+echo Making a single astropy library for iOS: >> $PREFIX/make_ios.log 2>&1
+clang -v -undefined error -dynamiclib \
+	-isysroot $IOS_SDKROOT \
+	-lz -lm -lc++ \
+	-F $PREFIX/ios/Frameworks/arm64-iphoneos -framework Python \
+	-F$PREFIX/Frameworks_iphoneos -framework ios_system \
+	-L$PREFIX/Frameworks_iphoneos/lib \
+	-O3 -Wall -arch arm64 \
+	-miphoneos-version-min=14.0 \
+	`find build -name \*.o` \
+	-L$PREFIX/Library/lib \
+	-o build/astropy.so  >> $PREFIX/make_ios.log 2>&1
+install_site_package astropy/astropy build/astropy.so >> $PREFIX/make_ios.log 2>&1
+# Now copy that astropy.fwork for all the dynamic libraries.
+pushd build/lib.macosx-*-cpython-313 >> $PREFIX/make_ios.log 2>&1
+for library in `find astropy -name \*.so`
+do
+	directory=`dirname $library`
+	libname=`basename $library .cpython-313-darwin.so`
+	cp $PREFIX/Library/lib/python3.13/site-packages/astropy/astropy.cpython-313-iphoneos.fwork $PREFIX/Library/lib/python3.13/site-packages/$directory/$libname.cpython-313-iphoneos.fwork >> $PREFIX/make_ios.log 2>&1
+done
+popd  >> $PREFIX/make_ios.log 2>&1
+popd  >> $PREFIX/make_ios.log 2>&1
+popd  >> $PREFIX/make_ios.log 2>&1
+# 
 # geopandas and cartopy: require Shapely, fiona, shapely
 # Shapely (interface for geos)
 pushd packages >> $PREFIX/make_ios.log 2>&1
 pushd Shapely-* >> $PREFIX/make_ios.log 2>&1
 rm -rf build/*  >> $PREFIX/make_ios.log 2>&1
 env CC=clang CXX=clang++ \
-	CPPFLAGS="-isysroot $IOS_SDKROOT -I$PREFIX -I $PREFIX/Frameworks_iphoneos/include -DCYTHON_PEP489_MULTI_PHASE_INIT=0 -DCYTHON_USE_DICT_VERSIONS=0" \
-	CFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT $DEBUG -I$PREFIX -I $PREFIX/Frameworks_iphoneos/include/  -DCYTHON_PEP489_MULTI_PHASE_INIT=0 -DCYTHON_USE_DICT_VERSIONS=0" \
-	CXXFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT $DEBUG -I$PREFIX -I $PREFIX/Frameworks_iphoneos/include  -DCYTHON_PEP489_MULTI_PHASE_INIT=0 -DCYTHON_USE_DICT_VERSIONS=0" \
+	CPPFLAGS="-isysroot $IOS_SDKROOT -I$PREFIX -I $PREFIX/Frameworks_iphoneos/include $CYTHON_OPTIONS" \
+	CFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT $DEBUG -I$PREFIX -I $PREFIX/Frameworks_iphoneos/include/  $CYTHON_OPTIONS" \
+	CXXFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT $DEBUG -I$PREFIX -I $PREFIX/Frameworks_iphoneos/include  $CYTHON_OPTIONS" \
 	LDFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT $DEBUG -F $PREFIX/Frameworks_iphoneos/ -framework libgeos_c" \
-	LDSHARED="clang -v -undefined error -dynamiclib -arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -lz -L$PREFIX -lpython3.13  -F$PREFIX/Frameworks_iphoneos -framework ios_system $DEBUG -framework libgeos_c" \
+	LDSHARED="clang -v -undefined error -dynamiclib -arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -lz -L$PREFIX  -F $PREFIX/ios/Frameworks/arm64-iphoneos -framework Python  -F$PREFIX/Frameworks_iphoneos -framework ios_system $DEBUG -framework libgeos_c" \
 	PLATFORM=iphoneos \
 	NO_GEOS_CONFIG=1 \
 	python3.13 setup.py build >> $PREFIX/make_ios.log 2>&1
 echo "Shapely libraries for iOS: "  >> $PREFIX/make_ios.log 2>&1
 find . -name \*.so  >> $PREFIX/make_ios.log 2>&1
-pushd build/lib.macosx-${OSX_VERSION}-arm64-cpython-313 >> $PREFIX/make_ios.log 2>&1
-for library in `find . -name \*.so`
-do
-	directory=$(dirname $library)
-	mkdir -p $PREFIX/build/lib.darwin-arm64-3.13/$directory >> $PREFIX/make_ios.log 2>&1
-	cp $library $PREFIX/build/lib.darwin-arm64-3.13/$library >> $PREFIX/make_ios.log 2>&1
-done
-popd  >> $PREFIX/make_ios.log 2>&1
+install_site_package shapely/speedups/_speedups build/lib.macosx-*-cpython-313/shapely/speedups/_speedups.cpython-313-darwin.so  >> $PREFIX/make_ios.log 2>&1
+install_site_package shapely/vectorized/_vectorized build/lib.macosx-*-cpython-313/shapely/vectorized/_vectorized.cpython-313-darwin.so  >> $PREFIX/make_ios.log 2>&1
 popd  >> $PREFIX/make_ios.log 2>&1
 popd  >> $PREFIX/make_ios.log 2>&1
 # Fiona (interface for GDAL)
@@ -879,32 +884,36 @@ pushd packages >> $PREFIX/make_ios.log 2>&1
 pushd Fiona >> $PREFIX/make_ios.log 2>&1
 rm -rf build/*  >> $PREFIX/make_ios.log 2>&1
 env CC=clang CXX=clang++ \
-CPPFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -I$PREFIX -I $PREFIX/Frameworks_iphoneos/include/gdal -DCYTHON_PEP489_MULTI_PHASE_INIT=0 -DCYTHON_USE_DICT_VERSIONS=0" \
-CFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT $DEBUG -I$PREFIX -I $PREFIX/Frameworks_iphoneos/include/gdal -DCYTHON_PEP489_MULTI_PHASE_INIT=0 -DCYTHON_USE_DICT_VERSIONS=0" \
-CXXFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT $DEBUG -I$PREFIX -I $PREFIX/Frameworks_iphoneos/include/gdal -DCYTHON_PEP489_MULTI_PHASE_INIT=0 -DCYTHON_USE_DICT_VERSIONS=0" \
+CPPFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -I$PREFIX -I $PREFIX/Frameworks_iphoneos/include/gdal $CYTHON_OPTIONS" \
+CFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT $DEBUG -I$PREFIX -I $PREFIX/Frameworks_iphoneos/include/gdal $CYTHON_OPTIONS" \
+CXXFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT $DEBUG -I$PREFIX -I $PREFIX/Frameworks_iphoneos/include/gdal $CYTHON_OPTIONS" \
 LDFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT $DEBUG -F $PREFIX/Frameworks_iphoneos/ -framework libgdal" \
-LDSHARED="clang -v -arch arm64 -miphoneos-version-min=14.0 -undefined error -dynamiclib -isysroot $IOS_SDKROOT -lz -L$PREFIX -lpython3.13 $DEBUG -F $PREFIX/Frameworks_iphoneos/ -framework ios_system -framework libgdal" \
-PLATFORM=macosx \
+LDCXXSHARED="clang++ -arch arm64 -miphoneos-version-min=14.0 -undefined error -dynamiclib -isysroot $IOS_SDKROOT -lz -L$PREFIX  -F $PREFIX/ios/Frameworks/arm64-iphoneos -framework Python $DEBUG -F $PREFIX/Frameworks_iphoneos/ -framework ios_system -framework libgdal" \
+LDSHARED="clang -v -arch arm64 -miphoneos-version-min=14.0 -undefined error -dynamiclib -isysroot $IOS_SDKROOT -lz -L$PREFIX  -F $PREFIX/ios/Frameworks/arm64-iphoneos -framework Python $DEBUG -F $PREFIX/Frameworks_iphoneos/ -framework ios_system -framework libgdal" \
+PLATFORM=iphoneos \
 GDAL_VERSION=3.6.0 \
 	python3.13 setup.py build >> $PREFIX/make_ios.log 2>&1
 echo "Fiona libraries for iOS: "  >> $PREFIX/make_ios.log 2>&1
 find . -name \*.so  >> $PREFIX/make_ios.log 2>&1
-for library in `find fiona -name \*.so`
-do
-	directory=$(dirname $library)
-	mkdir -p $PREFIX/build/lib.darwin-arm64-3.13/$directory >> $PREFIX/make_ios.log 2>&1
-	cp ./build/lib.macosx-${OSX_VERSION}-arm64-cpython-313/$library $PREFIX/build/lib.darwin-arm64-3.13/$library >> $PREFIX/make_ios.log 2>&1
-done
 clang -v -undefined error -dynamiclib \
 	-arch arm64 -miphoneos-version-min=14.0 \
+	 -F $PREFIX/ios/Frameworks/arm64-iphoneos -framework Python \
 	-isysroot $IOS_SDKROOT \
 	-lz -lm -lc++  \
 	-O3 -Wall \
 	`find build -name \*.o` \
-	-L$PREFIX -lpython3.13 \
 	-F$PREFIX/Frameworks_iphoneos -framework libgdal \
 	-o build/fiona.so >> $PREFIX/make_ios.log 2>&1
-cp build/fiona.so $PREFIX/build/lib.darwin-arm64-3.13 >> $PREFIX/make_ios.log 2>&1
+install_site_package fiona/fiona build/fiona.so >> $PREFIX/make_ios.log 2>&1
+# Now copy that fiona.fwork for all the dynamic libraries.
+pushd build/lib.macosx-*-cpython-313 >> $PREFIX/make_ios.log 2>&1
+for library in `find fiona -name \*.so`
+do
+	directory=`dirname $library`
+	libname=`basename $library .cpython-313-darwin.so`
+	cp $PREFIX/Library/lib/python3.13/site-packages/fiona/fiona.cpython-313-iphoneos.fwork $PREFIX/Library/lib/python3.13/site-packages/$directory/$libname.cpython-313-iphoneos.fwork >> $PREFIX/make_ios.log 2>&1
+done
+popd  >> $PREFIX/make_ios.log 2>&1
 popd  >> $PREFIX/make_ios.log 2>&1
 popd  >> $PREFIX/make_ios.log 2>&1
 # PyProj (interface for Proj)
@@ -912,40 +921,34 @@ pushd packages >> $PREFIX/make_ios.log 2>&1
 pushd pyproj-*  >> $PREFIX/make_ios.log 2>&1
 rm -rf build/* >> $PREFIX/make_ios.log 2>&1
 env CC=clang CXX=clang++ \
-CPPFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -I$PREFIX -I $PREFIX/Frameworks_iphoneos/include -DCYTHON_PEP489_MULTI_PHASE_INIT=0 -DCYTHON_USE_DICT_VERSIONS=0" \
-CFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT $DEBUG -I$PREFIX -I $PREFIX/Frameworks_iphoneos/include -DCYTHON_PEP489_MULTI_PHASE_INIT=0 -DCYTHON_USE_DICT_VERSIONS=0" \
-CXXFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT $DEBUG -I$PREFIX -I $PREFIX/Frameworks_iphoneos/include -DCYTHON_PEP489_MULTI_PHASE_INIT=0 -DCYTHON_USE_DICT_VERSIONS=0" \
+CPPFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -I$PREFIX -I $PREFIX/Frameworks_iphoneos/include $CYTHON_OPTIONS" \
+CFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT $DEBUG -I$PREFIX -I $PREFIX/Frameworks_iphoneos/include $CYTHON_OPTIONS" \
+CXXFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT $DEBUG -I$PREFIX -I $PREFIX/Frameworks_iphoneos/include $CYTHON_OPTIONS" \
 LDFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT $DEBUG -F $PREFIX/Frameworks_iphoneos/ -framework libgdal" \
-LDSHARED="clang -v -arch arm64 -miphoneos-version-min=14.0 -undefined error -dynamiclib -isysroot $IOS_SDKROOT -lz -L$PREFIX -lpython3.13 $DEBUG -F $PREFIX/Frameworks_iphoneos/ -framework ios_system -framework libproj" \
+LDSHARED="clang -v -arch arm64 -miphoneos-version-min=14.0 -undefined error -dynamiclib -isysroot $IOS_SDKROOT -lz  -F $PREFIX/ios/Frameworks/arm64-iphoneos -framework Python $DEBUG -F $PREFIX/Frameworks_iphoneos/ -framework ios_system -framework libproj" \
 PLATFORM=iphoneos \
 PROJ_VERSION=9.1.0 \
 	python3.13 setup.py build >> $PREFIX/make_ios.log 2>&1
 echo "pyproj libraries for iOS: "  >> $PREFIX/make_ios.log 2>&1
 find . -name \*.so  >> $PREFIX/make_ios.log 2>&1
-   for library in pyproj/_transformer.cpython-313-darwin.so \
-   	   pyproj/_datadir.cpython-313-darwin.so \
-   	   pyproj/list.cpython-313-darwin.so \
-   	   pyproj/_compat.cpython-313-darwin.so \
-   	   pyproj/_crs.cpython-313-darwin.so \
-   	   pyproj/_network.cpython-313-darwin.so \
-   	   pyproj/_geod.cpython-313-darwin.so \
-   	   pyproj/database.cpython-313-darwin.so \
-   	   pyproj/_sync.cpython-313-darwin.so
-do
-	directory=$(dirname $library)
-	mkdir -p $PREFIX/build/lib.darwin-arm64-3.13/$directory >> $PREFIX/make_ios.log 2>&1
-	cp ./build/lib.macosx-${OSX_VERSION}-arm64-cpython-313/$library $PREFIX/build/lib.darwin-arm64-3.13/$library >> $PREFIX/make_ios.log 2>&1
-done
 clang -v -undefined error -dynamiclib \
 	-arch arm64 -miphoneos-version-min=14.0 \
 	-isysroot $IOS_SDKROOT \
-	-lz -lm -lc++ -lpython3.13 \
-	-L$PREFIX/build/lib.darwin-arm64-3.13 \
+	-lz -lm -lc++  -F $PREFIX/ios/Frameworks/arm64-iphoneos -framework Python \
 	-O3 -Wall \
 	`find build -name \*.o` \
 	-F$PREFIX/Frameworks_iphoneos -framework libproj \
 	-o build/pyproj.so >> $PREFIX/make_ios.log 2>&1
-cp build/pyproj.so $PREFIX/build/lib.darwin-arm64-3.13 >> $PREFIX/make_ios.log 2>&1
+install_site_package pyproj/pyproj build/pyproj.so >> $PREFIX/make_ios.log 2>&1
+# Now copy that pyproj.fwork for all the dynamic libraries.
+pushd build/lib.macosx-*-cpython-313 >> $PREFIX/make_ios.log 2>&1
+for library in `find pyproj -name \*.so`
+do
+	directory=`dirname $library`
+	libname=`basename $library .cpython-313-darwin.so`
+	cp $PREFIX/Library/lib/python3.13/site-packages/pyproj/pyproj.cpython-313-iphoneos.fwork $PREFIX/Library/lib/python3.13/site-packages/$directory/$libname.cpython-313-iphoneos.fwork >> $PREFIX/make_ios.log 2>&1
+done
+popd  >> $PREFIX/make_ios.log 2>&1
 popd  >> $PREFIX/make_ios.log 2>&1
 popd  >> $PREFIX/make_ios.log 2>&1
 # Packages used by geopandas:
@@ -954,35 +957,36 @@ pushd packages >> $PREFIX/make_ios.log 2>&1
 pushd rasterio >> $PREFIX/make_ios.log 2>&1
 rm -rf build/ >> $PREFIX/make_ios.log 2>&1
 env CC=clang CXX=clang++ \
-	CPPFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -I$PREFIX -I $PREFIX/Frameworks_iphoneos/include/gdal -DCYTHON_PEP489_MULTI_PHASE_INIT=0 -DCYTHON_USE_DICT_VERSIONS=0" \
-	CFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT $DEBUG -I$PREFIX -I $PREFIX/Frameworks_iphoneos/include/gdal -DCYTHON_PEP489_MULTI_PHASE_INIT=0 -DCYTHON_USE_DICT_VERSIONS=0" \
-	CXXFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT $DEBUG -I$PREFIX -I $PREFIX/Frameworks_iphoneos/include/gdal -DCYTHON_PEP489_MULTI_PHASE_INIT=0 -DCYTHON_USE_DICT_VERSIONS=0" \
-	LDFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT $DEBUG -F $PREFIX/Frameworks_iphoneos/ -framework libgdal" \
-	LDSHARED="clang -v -arch arm64 -miphoneos-version-min=14.0 -undefined error -dynamiclib -isysroot $IOS_SDKROOT -lz -L$PREFIX -lpython3.13 $DEBUG -F $PREFIX/Frameworks_iphoneos/ -framework ios_system -framework libgdal" \
+	CPPFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -I$PREFIX -I $PREFIX/Frameworks_iphoneos/include/gdal $CYTHON_OPTIONS" \
+	CFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT $DEBUG -I$PREFIX -I $PREFIX/Frameworks_iphoneos/include/gdal $CYTHON_OPTIONS" \
+	CXXFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT $DEBUG -I$PREFIX -I $PREFIX/Frameworks_iphoneos/include/gdal $CYTHON_OPTIONS" \
+	LDFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT $DEBUG -F $PREFIX/Frameworks_iphoneos/ -framework libgdal -F $PREFIX/ios/Frameworks/arm64-iphoneos -framework Python -F $PREFIX/Frameworks_iphoneos/ -framework ios_system" \
+	LDSHARED="clang -v -arch arm64 -miphoneos-version-min=14.0 -undefined error -dynamiclib -isysroot $IOS_SDKROOT -lz  -F $PREFIX/ios/Frameworks/arm64-iphoneos -framework Python $DEBUG -F $PREFIX/Frameworks_iphoneos/ -framework ios_system -framework libgdal" \
 	PLATFORM=iphoneos \
 	GDAL_VERSION=3.6.0 \
 	python3.13 setup.py build >> $PREFIX/make_ios.log 2>&1
 echo "rasterio libraries for iOS: "  >> $PREFIX/make_ios.log 2>&1
 find . -name \*.so  >> $PREFIX/make_ios.log 2>&1
-pushd build/lib.macosx-${OSX_VERSION}-arm64-cpython-313 >> $PREFIX/make_ios.log 2>&1
-for library in `find rasterio -name \*.so`
-do
-	directory=$(dirname $library)
-	mkdir -p $PREFIX/build/lib.darwin-arm64-3.13/$directory >> $PREFIX/make_ios.log 2>&1
-	cp $library $PREFIX/build/lib.darwin-arm64-3.13/$library >> $PREFIX/make_ios.log 2>&1
-done
-popd >> $PREFIX/make_ios.log 2>&1
 clang -v -undefined error -dynamiclib \
 		-arch arm64 -miphoneos-version-min=14.0 \
 		-isysroot $IOS_SDKROOT \
-		-lz -lm -lc++ -lpython3.13 \
+		-lz -lm -lc++  -F $PREFIX/ios/Frameworks/arm64-iphoneos -framework Python \
 		-L$PREFIX/build/lib.darwin-arm64-3.13 \
 		-O3 -Wall \
 		`find build -name \*.o` \
 		-L$PREFIX/Library/lib \
 		-F$PREFIX/Frameworks_iphoneos -framework libgdal \
 		-o build/rasterio.so >> $PREFIX/make_ios.log 2>&1
-cp build/rasterio.so $PREFIX/build/lib.darwin-arm64-3.13 >> $PREFIX/make_ios.log 2>&1
+install_site_package rasterio/rasterio build/rasterio.so >> $PREFIX/make_ios.log 2>&1
+# Now copy that pyproj.fwork for all the dynamic libraries.
+pushd build/lib.macosx-*-cpython-313 >> $PREFIX/make_ios.log 2>&1
+for library in `find rasterio -name \*.so`
+do
+	directory=`dirname $library`
+	libname=`basename $library .cpython-313-darwin.so`
+	cp $PREFIX/Library/lib/python3.13/site-packages/rasterio/rasterio.cpython-313-iphoneos.fwork $PREFIX/Library/lib/python3.13/site-packages/$directory/$libname.cpython-313-iphoneos.fwork >> $PREFIX/make_ios.log 2>&1
+done
+popd  >> $PREFIX/make_ios.log 2>&1
 popd >> $PREFIX/make_ios.log 2>&1
 popd >> $PREFIX/make_ios.log 2>&1
 # 
@@ -993,11 +997,13 @@ then
     # Compiling OpenCV for iOS, 
     # use Makefiles rather than Ninja because we need the dynamic library to be a -dynamiclib, not a -bundle.
     rm -rf _skbuild/*  >> $PREFIX/make_ios.log 2>&1
+	# This option caused the compilation to fail
+	# SETUPTOOLS_USE_DISTUTILS=stdlib \
     env CC=clang CXX=clang++ CPPFLAGS="-isysroot $IOS_SDKROOT -I $PREFIX/Frameworks_iphoneos/include" \
     	CFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT $DEBUG -I $PREFIX/Frameworks_iphoneos/include/ -I$PREFIX/ -DPNG_ARM_NEON_OPT=0" \
     	CXXFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT $DEBUG -I $PREFIX/Frameworks_iphoneos/include -I$PREFIX/" \
-    	LDFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT $DEBUG -F $PREFIX/Frameworks_iphoneos/ -L$PREFIX -lpython3.13" \
-    	LDSHARED="clang -v -undefined error -dynamiclib -isysroot $IOS_SDKROOT -lz -L$PREFIX -lpython3.13 $DEBUG -F $PREFIX/Frameworks_iphoneos/ " \
+    	LDFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT $DEBUG -F $PREFIX/Frameworks_iphoneos/  -F $PREFIX/ios/Frameworks/arm64-iphoneos -framework Python" \
+    	LDSHARED="clang -v -undefined error -dynamiclib -isysroot $IOS_SDKROOT -lz  -F $PREFIX/ios/Frameworks/arm64-iphoneos -framework Python $DEBUG -F $PREFIX/Frameworks_iphoneos/ " \
     	CMAKE_INSTALL_PREFIX=@rpath \
     	CMAKE_BUILD_TYPE=Release \
     	CMAKE_OSX_SYSROOT=${IOS_SDKROOT} \
@@ -1007,12 +1013,11 @@ then
     	PYTHON_DEFAULT_EXECUTABLE=python3.13 \
     	CMAKE_CXX_COMPILER=clang++ \
     	CMAKE_C_FLAGS="-arch arm64 -target arm64-apple-darwin19.6.0 -O2 -miphoneos-version-min=14 -I$PREFIX/Frameworks_iphoneos/libssh2.framework/Headers -I$PREFIX/Frameworks_iphoneos/include/ -I$PREFIX/ -DPNG_ARM_NEON_OPT=0" \
-    	CMAKE_MODULE_LINKER_FLAGS="-arch arm64 -target arm64-apple-darwin19.6.0 -O2 -miphoneos-version-min=14 -F$PREFIX/Frameworks_iphoneos -L$PREFIX -lpython3.13 " \
-    	CMAKE_SHARED_LINKER_FLAGS="-arch arm64 -target arm64-apple-darwin19.6.0 -O2 -miphoneos-version-min=14 -F$PREFIX/Frameworks_iphoneos -L$PREFIX -lpython3.13 " \
-    	CMAKE_EXE_LINKER_FLAGS="-arch arm64 -target arm64-apple-darwin19.6.0 -O2 -miphoneos-version-min=14 -F$PREFIX/Frameworks_iphoneos -framework ios_system -L$PREFIX -lpython3.13" \
+    	CMAKE_MODULE_LINKER_FLAGS="-arch arm64 -target arm64-apple-darwin19.6.0 -O2 -miphoneos-version-min=14 -F$PREFIX/Frameworks_iphoneos  -F $PREFIX/ios/Frameworks/arm64-iphoneos -framework Python " \
+    	CMAKE_SHARED_LINKER_FLAGS="-arch arm64 -target arm64-apple-darwin19.6.0 -O2 -miphoneos-version-min=14 -F$PREFIX/Frameworks_iphoneos -F $PREFIX/ios/Frameworks/arm64-iphoneos -framework Python " \
+    	CMAKE_EXE_LINKER_FLAGS="-arch arm64 -target arm64-apple-darwin19.6.0 -O2 -miphoneos-version-min=14 -F$PREFIX/Frameworks_iphoneos -framework ios_system -F $PREFIX/ios/Frameworks/arm64-iphoneos -framework Python" \
     	CMAKE_LIBRARY_PATH="${IOS_SDKROOT}/lib/:$PREFIX/Frameworks_iphoneos/lib/" \
     	CMAKE_INCLUDE_PATH="${IOS_SDKROOT}/include/:$PREFIX/Frameworks_iphoneos/include" \
-        SETUPTOOLS_USE_DISTUTILS=stdlib \
     	PLATFORM=iphoneos \
     	python3.13 setup.py build >> $PREFIX/make_ios.log 2>&1
     echo "Done first pass, let's create the cv2 library" >> $PREFIX/make_ios.log 2>&1
@@ -1021,7 +1026,7 @@ then
 	clang++ \
 		-arch arm64 -miphoneos-version-min=14.0 -isysroot ${IOS_SDKROOT} -O3 -Wall -fsigned-char -W -Wall -Werror=return-type -Werror=non-virtual-dtor -Werror=address -Werror=sequence-point -Wformat -Werror=format-security -Wmissing-declarations -Wmissing-prototypes -Wstrict-prototypes -Winit-self -Wpointer-arith -Wshadow -Wsign-promo -Wuninitialized -Wno-delete-non-virtual-dtor -Wno-unnamed-type-template-args -Wno-comment -fdiagnostics-show-option -Wno-long-long -Qunused-arguments -Wno-semicolon-before-method-body  -fvisibility=hidden -fvisibility-inlines-hidden -Wno-unused-function -Wno-deprecated-declarations -Wno-overloaded-virtual -Wno-unused-private-field -Wno-undef -O3 -DNDEBUG  \
 		-dynamiclib -Wl,-headerpad_max_install_names \
-		 -F $PREFIX/Frameworks_iphoneos/ -L$PREFIX -lpython3.13  -undefined error \
+		 -F $PREFIX/Frameworks_iphoneos/  -F $PREFIX/ios/Frameworks/arm64-iphoneos -framework Python  -undefined error \
 		-o lib/python3/cv2.cpython-313-darwin.so \
 		modules/python3/CMakeFiles/opencv_python3.dir/__/src2/*.cpp.o lib/*.a 3rdparty/lib/*.a \
 		-framework Accelerate  -framework AVFoundation  -framework CoreGraphics  -framework CoreImage  -framework CoreMedia  -framework CoreVideo  -framework UIKit  -framework QuartzCore  lib/libopencv_video.a  lib/libopencv_dnn.a  3rdparty/lib/liblibprotobuf.a  lib/libopencv_calib3d.a  lib/libopencv_features2d.a  lib/libopencv_flann.a  lib/libopencv_imgproc.a  lib/libopencv_core.a  3rdparty/lib/libzlib.a  3rdparty/lib/libittnotify.a  -ldl  $PREFIX/Frameworks_iphoneos/lib/libopenblas.dylib  -lm  -ldl \
@@ -1032,6 +1037,9 @@ then
 	echo "opencv libraries for iOS: "  >> $PREFIX/make_ios.log 2>&1
 	find . -name \*.so -exec ls -l {} \; >> $PREFIX/make_ios.log 2>&1
 	find . -name \*.so -exec file {} \; >> $PREFIX/make_ios.log 2>&1
+
+
+	# TODO now: create the *.fwork for the libraries
 	for library in cv2/cv2.cpython-313-darwin.so
 	do
 		directory=$(dirname $library)
@@ -1047,6 +1055,12 @@ then
     popd  >> $PREFIX/make_ios.log 2>&1
     popd  >> $PREFIX/make_ios.log 2>&1
 fi
+
+
+# TODO after: separate the scripts into multiple ones.
+
+exit 0
+
 if [ $APP == "Carnets" ]; 
 then
 if [ $USE_FORTRAN == 1 ];
@@ -1128,7 +1142,7 @@ then
 		-arch arm64 -miphoneos-version-min=14.0 \
 		-isysroot $IOS_SDKROOT \
 		-lz -lm -lc++ \
-		-lpython3.13 \
+		 -F $PREFIX/ios/Frameworks/arm64-iphoneos -framework Python \
 		-L$PREFIX/build/lib.darwin-arm64-3.13 \
 		-L. \
 		-O3 -Wall  \
@@ -1203,9 +1217,9 @@ then
      -DCMAKE_OSX_SYSROOT=${IOS_SDKROOT} \
      -DCMAKE_C_FLAGS="-arch arm64 -target arm64-apple-darwin19.6.0 -O2 -D_LIBCPP_STRING_H_HAS_CONST_OVERLOADS -miphoneos-version-min=14 -I$PREFIX " \
      -DCMAKE_CXX_FLAGS="-arch arm64 -target arm64-apple-darwin19.6.0 -O2 -D_LIBCPP_STRING_H_HAS_CONST_OVERLOADS -miphoneos-version-min=14 -I$PREFIX " \
-     -DCMAKE_MODULE_LINKER_FLAGS="-nostdlib -O2 -lobjc -lc -lc++ -undefined error -dynamiclib -isysroot $IOS_SDKROOT -lz -lpython3.13 -miphoneos-version-min=14 -F$PREFIX/Frameworks_iphoneos -framework ios_system -framework Accelerate -framework Metal -L$PREFIX/build/lib.darwin-arm64-3.13 $DEBUG" \
-     -DCMAKE_SHARED_LINKER_FLAGS="-nostdlib -O2 -lobjc -lc -lc++ -undefined error -dynamiclib -isysroot $IOS_SDKROOT -lz -lpython3.13 -miphoneos-version-min=14 -F$PREFIX/Frameworks_iphoneos -framework ios_system -framework Accelerate -framework Metal -L$PREFIX/build/lib.darwin-arm64-3.13 $DEBUG" \
-     -DCMAKE_EXE_LINKER_FLAGS="-nostdlib -O2 -lobjc -lc -lc++ -undefined error -dynamiclib -isysroot $IOS_SDKROOT -lz -lpython3.13 -miphoneos-version-min=14 -F$PREFIX/Frameworks_iphoneos -framework ios_system -framework Accelerate -framework Metal -L$PREFIX/build/lib.darwin-arm64-3.13 $DEBUG" \
+     -DCMAKE_MODULE_LINKER_FLAGS="-nostdlib -O2 -lobjc -lc -lc++ -undefined error -dynamiclib -isysroot $IOS_SDKROOT -lz  -F $PREFIX/ios/Frameworks/arm64-iphoneos -framework Python -miphoneos-version-min=14 -F$PREFIX/Frameworks_iphoneos -framework ios_system -framework Accelerate -framework Metal -L$PREFIX/build/lib.darwin-arm64-3.13 $DEBUG" \
+     -DCMAKE_SHARED_LINKER_FLAGS="-nostdlib -O2 -lobjc -lc -lc++ -undefined error -dynamiclib -isysroot $IOS_SDKROOT -lz  -F $PREFIX/ios/Frameworks/arm64-iphoneos -framework Python -miphoneos-version-min=14 -F$PREFIX/Frameworks_iphoneos -framework ios_system -framework Accelerate -framework Metal -L$PREFIX/build/lib.darwin-arm64-3.13 $DEBUG" \
+     -DCMAKE_EXE_LINKER_FLAGS="-nostdlib -O2 -lobjc -lc -lc++ -undefined error -dynamiclib -isysroot $IOS_SDKROOT -lz  -F $PREFIX/ios/Frameworks/arm64-iphoneos -framework Python -miphoneos-version-min=14 -F$PREFIX/Frameworks_iphoneos -framework ios_system -framework Accelerate -framework Metal -L$PREFIX/build/lib.darwin-arm64-3.13 $DEBUG" \
      ..  >> $PREFIX/make_ios.log 2>&1
     # 1st make, will conclude in error:
     make  >> $PREFIX/make_ios.log 2>&1
@@ -1237,10 +1251,10 @@ then
 	rm -rf build/* >> $PREFIX/make_ios.log 2>&1
 	env CC=clang CXX=clang++ \
 CPPFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -I$PREFIX $DEBUG" \
-  CFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -I$PREFIX -DCYTHON_PEP489_MULTI_PHASE_INIT=0 -DCYTHON_USE_DICT_VERSIONS=0 $DEBUG -falign-functions=8" \
-CXXFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -DCYTHON_PEP489_MULTI_PHASE_INIT=0 -DCYTHON_USE_DICT_VERSIONS=0 $DEBUG" \
- LDFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -F$PREFIX/Frameworks_iphoneos -framework ios_system -L$PREFIX/Frameworks_iphoneos/lib -L$PREFIX/build/lib.darwin-arm64-3.13 -lpython3.13 $DEBUG" \
-LDSHARED="clang -v -undefined error -dynamiclib -isysroot $IOS_SDKROOT -lz -lpython3.13  -F$PREFIX/Frameworks_iphoneos -framework ios_system -L$PREFIX/Frameworks_iphoneos/lib -L$PREFIX/build/lib.darwin-arm64-3.13 $DEBUG" \
+  CFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -I$PREFIX $CYTHON_OPTIONS $DEBUG -falign-functions=8" \
+CXXFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT $CYTHON_OPTIONS $DEBUG" \
+ LDFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -F$PREFIX/Frameworks_iphoneos -framework ios_system -L$PREFIX/Frameworks_iphoneos/lib -L$PREFIX/build/lib.darwin-arm64-3.13  -F $PREFIX/ios/Frameworks/arm64-iphoneos -framework Python $DEBUG" \
+LDSHARED="clang -v -undefined error -dynamiclib -isysroot $IOS_SDKROOT -lz  -F $PREFIX/ios/Frameworks/arm64-iphoneos -framework Python  -F$PREFIX/Frameworks_iphoneos -framework ios_system -L$PREFIX/Frameworks_iphoneos/lib -L$PREFIX/build/lib.darwin-arm64-3.13 $DEBUG" \
 PLATFORM=iphoneos PYODIDE_PACKAGE_ABI=1 SETUPTOOLS_USE_DISTUTILS=stdlib python3.13 setup.py build >> $PREFIX/make_ios.log 2>&1
 	echo scikit-learn libraries for iOS: >> $PREFIX/make_ios.log 2>&1
 	find build -name \*.so -print  >> $PREFIX/make_ios.log 2>&1
@@ -1264,10 +1278,10 @@ PLATFORM=iphoneos PYODIDE_PACKAGE_ABI=1 SETUPTOOLS_USE_DISTUTILS=stdlib python3.
 	rm -rf build/* >> $PREFIX/make_ios.log 2>&1
 	env CC=clang CXX=clang++ \
 		CPPFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -I$PREFIX $DEBUG" \
-		CFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -I$PREFIX -DCYTHON_PEP489_MULTI_PHASE_INIT=0 -DCYTHON_USE_DICT_VERSIONS=0 $DEBUG" \
-		CXXFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -DCYTHON_PEP489_MULTI_PHASE_INIT=0 -DCYTHON_USE_DICT_VERSIONS=0 $DEBUG" \
-		LDFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -F$PREFIX/Frameworks_iphoneos -framework ios_system -L$PREFIX/Frameworks_iphoneos/lib -L$PREFIX/build/lib.darwin-arm64-3.13 -lpython3.13 $DEBUG" \
-		LDSHARED="clang -v -undefined error -dynamiclib -isysroot $IOS_SDKROOT -lz -lpython3.13  -F$PREFIX/Frameworks_iphoneos -framework ios_system -L$PREFIX/Frameworks_iphoneos/lib -L$PREFIX/build/lib.darwin-arm64-3.13 $DEBUG" \
+		CFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -I$PREFIX $CYTHON_OPTIONS $DEBUG" \
+		CXXFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT $CYTHON_OPTIONS $DEBUG" \
+		LDFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -F$PREFIX/Frameworks_iphoneos -framework ios_system -L$PREFIX/Frameworks_iphoneos/lib -L$PREFIX/build/lib.darwin-arm64-3.13  -F $PREFIX/ios/Frameworks/arm64-iphoneos -framework Python $DEBUG" \
+		LDSHARED="clang -v -undefined error -dynamiclib -isysroot $IOS_SDKROOT -lz  -F $PREFIX/ios/Frameworks/arm64-iphoneos -framework Python  -F$PREFIX/Frameworks_iphoneos -framework ios_system -L$PREFIX/Frameworks_iphoneos/lib -L$PREFIX/build/lib.darwin-arm64-3.13 $DEBUG" \
 		NPY_BLAS_ORDER="openblas" NPY_LAPACK_ORDER="openblas" MATHLIB="-lm" \
 		PLATFORM=iphoneos python3.13 setup.py build >> $PREFIX/make_ios.log 2>&1
 	echo qutip libraries for iOS: >> $PREFIX/make_ios.log 2>&1
@@ -1284,7 +1298,7 @@ PLATFORM=iphoneos PYODIDE_PACKAGE_ABI=1 SETUPTOOLS_USE_DISTUTILS=stdlib python3.
 	  clang -v -undefined error -dynamiclib \
 		  -isysroot $IOS_SDKROOT \
 		  -lz -lm -lc++ \
-		  -lpython3.13 \
+		   -F $PREFIX/ios/Frameworks/arm64-iphoneos -framework Python \
 		  -F$PREFIX/Frameworks_iphoneos -framework ios_system \
 		  -L$PREFIX/Frameworks_iphoneos/lib \
 		  -L$PREFIX/build/lib.darwin-arm64-3.13 \
@@ -1302,11 +1316,11 @@ PLATFORM=iphoneos PYODIDE_PACKAGE_ABI=1 SETUPTOOLS_USE_DISTUTILS=stdlib python3.
 	pushd Cartopy-* >> $PREFIX/make_ios.log 2>&1
 	rm -rf build/*  >> $PREFIX/make_ios.log 2>&1
 	rm -rf .eggs  >> $PREFIX/make_ios.log 2>&1
-	env CC=clang CXX=clang++ CPPFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -DCYTHON_PEP489_MULTI_PHASE_INIT=0 -DCYTHON_USE_DICT_VERSIONS=0 -I$PREFIX -I$PREFIX/Frameworks_iphoneos/include " \
-		CFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT $DEBUG -DCYTHON_PEP489_MULTI_PHASE_INIT=0 -DCYTHON_USE_DICT_VERSIONS=0 -I$PREFIX -I$PREFIX/Frameworks_iphoneos/include " \
-		CXXFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT $DEBUG -DCYTHON_PEP489_MULTI_PHASE_INIT=0 -DCYTHON_USE_DICT_VERSIONS=0 -I$PREFIX -I$PREFIX/Frameworks_iphoneos/include " \
-		LDFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -F$PREFIX/Frameworks_iphoneos/  -framework ios_system  -framework libproj -framework libgeos_c -L$PREFIX/build/lib.darwin-arm64-3.13 -lpython3.13 $DEBUG" \
-		LDSHARED="clang -v -undefined error -dynamiclib -arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -lz -L$PREFIX/build/lib.darwin-arm64-3.13 -lpython3.13 $DEBUG -lz -F$PREFIX/Frameworks_iphoneos/ -framework libproj -framework libgeos_c" \
+	env CC=clang CXX=clang++ CPPFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT $CYTHON_OPTIONS -I$PREFIX -I$PREFIX/Frameworks_iphoneos/include " \
+		CFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT $DEBUG $CYTHON_OPTIONS -I$PREFIX -I$PREFIX/Frameworks_iphoneos/include " \
+		CXXFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT $DEBUG $CYTHON_OPTIONS -I$PREFIX -I$PREFIX/Frameworks_iphoneos/include " \
+		LDFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -F$PREFIX/Frameworks_iphoneos/  -framework ios_system  -framework libproj -framework libgeos_c -L$PREFIX/build/lib.darwin-arm64-3.13  -F $PREFIX/ios/Frameworks/arm64-iphoneos -framework Python $DEBUG" \
+		LDSHARED="clang -v -undefined error -dynamiclib -arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -lz -L$PREFIX/build/lib.darwin-arm64-3.13  -F $PREFIX/ios/Frameworks/arm64-iphoneos -framework Python $DEBUG -lz -F$PREFIX/Frameworks_iphoneos/ -framework libproj -framework libgeos_c" \
 		PLATFORM=iphoneos \
 		FORCE_CYTHON="True" \
 		python3.13 setup.py build >> $PREFIX/make_ios.log 2>&1
@@ -1326,10 +1340,10 @@ PLATFORM=iphoneos PYODIDE_PACKAGE_ABI=1 SETUPTOOLS_USE_DISTUTILS=stdlib python3.
 	rm -rf build/*  >> $PREFIX/make_ios.log 2>&1
 	env CC=clang CXX=clang++ \
 		CPPFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -I$PREFIX $DEBUG" \
-		CFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -I$PREFIX -DCYTHON_PEP489_MULTI_PHASE_INIT=0 -DCYTHON_USE_DICT_VERSIONS=0 $DEBUG" \
-		CXXFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -DCYTHON_PEP489_MULTI_PHASE_INIT=0 -DCYTHON_USE_DICT_VERSIONS=0 $DEBUG" \
-		LDFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -F$PREFIX/Frameworks_iphoneos -framework ios_system -L$PREFIX/Frameworks_iphoneos/lib -L$PREFIX/build/lib.darwin-arm64-3.13 -lpython3.13 -L$PREFIX/build/lib.darwin-arm64-3.13/numpy $DEBUG" \
-		LDSHARED="clang -v -undefined error -dynamiclib -isysroot $IOS_SDKROOT -lz -lpython3.13  -F$PREFIX/Frameworks_iphoneos -framework ios_system -L$PREFIX/Frameworks_iphoneos/lib -L$PREFIX/build/lib.darwin-arm64-3.13 -L$PREFIX/build/lib.darwin-arm64-3.13/numpy $DEBUG" \
+		CFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -I$PREFIX $CYTHON_OPTIONS $DEBUG" \
+		CXXFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT $CYTHON_OPTIONS $DEBUG" \
+		LDFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -F$PREFIX/Frameworks_iphoneos -framework ios_system -L$PREFIX/Frameworks_iphoneos/lib -L$PREFIX/build/lib.darwin-arm64-3.13  -F $PREFIX/ios/Frameworks/arm64-iphoneos -framework Python -L$PREFIX/build/lib.darwin-arm64-3.13/numpy $DEBUG" \
+		LDSHARED="clang -v -undefined error -dynamiclib -isysroot $IOS_SDKROOT -lz  -F $PREFIX/ios/Frameworks/arm64-iphoneos -framework Python  -F$PREFIX/Frameworks_iphoneos -framework ios_system -L$PREFIX/Frameworks_iphoneos/lib -L$PREFIX/build/lib.darwin-arm64-3.13 -L$PREFIX/build/lib.darwin-arm64-3.13/numpy $DEBUG" \
 		NPY_BLAS_ORDER="openblas" NPY_LAPACK_ORDER="openblas" MATHLIB="-lm" \
 		PLATFORM=iphoneos python3.13 setup.py build >> $PREFIX/make_ios.log 2>&1
 	echo statsmodels libraries for iOS: >> $PREFIX/make_ios.log 2>&1
@@ -1351,7 +1365,7 @@ PLATFORM=iphoneos PYODIDE_PACKAGE_ABI=1 SETUPTOOLS_USE_DISTUTILS=stdlib python3.
 	clang -v -undefined error -dynamiclib \
 		  -isysroot $IOS_SDKROOT \
 		  -lz -lm -lc++ \
-		  -lpython3.13 \
+		   -F $PREFIX/ios/Frameworks/arm64-iphoneos -framework Python \
 		  -L$PREFIX/build/lib.darwin-arm64-3.13/numpy \
 		  -lnpymath -lnpyrandom \
 		  -F$PREFIX/Frameworks_iphoneos -framework ios_system \
@@ -1372,11 +1386,11 @@ PLATFORM=iphoneos PYODIDE_PACKAGE_ABI=1 SETUPTOOLS_USE_DISTUTILS=stdlib python3.
 	pushd pygeos-* >> $PREFIX/make_ios.log 2>&1
 	rm -rf build/*  >> $PREFIX/make_ios.log 2>&1
 	env CC=clang CXX=clang++ \
-CPPFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -DCYTHON_PEP489_MULTI_PHASE_INIT=0 -DCYTHON_USE_DICT_VERSIONS=0 -I$PREFIX -I $PREFIX/Frameworks_iphoneos/include" \
-CFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT $DEBUG  -DCYTHON_PEP489_MULTI_PHASE_INIT=0 -DCYTHON_USE_DICT_VERSIONS=0 -I$PREFIX -I $PREFIX/Frameworks_iphoneos/include/" \
-CXXFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT $DEBUG -DCYTHON_PEP489_MULTI_PHASE_INIT=0 -DCYTHON_USE_DICT_VERSIONS=0 -I$PREFIX -I $PREFIX/Frameworks_iphoneos/include" \
+CPPFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT $CYTHON_OPTIONS -I$PREFIX -I $PREFIX/Frameworks_iphoneos/include" \
+CFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT $DEBUG  $CYTHON_OPTIONS -I$PREFIX -I $PREFIX/Frameworks_iphoneos/include/" \
+CXXFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT $DEBUG $CYTHON_OPTIONS -I$PREFIX -I $PREFIX/Frameworks_iphoneos/include" \
 LDFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT $DEBUG -F $PREFIX/Frameworks_iphoneos/ -framework libgeos_c" \
-LDSHARED="clang -v -undefined error -dynamiclib -isysroot $IOS_SDKROOT -lz $DEBUG -F $PREFIX/Frameworks_iphoneos/ -L$PREFIX/Frameworks_iphoneos/lib -L$PREFIX/build/lib.darwin-arm64-3.13 -lpython3.13 -framework libgeos_c" \
+LDSHARED="clang -v -undefined error -dynamiclib -isysroot $IOS_SDKROOT -lz $DEBUG -F $PREFIX/Frameworks_iphoneos/ -L$PREFIX/Frameworks_iphoneos/lib -L$PREFIX/build/lib.darwin-arm64-3.13  -F $PREFIX/ios/Frameworks/arm64-iphoneos -framework Python -framework libgeos_c" \
 PLATFORM=iphoneos \
 GEOS_INCLUDE_PATH=$PREFIX/Frameworks_iphoneos/include \
 GEOS_LIBRARY_PATH=$PREFIX/Frameworks_iphoneos/lib \

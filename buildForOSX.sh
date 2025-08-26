@@ -10,6 +10,7 @@ export PATH=$PREFIX/Library/bin:~/.cargo/bin:$OLD_PATH
 export PYTHONPYCACHEPREFIX=$PREFIX/__pycache__
 export OSX_SDKROOT=$(xcrun --sdk macosx --show-sdk-path)
 export DEBUG="-O3 -Wall"
+export CYTHON_OPTIONS="-DCYTHON_PEP489_MULTI_PHASE_INIT=0 -DCYTHON_USE_DICT_VERSIONS=0 -DCYTHON_USE_PYTYPE_LOOKUP=0"
 # Comment this line to re-download all package source from PyPi
 export USE_CACHED_PACKAGES=1
 # DEBUG="-g"
@@ -165,6 +166,7 @@ python3.13 -m pip install urllib3 --upgrade >> $PREFIX/make_install_osx.log 2>&1
 python3.13 -m pip install webencodings --upgrade >> $PREFIX/make_install_osx.log 2>&1
 python3.13 -m pip install wheel --upgrade >> $PREFIX/make_install_osx.log 2>&1
 python3.13 -m pip install pygments --upgrade >> $PREFIX/make_install_osx.log 2>&1
+# 
 # markupsafe: prevent compilation of extension:
 echo Installing MarkupSafe with no extensions >> $PREFIX/make_install_osx.log 2>&1
 mkdir -p packages >> $PREFIX/make_install_osx.log 2>&1
@@ -201,11 +203,21 @@ pushd packages >> $PREFIX/make_install_osx.log 2>&1
 downloadSource cffi >> $PREFIX/make_install_osx.log 2>&1
 pushd cffi-* >> $PREFIX/make_install_osx.log 2>&1
 rm -rf build/* >> $PREFIX/make_install_osx.log 2>&1
-cp ../setup_cffi.py ./setup.py  >> $PREFIX/make_install_osx.log 2>&1
+if [ ! -f setup.pybak ]
+then
+	cp setup.py setup.pybak >> $PREFIX/make_install_osx.log 2>&1
+	cp ../setup_cffi.py ./setup.py >> $PREFIX/make_install_osx.log 2>&1
+fi
 # Make the static cache variables thread-local:
 sed -i bak 's/static char init_done/static __thread char init_done/' src/c/_cffi_backend.c >> $PREFIX/make_install_osx.log 2>&1
 sed -i bak 's/    static CTypeDescrObject /    static __thread CTypeDescrObject /' src/c/_cffi_backend.c >> $PREFIX/make_install_osx.log 2>&1
-env CC=clang CXX=clang++ CPPFLAGS="-isysroot $OSX_SDKROOT" CFLAGS="-isysroot $OSX_SDKROOT" CXXFLAGS="-isysroot $OSX_SDKROOT" LDFLAGS="-isysroot $OSX_SDKROOT " LDSHARED="clang -v -undefined error -dynamiclib -isysroot $OSX_SDKROOT -lz -L$PREFIX -lpython3.13 -lc++ " python3.13 setup.py build  >> $PREFIX/make_install_osx.log 2>&1
+env CC=clang CXX=clang++ \
+	CPPFLAGS="-isysroot $OSX_SDKROOT" \
+	CFLAGS="-isysroot $OSX_SDKROOT" \
+	CXXFLAGS="-isysroot $OSX_SDKROOT" \
+	LDFLAGS="-isysroot $OSX_SDKROOT " \
+	LDSHARED="clang -v -undefined error -dynamiclib -isysroot $OSX_SDKROOT -lz -L$PREFIX -lpython3.13 -lc++ " \
+	PLATFORM=macosx python3.13 setup.py build  >> $PREFIX/make_install_osx.log 2>&1
 cp build/lib.macosx-${OSX_VERSION}-x86_64-*/_cffi_backend.cpython-313-darwin.so $PREFIX/build/lib.macosx-${OSX_VERSION}-x86_64-3.13/  >> $PREFIX/make_install_osx.log 2>&1
 env CC=clang CXX=clang++ CPPFLAGS="-isysroot $OSX_SDKROOT" CFLAGS="-isysroot $OSX_SDKROOT" CXXFLAGS="-isysroot $OSX_SDKROOT" LDFLAGS="-isysroot $OSX_SDKROOT " LDSHARED="clang -v -undefined error -dynamiclib -isysroot $OSX_SDKROOT -lz -L$PREFIX -lpython3.13 -lc++ " python3.13 -m pip install . >> $PREFIX/make_install_osx.log 2>&1
 popd  >> $PREFIX/make_install_osx.log 2>&1
@@ -215,10 +227,12 @@ export SSL_CERT_FILE=$PREFIX/Library/lib/python3.13/site-packages/certifi/cacert
 export SSL_CERT_DIR=$PREFIX/lib/python3.13/site-packages/certifi/
 # Let's install prompt-toolkit for Ipython:
 python3.13 -m pip install prompt-toolkit >> $PREFIX/make_install_osx.log 2>&1
-# ipython: just two files to change, we use sed to patch it: 
+# ipython: just three files to change, we use sed to patch it: 
 echo Installing IPython for OSX  >> $PREFIX/make_install_osx.log 2>&1
 pushd packages >> $PREFIX/make_install_osx.log 2>&1
-downloadSource ipython >> $PREFIX/make_install_osx.log 2>&1
+# 8.36 is the last ipython-8 version. 
+# I should test with ipython 9, but it will require re-checking the files.
+downloadSource ipython 8.36.0 >> $PREFIX/make_install_osx.log 2>&1
 pushd ipython-8* >>  $PREFIX/make_install_osx.log 2>&1
 # That's one large sed replace, but it's a single file in the repository.
 # We need system_ios to replace system_piped *and* system_raw.
@@ -263,6 +277,46 @@ sed -i bak 's/^    system = system_piped/    # iOS: use system_ios instead\
     else:\
         system = system_piped/' IPython/core/interactiveshell.py  >> $PREFIX/make_install_osx.log 2>&1
 sed -i bak 's/^    system = InteractiveShell.system_raw/    system = InteractiveShell.system_ios/'  IPython/terminal/interactiveshell.py  >> $PREFIX/make_install_osx.log 2>&1
+# We also change system in utils/_process_posix.py:
+sed -i bak 's/^system = ProcessHandler().system/# iOS: use system_ios instead of ProcessHandler().system:\
+import subprocess\
+def system_ios(cmd): \
+    p = subprocess.Popen(cmd, shell=True, stdout = subprocess.PIPE, stderr = subprocess.PIPE)\
+    os.set_blocking(p.stdout.fileno(), False)\
+    os.set_blocking(p.stderr.fileno(), False)\
+    while True:\
+        if (not p.stdout.closed):\
+            outline = p.stdout.readline()\
+        if (not p.stderr.closed):\
+            errline = p.stderr.readline()\
+        if (outline and outline != b""): \
+            print(outline.decode("UTF-8"),  end="\\r", flush=True)\
+        if (errline and errline != b""): \
+            print(errline.decode("UTF-8"),  end="\\r", file = sys.stderr, flush=True)\
+        outStreamClosed = p.stdout.closed or outline == b""\
+        errStreamClosed = p.stderr.closed or errline == b""\
+        # Additional test: check that the process is not still running:\
+        processTerminated = False\
+        try:\
+            pid, sts = os.waitpid(p.pid, os.WNOHANG)\
+            if pid != 0:\
+                processTerminated = True\
+        except OSError as e:\
+            processTerminated = True\
+        if (errStreamClosed and outStreamClosed and processTerminated):\
+            break\
+    retcode = p.poll()\
+\
+    if retcode is None:\
+        return 0\
+    if retcode > 128:\
+        return -(retcode - 128)\
+    return retcode\
+\
+if (sys.platform == "ios"):\
+    system = system_ios\
+else:\
+    system = ProcessHandler().system/' IPython/utils/_process_posix.py  >> $PREFIX/make_install_osx.log 2>&1
 rm -rf build/*  >> $PREFIX/make_install_osx.log 2>&1
 python3.13 setup.py build >> $PREFIX/make_install_osx.log 2>&1
 python3.13 -m pip install . >> $PREFIX/make_install_osx.log 2>&1
@@ -284,13 +338,21 @@ then
 	cp setupinfo.py setupinfo.pybak >> $PREFIX/make_install_osx.log 2>&1
 	cp ../setupinfo_lxml.py setupinfo.py >> $PREFIX/make_install_osx.log 2>&1
 fi
+if [ ! -f src/lxml/xslt.pxibak ]
+then
+	sed -i bak 's/^cdef xslt.xsltDocLoaderFunc/# iOS: reset xsltDocDefaultLoader:\
+xslt.xsltSetLoaderFunc(NULL)\
+&/' src/lxml/xslt.pxi  >> $PREFIX/make_install_osx.log 2>&1
+fi
 rm -rf build/* >> $PREFIX/make_install_osx.log 2>&1
+# Force Cython regeneration for these three modules: 
+touch src/lxml/_elementpath.py >> $PREFIX/make_install_osx.log 2>&1
+touch src/lxml/builder.py >> $PREFIX/make_install_osx.log 2>&1
+touch src/lxml/sax.py >> $PREFIX/make_install_osx.log 2>&1
 # lxml has 2 cython modules. We need PEP489=0 and USE_DICT=0
-	which cython  >> $PREFIX/make_install_osx.log 2>&1
-	pip3 show cython >> $PREFIX/make_install_osx.log 2>&1
-	env CC=clang CXX=clang++ CPPFLAGS="-isysroot $OSX_SDKROOT" CFLAGS="-isysroot $OSX_SDKROOT  -DCYTHON_PEP489_MULTI_PHASE_INIT=0 -DCYTHON_USE_DICT_VERSIONS=0 $DEBUG" CXXFLAGS="-isysroot $OSX_SDKROOT  -DCYTHON_PEP489_MULTI_PHASE_INIT=0 -DCYTHON_USE_DICT_VERSIONS=0 $DEBUG" LDFLAGS="-isysroot $OSX_SDKROOT $DEBUG " LDSHARED="clang -v -undefined error -dynamiclib -isysroot $OSX_SDKROOT -lz -L$PREFIX -lpython3.13 -lc++ $DEBUG"  PLATFORM=macosx python3.13 setup.py build --with-cython >> $PREFIX/make_install_osx.log 2>&1
+	env CC=clang CXX=clang++ CPPFLAGS="-isysroot $OSX_SDKROOT" CFLAGS="-isysroot $OSX_SDKROOT  $CYTHON_OPTIONS $DEBUG" CXXFLAGS="-isysroot $OSX_SDKROOT  $CYTHON_OPTIONS $DEBUG" LDFLAGS="-isysroot $OSX_SDKROOT $DEBUG " LDSHARED="clang -v -undefined error -dynamiclib -isysroot $OSX_SDKROOT -lz -L$PREFIX -lpython3.13 -lc++ $DEBUG"  PLATFORM=macosx python3.13 setup.py build --with-cython >> $PREFIX/make_install_osx.log 2>&1
 	echo Done first build >> $PREFIX/make_install_osx.log 2>&1
-	env CC=clang CXX=clang++ CPPFLAGS="-isysroot $OSX_SDKROOT" CFLAGS="-isysroot $OSX_SDKROOT  -DCYTHON_PEP489_MULTI_PHASE_INIT=0 -DCYTHON_USE_DICT_VERSIONS=0 $DEBUG" CXXFLAGS="-isysroot $OSX_SDKROOT  -DCYTHON_PEP489_MULTI_PHASE_INIT=0 -DCYTHON_USE_DICT_VERSIONS=0 $DEBUG" LDFLAGS="-isysroot $OSX_SDKROOT $DEBUG " LDSHARED="clang -v -undefined error -dynamiclib -isysroot $OSX_SDKROOT -lz -L$PREFIX -lpython3.13 -lc++ $DEBUG"  PLATFORM=macosx python3.13 -m pip install .  >> $PREFIX/make_install_osx.log 2>&1
+	env CC=clang CXX=clang++ CPPFLAGS="-isysroot $OSX_SDKROOT" CFLAGS="-isysroot $OSX_SDKROOT  $CYTHON_OPTIONS $DEBUG" CXXFLAGS="-isysroot $OSX_SDKROOT  $CYTHON_OPTIONS $DEBUG" LDFLAGS="-isysroot $OSX_SDKROOT $DEBUG " LDSHARED="clang -v -undefined error -dynamiclib -isysroot $OSX_SDKROOT -lz -L$PREFIX -lpython3.13 -lc++ $DEBUG"  PLATFORM=macosx python3.13 -m pip install .  >> $PREFIX/make_install_osx.log 2>&1
 echo lxml libraries for OSX: >> $PREFIX/make_install_osx.log 2>&1
 find build -name \*.so -print  >> $PREFIX/make_install_osx.log 2>&1
 pushd build/lib.macosx-${OSX_VERSION}-x86_64-cpython-313 >> $PREFIX/make_install_osx.log 2>&1
@@ -329,8 +391,8 @@ rm -rf build/* >> $PREFIX/make_install_osx.log 2>&1
 # As of Feb. 11, 2021, rustc is unable to cross-compile a dynamic library for iOS. We stick to the old version.
 # August 2023: rustc can generate a dynamic library, but does not free or reinitialize the modules. We stick to the old version.
 # March 2025: rustc can generate a dynamic library, and the module gets partially released, but reloading does not work. We stick to the old version.
-env CRYPTOGRAPHY_DONT_BUILD_RUST=1 CC=clang CXX=clang++ CFLAGS="-I$PREFIX/ -I/usr/local/include/ -DCRYPTOGRAPHY_OSRANDOM_ENGINE=CRYPTOGRAPHY_OSRANDOM_ENGINE_DEV_URANDOM" LDFLAGS="-L$PREFIX/ -L/usr/local/lib" python3.13 setup.py build --verbose >> $PREFIX/make_install_osx.log 2>&1
-env CRYPTOGRAPHY_DONT_BUILD_RUST=1 CC=clang CXX=clang++ CFLAGS="-I$PREFIX/ -I/usr/local/include/ -DCRYPTOGRAPHY_OSRANDOM_ENGINE=CRYPTOGRAPHY_OSRANDOM_ENGINE_DEV_URANDOM" LDFLAGS="-L$PREFIX/ -L/usr/local/lib" python3.13 -m pip install . >> $PREFIX/make_install_osx.log 2>&1
+env CRYPTOGRAPHY_DONT_BUILD_RUST=1 CC=clang CXX=clang++ CFLAGS="-I$PREFIX/ -isysroot $OSX_SDKROOT -I/usr/local/include/ -DCRYPTOGRAPHY_OSRANDOM_ENGINE=CRYPTOGRAPHY_OSRANDOM_ENGINE_DEV_URANDOM" LDFLAGS="-isysroot $OSX_SDKROOT -L$PREFIX/ -L/usr/local/lib" python3.13 setup.py build --verbose >> $PREFIX/make_install_osx.log 2>&1
+env CRYPTOGRAPHY_DONT_BUILD_RUST=1 CC=clang CXX=clang++ CFLAGS="-I$PREFIX/ -isysroot $OSX_SDKROOT -I/usr/local/include/ -DCRYPTOGRAPHY_OSRANDOM_ENGINE=CRYPTOGRAPHY_OSRANDOM_ENGINE_DEV_URANDOM" LDFLAGS="-isysroot $OSX_SDKROOT -L$PREFIX/ -L/usr/local/lib" python3.13 -m pip install . >> $PREFIX/make_install_osx.log 2>&1
 echo cryptography libraries for OSX: >> $PREFIX/make_install_osx.log 2>&1
 find build -name \*.so -print  >> $PREFIX/make_install_osx.log 2>&1
 find build -name \*.dylib -print  >> $PREFIX/make_install_osx.log 2>&1
@@ -340,21 +402,25 @@ mkdir -p $PREFIX/build/lib.macosx-${OSX_VERSION}-x86_64-3.13/cryptography/hazmat
 cp build//lib.macosx-${OSX_VERSION}-x86_64-cpython-313/cryptography/hazmat/bindings/*.so $PREFIX/build/lib.macosx-${OSX_VERSION}-x86_64-3.13/cryptography/hazmat/bindings  >> $PREFIX/make_install_osx.log 2>&1
 popd  >> $PREFIX/make_install_osx.log 2>&1
 popd  >> $PREFIX/make_install_osx.log 2>&1
-# pycryptodome (a-Shell only, 39 frameworks):
-if [ $APP == "a-Shell" ]; 
+# pycryptodome (a-Shell only, 80 frameworks total (40 for Crypto, 40 for Cryptodome):
+# Carnets has hit the maximum number of embedded frameworks, adding 320 (4 * 80) frameworks 
+# would be excessive.
+if [ $APP != "Carnets" ]; 
 then
 	pushd packages >> $PREFIX/make_install_osx.log 2>&1
-	downloadSource pycryptodome  >> $PREFIX/make_install_osx.log 2>&1
+	downloadSource pycryptodome >> $PREFIX/make_install_osx.log 2>&1
 	pushd pycryptodome-* >> $PREFIX/make_install_osx.log 2>&1
 	rm .separate_namespace >> $PREFIX/make_install_osx.log 2>&1
 	if [ ! -f lib/Crypto/Util/_raw_api.pybak ];
 	then
 		sed -i bak 's/^    split = name.split/    # iOS: we can only load frameworks:\
-    if sys.platform == "darwin" and os.uname().machine.startswith("iP"):\
+    if sys.platform == "ios":\
         pythonName = sys.orig_argv[0]\
         if (pythonName == "python3") or (pythonName == "python"):\
-            pythonName = "python3_ios"\
-        frameworkName = pythonName + "-" + name\
+            pythonName = "Python-"\
+        else:\
+            pythonName.replace("python", "Python", 1)\
+        frameworkName = pythonName + name\
         home, tail = os.path.split(sys.prefix)\
         full_path = os.path.join(home, "Frameworks", frameworkName + ".framework", frameworkName)\
         if os.path.isfile(full_path):\
@@ -362,12 +428,19 @@ then
     # Not iOS case: test all possible suffixes and libraries:\
 &/' lib/Crypto/Util/_raw_api.py  >> $PREFIX/make_install_osx.log 2>&1
 	fi
+	#  Python-Cryptodome.Cipher._raw_des.framework/Python-Cryptodome.Cipher._raw_des
 	rm -rf build/* >> $PREFIX/make_install_osx.log 2>&1
-	env CC=clang CXX=clang++ CFLAGS="-I$PREFIX/ -I/usr/local/include/" LDFLAGS="-L$PREFIX/ -L/usr/local/lib" python3.13 setup.py build >> $PREFIX/make_install_osx.log 2>&1
-	env CC=clang CXX=clang++ CFLAGS="-I$PREFIX/ -I/usr/local/include/" LDFLAGS="-L$PREFIX/ -L/usr/local/lib" python3.13 -m pip install . >> $PREFIX/make_install_osx.log 2>&1
+	env CC=clang CXX=clang++ \
+		CFLAGS="-I$PREFIX/ -I/usr/local/include/ -isysroot $OSX_SDKROOT" \
+		LDFLAGS="-L$PREFIX/ -L/usr/local/lib -isysroot $OSX_SDKROOT" \
+		python3.13 setup.py build >> $PREFIX/make_install_osx.log 2>&1
+	env CC=clang CXX=clang++ \
+		CFLAGS="-I$PREFIX/ -I/usr/local/include/  -isysroot $OSX_SDKROOT" \
+		LDFLAGS="-L$PREFIX/ -L/usr/local/lib -isysroot $OSX_SDKROOT" \
+		python3.13 -m pip install . >> $PREFIX/make_install_osx.log 2>&1
 	echo pycryptodome libraries for OSX: >> $PREFIX/make_install_osx.log 2>&1
 	find build -name \*.so -print  >> $PREFIX/make_install_osx.log 2>&1
-	pushd build/lib.macosx-${OSX_VERSION}-x86_64-cpython-313 >> $PREFIX/make_install_osx.log 2>&1
+	pushd build/lib.macosx-*-cpython-313 >> $PREFIX/make_install_osx.log 2>&1
 	for library in `find Crypto -name \*.so`
 	do
 		directory=$(dirname $library)
@@ -378,11 +451,17 @@ then
 	# pycryptodomex: same source files, one tiny difference:
 	rm -rf build/* >> $PREFIX/make_install_osx.log 2>&1
 	touch .separate_namespace >> $PREFIX/make_install_osx.log 2>&1
-	env CC=clang CXX=clang++ CFLAGS="-I$PREFIX/ -I/usr/local/include/" LDFLAGS="-L$PREFIX/ -L/usr/local/lib" python3.13 setup.py build >> $PREFIX/make_install_osx.log 2>&1
-	env CC=clang CXX=clang++ CFLAGS="-I$PREFIX/ -I/usr/local/include/" LDFLAGS="-L$PREFIX/ -L/usr/local/lib" python3.13 -m pip install . >> $PREFIX/make_install_osx.log 2>&1
+	env CC=clang CXX=clang++ \
+		CFLAGS="-I$PREFIX/ -I/usr/local/include/ -isysroot $OSX_SDKROOT" \
+		LDFLAGS="-L$PREFIX/ -L/usr/local/lib -isysroot $OSX_SDKROOT" \
+		python3.13 setup.py build >> $PREFIX/make_install_osx.log 2>&1
+	env CC=clang CXX=clang++ \
+		CFLAGS="-I$PREFIX/ -I/usr/local/include/ -isysroot $OSX_SDKROOT" \
+		LDFLAGS="-L$PREFIX/ -L/usr/local/lib -isysroot $OSX_SDKROOT" \
+		python3.13 -m pip install . >> $PREFIX/make_install_osx.log 2>&1
 	echo pycryptodomex libraries for OSX: >> $PREFIX/make_install_osx.log 2>&1
 	find build -name \*.so -print  >> $PREFIX/make_install_osx.log 2>&1
-	pushd build/lib.macosx-${OSX_VERSION}-x86_64-cpython-313 >> $PREFIX/make_install_osx.log 2>&1
+	pushd build/lib.macosx-*-cpython-313 >> $PREFIX/make_install_osx.log 2>&1
 	for library in `find Cryptodome -name \*.so`
 	do
 		directory=$(dirname $library)
@@ -469,10 +548,6 @@ python3.13 -m pip install nbformat --upgrade >> $PREFIX/make_install_osx.log 2>&
 python3.13 -m pip install prometheus-client --upgrade >> $PREFIX/make_install_osx.log 2>&1
 # Now install everything we need:
 # python3.13 -m pip install jupyter --upgrade >> $PREFIX/make_install_osx.log 2>&1
-# Now install mpmath:
-python3.13 -m pip install mpmath --upgrade >> $PREFIX/make_install_osx.log 2>&1
-# Now install sympy:
-python3.13 -m pip install sympy --upgrade >> $PREFIX/make_install_osx.log 2>&1
 # For jupyter: 
 # jupyter_client (at version 7.4.7 because versions ipykernel-before-psutils requires jupyter-client < 8)
 pushd packages >> $PREFIX/make_install_osx.log 2>&1
@@ -634,11 +709,8 @@ pip3.13 install jupyterlab-language-pack-vi-VN >> $PREFIX/make_install_osx.log 2
 pip3.13 install jupyterlab-language-pack-zh-CN >> $PREFIX/make_install_osx.log 2>&1
 pip3.13 install jupyterlab-language-pack-zh-TW >> $PREFIX/make_install_osx.log 2>&1
 
-# Stop here to check that the files we edit are still OK:
-exit 0
-
 # Notebook v7: disable autozoom
-# Notebook v7 simplification: only page.html and view.html hace scaling information, all the other include these
+# Notebook v7 simplification: only page.html and view.html have scaling information, all the other include these
 # They are still present in 3 places: nbclassic, notebook, jupyter-server
 for htmlFile in page view notebook notebooks edit tree 
 do
@@ -672,11 +744,7 @@ popd  >> $PREFIX/make_install_osx.log 2>&1
 find $PREFIX/Library/share/jupyter -type f -name \*.css -exec sed -i bak 's/--jp-editor-cursor-color: var(--jp-ui-font-color0);/&\
   caret-color: #007aff;/' {} \; -print  >> $PREFIX/make_install_osx.log 2>&1
 #
-# done jupyterlab/retrolab
-# Now make that work with iOS and check on a-Shell
-
-exit 0
-# Next step will be compiling numpy and nbconvert. Numpy has changed everywhere (bad) but should be thread-safe (good).
+# done jupyterlab/retrolab. That works on a-Shell so far.
 
 # End packages that are not included with a-Shell mini
 # python3.13 -m pip install ipython --upgrade >> $PREFIX/make_install_osx.log 2>&1
@@ -690,58 +758,43 @@ cp packages/nbconvert_utils_pandoc.py $PREFIX/Library/lib/python3.13/site-packag
 cp packages/nbconvert_exporters_pdf.py $PREFIX/Library/lib/python3.13/site-packages/nbconvert/exporters/pdf.py  >> $PREFIX/make_install_osx.log 2>&1
 cp packages/Library_share_jupyter_nbconvert_templates_latex_document_contents.tex.j2 $PREFIX/Library/share/jupyter/nbconvert/templates/latex/document_contents.tex.j2 >> $PREFIX/make_install_osx.log 2>&1
 cp packages/Library_share_jupyter_nbconvert_templates_latex_report.tex.j2 $PREFIX/Library/share/jupyter/nbconvert/templates/latex/report.tex.j2  >> $PREFIX/make_install_osx.log 2>&1
+
+# Now install mpmath:
+python3.13 -m pip install mpmath --upgrade >> $PREFIX/make_install_osx.log 2>&1
+# Now install sympy:
+python3.13 -m pip install sympy --upgrade >> $PREFIX/make_install_osx.log 2>&1
+
 # Numpy:
 # Cython options for numpy (and other packages: PEP489_MULTI_PHASE_INIT=0, USE_DICT_VERSIONS=0 to reduce
 # amount of memory allocated and not tracked. Also in numpy/tools/cythonize.py, "--cleanup 3" to free
 # all memory and reset pointers.
+# numpy also needs meson (unmodified):
+python3.13 -m pip install meson-python  >> $PREFIX/make_install_osx.log 2>&1
+python3.13 -m pip install features >> $PREFIX/make_install_osx.log 2>&1
 pushd packages >> $PREFIX/make_install_osx.log 2>&1
 pushd numpy >> $PREFIX/make_install_osx.log 2>&1
-rm -rf build/*  >> $PREFIX/make_install_osx.log 2>&1
-export LIBRARY_PATH="/Library/Developer/CommandLineTools/SDKs/MacOSX12.0.sdk/usr/lib"
-if [ $USE_FORTRAN == 0 ];
-then
-	rm site.cfg >> $PREFIX/make_install_osx.log 2>&1
-	# mathlib detection ignores CFLAGS, so we have to change clang:
-	env CC="clang -isysroot $OSX_SDKROOT  -DCYTHON_PEP489_MULTI_PHASE_INIT=0 -DCYTHON_USE_DICT_VERSIONS=0 $DEBUG " \
-		CXX="clang++ -isysroot $OSX_SDKROOT  -DCYTHON_PEP489_MULTI_PHASE_INIT=0 -DCYTHON_USE_DICT_VERSIONS=0 $DEBUG " \
-		LDFLAGS="-isysroot $OSX_SDKROOT $DEBUG" \
-		LDSHARED="clang -v -undefined error -dynamiclib -isysroot $OSX_SDKROOT -lz -L$PREFIX -lpython3.13 -lc++ $DEBUG "\
-		NPY_BLAS_ORDER= NPY_LAPACK_ORDER= MATHLIB="-lm" PLATFORM=macosx \
-		SETUPTOOLS_USE_DISTUTILS=stdlib python3.13 setup.py build --verbose  >> $PREFIX/make_install_osx.log 2>&1
-    # pip install . gives the correct version number:
-	env CC="clang -isysroot $OSX_SDKROOT  -DCYTHON_PEP489_MULTI_PHASE_INIT=0 -DCYTHON_USE_DICT_VERSIONS=0 $DEBUG " \
-		CXX="clang++ -isysroot $OSX_SDKROOT  -DCYTHON_PEP489_MULTI_PHASE_INIT=0 -DCYTHON_USE_DICT_VERSIONS=0 $DEBUG " \
-		LDFLAGS="-isysroot $OSX_SDKROOT $DEBUG" \
-		LDSHARED="clang -v -undefined error -dynamiclib -isysroot $OSX_SDKROOT -lz -L$PREFIX -lpython3.13 -lc++ $DEBUG "\
-		NPY_BLAS_ORDER= NPY_LAPACK_ORDER= MATHLIB="-lm" PLATFORM=macosx \
-		SETUPTOOLS_USE_DISTUTILS=stdlib python3.13 -m pip install . >> $PREFIX/make_install_osx.log 2>&1
-else
-	cp site_original.cfg site.cfg >> $PREFIX/make_install_osx.log 2>&1
-	sed -i bak "s|__main_directory__|${PREFIX}/Frameworks_macosx|" site.cfg >> $PREFIX/make_install_osx.log 2>&1
-	env CC="clang -isysroot $OSX_SDKROOT  -DCYTHON_PEP489_MULTI_PHASE_INIT=0 -DCYTHON_USE_DICT_VERSIONS=0 $DEBUG " \
-		CXX="clang++ -isysroot $OSX_SDKROOT  -DCYTHON_PEP489_MULTI_PHASE_INIT=0 -DCYTHON_USE_DICT_VERSIONS=0 $DEBUG " \
-		LDSHARED="clang -v -undefined error -dynamiclib -isysroot $OSX_SDKROOT -lz -L$PREFIX -lpython3.13 -lc++ $DEBUG "\
-		NPY_BLAS_ORDER="openblas" NPY_LAPACK_ORDER="openblas" MATHLIB="-lm" \
-		PLATFORM=macosx SETUPTOOLS_USE_DISTUTILS=stdlib python3.13 setup.py build  >> $PREFIX/make_install_osx.log 2>&1
-	# pip install . gives the correct version number:
-	env CC="clang -isysroot $OSX_SDKROOT  -DCYTHON_PEP489_MULTI_PHASE_INIT=0 -DCYTHON_USE_DICT_VERSIONS=0 $DEBUG " \
-		CXX="clang++ -isysroot $OSX_SDKROOT  -DCYTHON_PEP489_MULTI_PHASE_INIT=0 -DCYTHON_USE_DICT_VERSIONS=0 $DEBUG " \
-		LDSHARED="clang -v -undefined error -dynamiclib -isysroot $OSX_SDKROOT -lz -L$PREFIX -lpython3.13 -lc++ $DEBUG "\
-		NPY_BLAS_ORDER="openblas" NPY_LAPACK_ORDER="openblas" MATHLIB="-lm" \
-		PLATFORM=macosx SETUPTOOLS_USE_DISTUTILS=stdlib python3.13 setup.py install >> $PREFIX/make_install_osx.log 2>&1
-	echo Where are the numpy libraries? >> $PREFIX/make_install_osx.log 2>&1
-	find build -name \*.a >> $PREFIX/make_install_osx.log 2>&1
-	# One of the two will work
-	cp build/temp.macosx-${OSX_VERSION}-x86_64-3.13/libnpyrandom.a $PREFIX/Library/lib/python3.13/site-packages/numpy-*.egg/numpy/random/lib/libnpyrandom.a >> $PREFIX/make_install_osx.log 2>&1
-	cp build/temp.macosx-${OSX_VERSION}-x86_64-3.13/libnpymath.a  $PREFIX/Library/lib/python3.13/site-packages/numpy-*.egg/numpy/core/lib/libnpymath.a >> $PREFIX/make_install_osx.log 2>&1
-	cp build/temp.macosx-${OSX_VERSION}-x86_64-3.13/libnpyrandom.a $PREFIX/Library/lib/python3.13/site-packages/numpy/random/lib/libnpyrandom.a >> $PREFIX/make_install_osx.log 2>&1
-	cp build/temp.macosx-${OSX_VERSION}-x86_64-3.13/libnpymath.a  $PREFIX/Library/lib/python3.13/site-packages/numpy/core/lib/libnpymath.a >> $PREFIX/make_install_osx.log 2>&1
-	find $PREFIX/Library/lib/python3.13/site-packages/numpy* -name \*.a >> $PREFIX/make_install_osx.log 2>&1
-fi
-unset LIBRARY_PATH
-echo numpy libraries for OSX: >> $PREFIX/make_install_osx.log 2>&1
-find build -name \*.so -print  >> $PREFIX/make_install_osx.log 2>&1
-pushd build/lib.macosx-${OSX_VERSION}-x86_64-3.13 >> $PREFIX/make_install_osx.log 2>&1
+mkdir -p build_osx  >> $PREFIX/make_install_osx.log 2>&1
+rm -rf build_osx/*  >> $PREFIX/make_install_osx.log 2>&1
+# TODO: this is only the numpy-with-fortran version. 
+# I don't have the manpower to maintain the numpy-without-fortran anymore.
+# If you don't have fortran, you need something like: NPY_BLAS_ORDER= NPY_LAPACK_ORDER= 
+# but maybe something else as well.
+env CC=clang CXX=clang++ AR=ar CPPFLAGS="-isysroot $OSX_SDKROOT" CFLAGS="-isysroot $OSX_SDKROOT  $CYTHON_OPTIONS $DEBUG" CXXFLAGS="-isysroot $OSX_SDKROOT  $CYTHON_OPTIONS $DEBUG" LDFLAGS="-isysroot $OSX_SDKROOT $DEBUG -L/Library/Developer/CommandLineTools/SDKs/MacOSX12.0.sdk/usr/lib -L/usr/local/lib -lgfortran" LDSHARED="clang -v -undefined error -dynamiclib -isysroot $OSX_SDKROOT -lz -L$PREFIX -lpython3.13 -lc++ $DEBUG" NPY_BLAS_ORDER="openblas" NPY_LAPACK_ORDER="openblas" MATHLIB="-lm" \ PLATFORM=macosx SETUPTOOLS_USE_DISTUTILS=stdlib vendored-meson/meson/meson.py . build_osx -Dblas=openblas -Dlapack=openblas  >> $PREFIX/make_install_osx.log 2>&1
+pushd build_osx  >> $PREFIX/make_install_osx.log 2>&1
+ninja  >> $PREFIX/make_install_osx.log 2>&1
+popd  >> $PREFIX/make_install_osx.log 2>&1
+echo Done building numpy. Now pip install: >> $PREFIX/make_install_osx.log 2>&1
+env CC=clang CXX=clang++ AR=ar CPPFLAGS="-isysroot $OSX_SDKROOT" CFLAGS="-isysroot $OSX_SDKROOT  $CYTHON_OPTIONS $DEBUG" CXXFLAGS="-isysroot $OSX_SDKROOT  $CYTHON_OPTIONS $DEBUG" LDFLAGS="-isysroot $OSX_SDKROOT $DEBUG -L/Library/Developer/CommandLineTools/SDKs/MacOSX12.0.sdk/usr/lib -L/usr/local/lib -lgfortran" LDSHARED="clang -v -undefined error -dynamiclib -isysroot $OSX_SDKROOT -lz -L$PREFIX -lpython3.13 -lc++ $DEBUG" NPY_BLAS_ORDER="openblas" NPY_LAPACK_ORDER="openblas" MATHLIB="-lm" \ PLATFORM=macosx SETUPTOOLS_USE_DISTUTILS=stdlib python3.13 -m pip install . >> $PREFIX/make_install_osx.log 2>&1
+echo Where are the numpy libraries in build_osx? >> $PREFIX/make_install_osx.log 2>&1
+find build_osx -name \*.a >> $PREFIX/make_install_osx.log 2>&1
+echo Where are the numpy libraries in site-packages? >> $PREFIX/make_install_osx.log 2>&1
+find $PREFIX/Library/lib/python3.13/site-packages/numpy* -name \*.a >> $PREFIX/make_install_osx.log 2>&1
+cp build_osx/numpy/random/libnpyrandom.a $PREFIX/Library/lib/python3.13/site-packages/numpy/random/lib/libnpyrandom.a >> $PREFIX/make_install_osx.log 2>&1
+cp build_osx/numpy/_core/libnpymath.a  $PREFIX/Library/lib/python3.13/site-packages/numpy/_core/lib/libnpymath.a >> $PREFIX/make_install_osx.log 2>&1
+# Copying the libraries:
+echo numpy dynamic libraries for OSX: >> $PREFIX/make_install_osx.log 2>&1
+find build_osx -name \*.so -print  >> $PREFIX/make_install_osx.log 2>&1
+pushd build_osx >> $PREFIX/make_install_osx.log 2>&1
 for library in `find numpy -name \*.so`
 do
 	directory=$(dirname $library)
@@ -755,30 +808,48 @@ if [ $USE_FORTRAN == 1 ];
 then
 	export LIBRARY_PATH="/Library/Developer/CommandLineTools/SDKs/MacOSX12.0.sdk/usr/lib"
 	OPENBLAS="-L $PREFIX/Frameworks_macosx/lib -lopenblas"
-	mv build/temp.macosx-${OSX_VERSION}-x86_64-3.13/numpy/core/src/common/python_xerbla.o build/temp.macosx-${OSX_VERSION}-x86_64-3.13/numpy/core/src/common/python_xerbla.op
+	# mv build/temp.macosx-${OSX_VERSION}-x86_64-3.13/numpy/core/src/common/python_xerbla.o build/temp.macosx-${OSX_VERSION}-x86_64-3.13/numpy/core/src/common/python_xerbla.op
 else
 	OPENBLAS=""
 fi
+# Remove duplicate files:
+mkdir -p temp_osx/numpy/linalg/lapack_lite.cpython-313-darwin.so.p >> $PREFIX/make_install_osx.log 2>&1
+mv build_osx/numpy/linalg/lapack_lite.cpython-313-darwin.so.p/lapack_lite_f2c*.c.o temp_osx/numpy/linalg/lapack_lite.cpython-313-darwin.so.p/ >> $PREFIX/make_install_osx.log 2>&1
+mv build_osx/numpy/linalg/lapack_lite.cpython-313-darwin.so.p/lapack_lite_python_xerbla.c.o temp_osx/numpy/linalg/lapack_lite.cpython-313-darwin.so.p/ >> $PREFIX/make_install_osx.log 2>&1
+mkdir -p temp_osx/numpy/linalg/_umath_linalg.cpython-313-darwin.so.p  >> $PREFIX/make_install_osx.log 2>&1
+mv build_osx/numpy/linalg/_umath_linalg.cpython-313-darwin.so.p/lapack_lite_python_xerbla.c.o temp_osx/numpy/linalg/_umath_linalg.cpython-313-darwin.so.p/ >> $PREFIX/make_install_osx.log 2>&1
+mkdir -p temp_osx/numpy/random/libnpyrandom.a.p  >> $PREFIX/make_install_osx.log 2>&1
+mv build_osx/numpy/random/libnpyrandom.a.p/src_distributions_distributions.c.o temp_osx/numpy/random/libnpyrandom.a.p/src_distributions_distributions.c.o  >> $PREFIX/make_install_osx.log 2>&1
+mkdir -p temp_osx/numpy/_core/_multiarray_tests.cpython-313-darwin.so.p >> $PREFIX/make_install_osx.log 2>&1
+mv build_osx/numpy/_core/_multiarray_tests.cpython-313-darwin.so.p/src_common_*.o temp_osx/numpy/_core/_multiarray_tests.cpython-313-darwin.so.p/ >> $PREFIX/make_install_osx.log 2>&1
+mkdir -p temp_osx/numpy/_core/_umath_tests.cpython-313-darwin.so.p >> $PREFIX/make_install_osx.log 2>&1
+mv build_osx/numpy/_core/_umath_tests.cpython-313-darwin.so.p/src_common_*.o temp_osx/numpy/_core/_umath_tests.cpython-313-darwin.so.p >> $PREFIX/make_install_osx.log 2>&1
+mkdir -p temp_osx/numpy/_core/_simd.cpython-313-darwin.so.p >> $PREFIX/make_install_osx.log 2>&1
+mv build_osx/numpy/_core/_simd.cpython-313-darwin.so.p/src_common_*.o temp_osx/numpy/_core/_simd.cpython-313-darwin.so.p >> $PREFIX/make_install_osx.log 2>&1
+mkdir -p temp_osx/meson-private/cmake_OpenBLAS/CMakeFiles/3.28.2/CompilerIdCXX  >> $PREFIX/make_install_osx.log 2>&1
+mv build_osx/meson-private/cmake_OpenBLAS/CMakeFiles/3.28.2/CompilerIdCXX/CMakeCXXCompilerId.o temp_osx/meson-private/cmake_OpenBLAS/CMakeFiles/3.28.2/CompilerIdCXX  >> $PREFIX/make_install_osx.log 2>&1
+mkdir -p temp_osx/meson-private/cmake_OpenBLAS/CMakeFiles/3.28.2/CompilerIdC  >> $PREFIX/make_install_osx.log 2>&1
+mv build_osx/meson-private/cmake_OpenBLAS/CMakeFiles/3.28.2/CompilerIdC/CMakeCCompilerId.o temp_osx/meson-private/cmake_OpenBLAS/CMakeFiles/3.28.2/CompilerIdC  >> $PREFIX/make_install_osx.log 2>&1
 clang -v -undefined error -dynamiclib \
 -isysroot $OSX_SDKROOT \
 -lz -lm -lc++ \
 -lpython3.13 \
--L$PREFIX/build/lib.macosx-${OSX_VERSION}-x86_64-3.13 \
 -O3 -Wall \
-`find build -name \*.o` \
+`find build_osx -name \*.o` \
 -L$PREFIX/Library/lib \
--Lbuild/temp.macosx-${OSX_VERSION}-x86_64-3.13 \
--lnpymath \
+-Lbuild_osx/numpy/random \
 -lnpyrandom \
+-Lbuild_osx/numpy/_core \
+-lnpymath \
 $OPENBLAS \
--o build/numpy.so  >> $PREFIX/make_install_osx.log 2>&1
-cp build/numpy.so $PREFIX/build/lib.macosx-${OSX_VERSION}-x86_64-3.13 >> $PREFIX/make_install_osx.log 2>&1
+-o build_osx/numpy.so  >> $PREFIX/make_install_osx.log 2>&1
+cp build_osx/numpy.so $PREFIX/build/lib.macosx-${OSX_VERSION}-x86_64-3.13 >> $PREFIX/make_install_osx.log 2>&1
 popd  >> $PREFIX/make_install_osx.log 2>&1
 popd  >> $PREFIX/make_install_osx.log 2>&1
 # change references to openblas in numpy*.so back to the framework:
 if [ $USE_FORTRAN == 1 ];
 then
-	install_name_tool -change $PREFIX/Frameworks_macosx/lib/libopenblas.dylib @rpath/openblas.framework/openblas   build/lib.macosx-${OSX_VERSION}-x86_64-3.13/numpy/core/_multiarray_umath.cpython-313-darwin.so  >> $PREFIX/make_install_osx.log 2>&1
+	install_name_tool -change $PREFIX/Frameworks_macosx/lib/libopenblas.dylib @rpath/openblas.framework/openblas   build/lib.macosx-${OSX_VERSION}-x86_64-3.13/numpy/_core/_multiarray_umath.cpython-313-darwin.so  >> $PREFIX/make_install_osx.log 2>&1
 	install_name_tool -change $PREFIX/Frameworks_macosx/lib/libopenblas.dylib @rpath/openblas.framework/openblas   build/lib.macosx-${OSX_VERSION}-x86_64-3.13/numpy/linalg/_umath_linalg.cpython-313-darwin.so  >> $PREFIX/make_install_osx.log 2>&1
 	install_name_tool -change $PREFIX/Frameworks_macosx/lib/libopenblas.dylib @rpath/openblas.framework/openblas   build/lib.macosx-${OSX_VERSION}-x86_64-3.13/numpy/linalg/lapack_lite.cpython-313-darwin.so  >> $PREFIX/make_install_osx.log 2>&1
 	install_name_tool -change $PREFIX/Frameworks_macosx/lib/libopenblas.dylib @rpath/openblas.framework/openblas   build/lib.macosx-${OSX_VERSION}-x86_64-3.13/numpy.so  >> $PREFIX/make_install_osx.log 2>&1
@@ -790,7 +861,8 @@ python3.13 -m pip install cycler --upgrade  >> $PREFIX/make_install_osx.log 2>&1
 ## kiwisolver
 pushd packages >> $PREFIX/make_install_osx.log 2>&1
 python3.13 -m pip install cppy --upgrade  >> $PREFIX/make_install_osx.log 2>&1
-downloadSource kiwisolver >> $PREFIX/make_install_osx.log 2>&1
+# kiwisolver 1.4.8 causes a crash; it doesn't make sense and takes too long to debug.
+downloadSource kiwisolver 1.4.4 >> $PREFIX/make_install_osx.log 2>&1
 pushd kiwisolver* >> $PREFIX/make_install_osx.log 2>&1
 rm -rf build/*  >> $PREFIX/make_install_osx.log 2>&1
 env CC=clang CXX=clang++ CPPFLAGS="-isysroot $OSX_SDKROOT" CFLAGS="-isysroot $OSX_SDKROOT" CXXFLAGS="-isysroot $OSX_SDKROOT" LDFLAGS="-isysroot $OSX_SDKROOT " LDSHARED="clang -v -undefined error -dynamiclib -isysroot $OSX_SDKROOT -lz -L$PREFIX -lpython3.13 -lc++ " python3.13 setup.py build >> $PREFIX/make_install_osx.log 2>&1
@@ -803,20 +875,11 @@ popd  >> $PREFIX/make_install_osx.log 2>&1
 popd  >> $PREFIX/make_install_osx.log 2>&1
 ## Pillow
 pushd packages >> $PREFIX/make_install_osx.log 2>&1
-downloadSource Pillow >> $PREFIX/make_install_osx.log 2>&1
-pushd Pillow*  >> $PREFIX/make_install_osx.log 2>&1
-cp ../setup_Pillow.py ./setup.py >> $PREFIX/make_install_osx.log 2>&1
+downloadSource pillow >> $PREFIX/make_install_osx.log 2>&1
+pushd pillow*  >> $PREFIX/make_install_osx.log 2>&1
+# TODO: remove or redo.
+# cp ../setup_Pillow.py ./setup.py >> $PREFIX/make_install_osx.log 2>&1
 rm -rf build/*  >> $PREFIX/make_install_osx.log 2>&1
-# image show and image capture not implemented on iOS.
-if [ ! -f src/PIL/ImageShow.pybak ];
-then
-sed -i bak 's/^if sys.platform == "darwin"/& and not os.uname\(\).machine.startswith\("iP"\)/' src/PIL/ImageShow.py >> $PREFIX/make_install_osx.log 2>&1
-fi
-if [ ! -f src/PIL/ImageGrab.pybak ];
-then
-sed -i bak 's/    if sys.platform == "darwin"/& and not os.uname\(\).machine.startswith\("iP"\)/' src/PIL/ImageGrab.py >> $PREFIX/make_install_osx.log 2>&1
-fi
-#
 env CC=clang CXX=clang++ CFLAGS="-I /opt/X11/include/freetype2/ -isysroot $OSX_SDKROOT"  CXXFLAGS="-isysroot $OSX_SDKROOT" LDFLAGS="-L/opt/X11/lib -isysroot $OSX_SDKROOT" LDSHARED="clang -v -undefined error -dynamiclib -isysroot $OSX_SDKROOT -lz -L$PREFIX -lpython3.13 -lc++ " python3.13 setup.py build >> $PREFIX/make_install_osx.log 2>&1
 env CC=clang CXX=clang++ CFLAGS="-I /opt/X11/include/freetype2/ -isysroot $OSX_SDKROOT"  CXXFLAGS="-isysroot $OSX_SDKROOT" LDFLAGS="-L/opt/X11/lib -isysroot $OSX_SDKROOT" LDSHARED="clang -v -undefined error -dynamiclib -isysroot $OSX_SDKROOT -lz -L$PREFIX -lpython3.13 -lc++ " python3.13 -m pip install . >> $PREFIX/make_install_osx.log 2>&1
 mkdir -p $PREFIX/build/lib.macosx-${OSX_VERSION}-x86_64-3.13/PIL/  >> $PREFIX/make_install_osx.log 2>&1
@@ -832,19 +895,14 @@ clang -v -undefined error -dynamiclib \
 -O3 -Wall \
 `find build -name \*.o` \
 -L$PREFIX/Library/lib \
--Lbuild/temp.macosx-${OSX_VERSION}-x86_64-3.13 \
+-Lbuild/temp.macosx-11.5-x86_64-cpython-313 \
 -L/usr/local/lib -ljpeg -ltiff -L/opt/X11/lib -lfreetype \
 -o build/PIL.so  >> $PREFIX/make_install_osx.log 2>&1
 cp build/PIL.so $PREFIX/build/lib.macosx-${OSX_VERSION}-x86_64-3.13 >> $PREFIX/make_install_osx.log 2>&1
 popd  >> $PREFIX/make_install_osx.log 2>&1
 popd  >> $PREFIX/make_install_osx.log 2>&1
-# contourpy also needs meson (unmodified):
-python3.13 -m pip install meson-python  >> $PREFIX/make_install_osx.log 2>&1
+# 
 # pybind11 is required for contourpy. We update it so it works with iOS:
-# python3.13 -m pip install pybind11 --upgrade  >> $PREFIX/make_install_osx.log 2>&1
-# avoid -mmacosx-version-min when compiling for iOS:
-# cp $PYTHONHOME/lib/python3.13/site-packages/pybind11/setup_helpers.py $PYTHONHOME/lib/python3.13/site-packages/pybind11/setup_helpers.bak >> $PREFIX/make_install_osx.log 2>&1
-# cp packages/pybind11_setup_helpers.py $PYTHONHOME/lib/python3.13/site-packages/pybind11/setup_helpers.py >> $PREFIX/make_install_osx.log 2>&1
 pushd packages >> $PREFIX/make_install_osx.log 2>&1
 pushd pybind11 >> $PREFIX/make_install_osx.log 2>&1
 rm -rf build/*  >> $PREFIX/make_install_osx.log 2>&1
@@ -852,7 +910,8 @@ env CC=clang CXX=clang++ CFLAGS="-I /opt/X11/include/freetype2/ -isysroot $OSX_S
 env CC=clang CXX=clang++ CFLAGS="-I /opt/X11/include/freetype2/ -isysroot $OSX_SDKROOT"  CXXFLAGS="-isysroot $OSX_SDKROOT" LDFLAGS="-L/opt/X11/lib -isysroot $OSX_SDKROOT" LDSHARED="clang -v -undefined error -dynamiclib -isysroot $OSX_SDKROOT -lz -L$PREFIX -lpython3.13 -lc++ " PLATFORM=macosx python3.13 -m pip install . >> $PREFIX/make_install_osx.log 2>&1
 popd >> $PREFIX/make_install_osx.log 2>&1
 popd >> $PREFIX/make_install_osx.log 2>&1
-## contourpy: 
+#
+# contourpy: 
 pushd packages >> $PREFIX/make_install_osx.log 2>&1
 downloadSource contourpy >> $PREFIX/make_install_osx.log 2>&1
 pushd contourpy*  >> $PREFIX/make_install_osx.log 2>&1
@@ -869,26 +928,31 @@ popd  >> $PREFIX/make_install_osx.log 2>&1
 # Should be version 3.7.2
 pushd packages >> $PREFIX/make_install_osx.log 2>&1
 pushd matplotlib  >> $PREFIX/make_install_osx.log 2>&1
-rm -rf build/*  >> $PREFIX/make_install_osx.log 2>&1
+mkdir -p build_osx  >> $PREFIX/make_install_osx.log 2>&1
+# rm -rf build_osx/*  >> $PREFIX/make_install_osx.log 2>&1
 rm -rf .eggs  >> $PREFIX/make_install_osx.log 2>&1
-env CC=clang CXX=clang++ CFLAGS="-I /opt/X11/include/freetype2/ -isysroot $OSX_SDKROOT"  CXXFLAGS="-isysroot $OSX_SDKROOT" LDFLAGS="-L/opt/X11/lib -isysroot $OSX_SDKROOT" LDSHARED="clang -v -undefined error -dynamiclib -isysroot $OSX_SDKROOT -lz -L$PREFIX -lpython3.13 -lc++ " python3.13 setup.py build >> $PREFIX/make_install_osx.log 2>&1
-# Need to install matplotlib from the git repository so pip gets the proper version number:
-# For version number, remember to "git push --tags" after each "git pull upstream"
-# Trying again with "pip install ."
-env CC=clang CXX=clang++ CFLAGS="-I /opt/X11/include/freetype2/ -isysroot $OSX_SDKROOT" LDFLAGS="-L/opt/X11/lib -isysroot $OSX_SDKROOT" LDSHARED="clang -v -undefined error -dynamiclib -isysroot $OSX_SDKROOT -lz -L$PREFIX -lpython3.13 -lc++ " python3.13 -m pip install . --no-build-isolation >> $PREFIX/make_install_osx.log 2>&1
-# env CC=clang CXX=clang++ CFLAGS="-I /opt/X11/include/freetype2/ -isysroot $OSX_SDKROOT" LDFLAGS="-L/opt/X11/lib -isysroot $OSX_SDKROOT" LDSHARED="clang -v -undefined error -dynamiclib -isysroot $OSX_SDKROOT -lz -L$PREFIX -lpython3.13 -lc++ " python3.13 -m pip install git+https://github.com/holzschu/matplotlib.git --upgrade >> $PREFIX/make_install_osx.log 2>&1
+env CC=clang CXX=clang++ CFLAGS="-I /opt/X11/include/freetype2/ -isysroot $OSX_SDKROOT" \
+	CXXFLAGS="-isysroot $OSX_SDKROOT" \
+	LDFLAGS="-L/opt/X11/lib -isysroot $OSX_SDKROOT" \
+	LDSHARED="clang -v -undefined error -dynamiclib -isysroot $OSX_SDKROOT -lz -L$PREFIX -lpython3.13 -lc++ " \
+	$PREFIX/Library/bin/meson build_osx -Dmacosx=false >> $PREFIX/make_install_osx.log 2>&1
+pushd build_osx  >> $PREFIX/make_install_osx.log 2>&1
+ninja  >> $PREFIX/make_install_osx.log 2>&1
+popd >> $PREFIX/make_install_osx.log 2>&1
+env CC=clang CXX=clang++ CFLAGS="-I/opt/X11/include/freetype2/ -isysroot $OSX_SDKROOT" \
+	CXXFLAGS="-I/opt/X11/include/freetype2/ -isysroot $OSX_SDKROOT" \
+	LDFLAGS="-L/opt/X11/lib -isysroot $OSX_SDKROOT" \
+	LDSHARED="clang -v -undefined error -dynamiclib -isysroot $OSX_SDKROOT -lz -L$PREFIX -lpython3.13 -lc++ " \
+	python3.13 -m pip install . --no-build-isolation --config-settings=setup-args="-Dmacosx=false" >> $PREFIX/make_install_osx.log 2>&1
 # cp the dynamic libraries to build/lib.macosx.../
 echo matplotlib libraries for OSX: >> $PREFIX/make_install_osx.log 2>&1
-find build -name \*.so -print  >> $PREFIX/make_install_osx.log 2>&1
-pushd build/lib.macosx-${OSX_VERSION}-x86_64-cpython-313 >> $PREFIX/make_install_osx.log 2>&1
-for library in `find matplotlib -name \*.so`
+find build_osx -name \*.so -print  >> $PREFIX/make_install_osx.log 2>&1
+for library in `find build_osx -name \*.so`
 do
 	directory=$(dirname $library)
 	mkdir -p $PREFIX/build/lib.macosx-${OSX_VERSION}-x86_64-3.13/$directory >> $PREFIX/make_install_osx.log 2>&1
 	cp $library $PREFIX/build/lib.macosx-${OSX_VERSION}-x86_64-3.13/$library >> $PREFIX/make_install_osx.log 2>&1
 done
-# version number is still not correct! (but why?)
-# cp matplotlib/_version.py $PREFIX/Library/lib/python3.13/site-packages/matplotlib/_version.py
 popd  >> $PREFIX/make_install_osx.log 2>&1
 popd  >> $PREFIX/make_install_osx.log 2>&1
 popd  >> $PREFIX/make_install_osx.log 2>&1
@@ -909,16 +973,15 @@ popd  >> $PREFIX/make_install_osx.log 2>&1
 pushd packages >> $PREFIX/make_install_osx.log 2>&1
 pushd word_cloud  >> $PREFIX/make_install_osx.log 2>&1
 rm -rf build/*  >> $PREFIX/make_install_osx.log 2>&1
-cp ../setup_wordcloud.py setup.py  >> $PREFIX/make_install_osx.log 2>&1
 # Force rebuild of C file, to have Cython improved memory management:
 pushd wordcloud  >> $PREFIX/make_install_osx.log 2>&1
 cython query_integral_image.pyx  >> $PREFIX/make_install_osx.log 2>&1
 popd  >> $PREFIX/make_install_osx.log 2>&1
 # Now compile:
-	env CC=clang CXX=clang++ CPPFLAGS="-isysroot $OSX_SDKROOT" CFLAGS="-isysroot $OSX_SDKROOT  -DCYTHON_PEP489_MULTI_PHASE_INIT=0 -DCYTHON_USE_DICT_VERSIONS=0 $DEBUG" CXXFLAGS="-isysroot $OSX_SDKROOT  -DCYTHON_PEP489_MULTI_PHASE_INIT=0 -DCYTHON_USE_DICT_VERSIONS=0 $DEBUG" LDFLAGS="-isysroot $OSX_SDKROOT $DEBUG " LDSHARED="clang -v -undefined error -dynamiclib -isysroot $OSX_SDKROOT -lz -L$PREFIX -lpython3.13 -lc++ $DEBUG"  PLATFORM=macosx python3.13 setup.py build >> $PREFIX/make_install_osx.log 2>&1
-	env CC=clang CXX=clang++ CPPFLAGS="-isysroot $OSX_SDKROOT" CFLAGS="-isysroot $OSX_SDKROOT  -DCYTHON_PEP489_MULTI_PHASE_INIT=0 -DCYTHON_USE_DICT_VERSIONS=0 $DEBUG" CXXFLAGS="-isysroot $OSX_SDKROOT  -DCYTHON_PEP489_MULTI_PHASE_INIT=0 -DCYTHON_USE_DICT_VERSIONS=0 $DEBUG" LDFLAGS="-isysroot $OSX_SDKROOT $DEBUG " LDSHARED="clang -v -undefined error -dynamiclib -isysroot $OSX_SDKROOT -lz -L$PREFIX -lpython3.13 -lc++ $DEBUG"  PLATFORM=macosx python3.13 -m pip install .  >> $PREFIX/make_install_osx.log 2>&1
+	env CC=clang CXX=clang++ CPPFLAGS="-isysroot $OSX_SDKROOT" CFLAGS="-isysroot $OSX_SDKROOT  $CYTHON_OPTIONS $DEBUG" CXXFLAGS="-isysroot $OSX_SDKROOT  $CYTHON_OPTIONS $DEBUG" LDFLAGS="-isysroot $OSX_SDKROOT $DEBUG " LDSHARED="clang -v -undefined error -dynamiclib -isysroot $OSX_SDKROOT -lz -L$PREFIX -lpython3.13 -lc++ $DEBUG"  PLATFORM=macosx python3.13 setup.py build >> $PREFIX/make_install_osx.log 2>&1
+	env CC=clang CXX=clang++ CPPFLAGS="-isysroot $OSX_SDKROOT" CFLAGS="-isysroot $OSX_SDKROOT  $CYTHON_OPTIONS $DEBUG" CXXFLAGS="-isysroot $OSX_SDKROOT  $CYTHON_OPTIONS $DEBUG" LDFLAGS="-isysroot $OSX_SDKROOT $DEBUG " LDSHARED="clang -v -undefined error -dynamiclib -isysroot $OSX_SDKROOT -lz -L$PREFIX -lpython3.13 -lc++ $DEBUG"  PLATFORM=macosx python3.13 -m pip install .  >> $PREFIX/make_install_osx.log 2>&1
 	# And pip still deleted the version number:
-cp build/lib.macosx-${OSX_VERSION}-x86_64-cpython-313/wordcloud/_version.py $PYTHONHOME/lib/python3.13/site-packages/wordcloud/_version.py
+cp build/lib.macosx-${OSX_VERSION}-x86_64-cpython-313/wordcloud/_version.py $PYTHONHOME/lib/python3.13/site-packages/wordcloud/_version.py  >>  $PREFIX/make_install_osx.log 2>&1
 find build -name \*.so -print  >>  $PREFIX/make_install_osx.log 2>&1
 mkdir -p  $PREFIX/build/lib.macosx-${OSX_VERSION}-x86_64-3.13/wordcloud/ >> $PREFIX/make_install_osx.log 2>&1
 cp build//lib.macosx-${OSX_VERSION}-x86_64-cpython-313/wordcloud/query_integral_image.cpython-313-darwin.so $PREFIX/build/lib.macosx-${OSX_VERSION}-x86_64-3.13/wordcloud/ >> $PREFIX/make_install_osx.log 2>&1
@@ -926,9 +989,8 @@ popd  >> $PREFIX/make_install_osx.log 2>&1
 popd  >> $PREFIX/make_install_osx.log 2>&1
 # pyfftw: uses libfftw.
 pushd packages >> $PREFIX/make_install_osx.log 2>&1
-# 0.13 does not compile, for some reasons. Stick to 0.12:
-downloadSource pyFFTW >> $PREFIX/make_install_osx.log 2>&1
-pushd pyFFTW-*  >> $PREFIX/make_install_osx.log 2>&1
+downloadSource pyfftw >> $PREFIX/make_install_osx.log 2>&1
+pushd pyfftw-*  >> $PREFIX/make_install_osx.log 2>&1
 rm -rf build/*  >> $PREFIX/make_install_osx.log 2>&1
 # Make sure setup.py uses LDFLAGS:
 sed -i bak 's/self.linker_flags = \[\]/self.linker_flags = os.getenv("LDFLAGS").split(" ")/' setup.py 
@@ -936,14 +998,14 @@ sed -i bak 's/self.linker_flags = \[\]/self.linker_flags = os.getenv("LDFLAGS").
 # Had to add noexcept 2-3 times, due to migration to Cython 3.0
 touch pyfftw/pyfftw.pyx
 env SDKROOT=$OSX_SDKROOT CC=clang CXX=clang++ CPPFLAGS="-isysroot $OSX_SDKROOT" \
-	CFLAGS="-isysroot $OSX_SDKROOT  -DCYTHON_PEP489_MULTI_PHASE_INIT=0 -DCYTHON_USE_DICT_VERSIONS=0 -Wno-error=implicit-function-declaration $DEBUG" \
-	CXXFLAGS="-isysroot $OSX_SDKROOT  -DCYTHON_PEP489_MULTI_PHASE_INIT=0 -DCYTHON_USE_DICT_VERSIONS=0 -Wno-error=implicit-function-declaration $DEBUG" \
+	CFLAGS="-isysroot $OSX_SDKROOT  $CYTHON_OPTIONS -Wno-error=implicit-function-declaration $DEBUG" \
+	CXXFLAGS="-isysroot $OSX_SDKROOT  $CYTHON_OPTIONS -Wno-error=implicit-function-declaration $DEBUG" \
 	LDFLAGS="-isysroot $OSX_SDKROOT $DEBUG " \
 	LDSHARED="clang -v -undefined error -dynamiclib -isysroot $OSX_SDKROOT -lz -L$PREFIX -lpython3.13 -lc++ $DEBUG" \
 	PLATFORM=macosx PYFFTW_INCLUDE=$PREFIX/Frameworks_macosx/include/ PYFFTW_LIB_DIR=$PREFIX/Frameworks_macosx/lib python3.13 setup.py build  >> $PREFIX/make_install_osx.log 2>&1
 env SDKROOT=$OSX_SDKROOT CC=clang CXX=clang++ CPPFLAGS="-isysroot $OSX_SDKROOT" \
-	CFLAGS="-isysroot $OSX_SDKROOT  -DCYTHON_PEP489_MULTI_PHASE_INIT=0 -DCYTHON_USE_DICT_VERSIONS=0 -Wno-error=implicit-function-declaration $DEBUG" \
-	CXXFLAGS="-isysroot $OSX_SDKROOT  -DCYTHON_PEP489_MULTI_PHASE_INIT=0 -DCYTHON_USE_DICT_VERSIONS=0 -Wno-error=implicit-function-declaration $DEBUG" \
+	CFLAGS="-isysroot $OSX_SDKROOT  $CYTHON_OPTIONS -Wno-error=implicit-function-declaration $DEBUG" \
+	CXXFLAGS="-isysroot $OSX_SDKROOT  $CYTHON_OPTIONS -Wno-error=implicit-function-declaration $DEBUG" \
 	LDFLAGS="-isysroot $OSX_SDKROOT $DEBUG " \
 	LDSHARED="clang -v -undefined error -dynamiclib -isysroot $OSX_SDKROOT -lz -L$PREFIX -lpython3.13 -lc++ $DEBUG" \
 	PLATFORM=macosx PYFFTW_INCLUDE=$PREFIX/Frameworks_macosx/include/ PYFFTW_LIB_DIR=$PREFIX/Frameworks_macosx/lib python3.13 -m pip install . --no-build-isolation >> $PREFIX/make_install_osx.log 2>&1
@@ -987,12 +1049,14 @@ then
 		CVXOPT_SUITESPARSE_SRC_DIR=$PREFIX/packages/SuiteSparse \
 		python3.13 -m pip install . >> $PREFIX/make_install_osx.log 2>&1
 	echo "cvxopt libraries for OSX: "  >> $PREFIX/make_install_osx.log 2>&1
+	pushd build/lib.macosx-${OSX_VERSION}-x86_64-cpython-313  >> $PREFIX/make_install_osx.log 2>&1
 	find . -name \*.so  >> $PREFIX/make_install_osx.log 2>&1
-    for library in cvxopt/cholmod.cpython-313-darwin.so cvxopt/misc_solvers.cpython-313-darwin.so cvxopt/amd.cpython-313-darwin.so cvxopt/base.cpython-313-darwin.so cvxopt/umfpack.cpython-313-darwin.so cvxopt/fftw.cpython-313-darwin.so cvxopt/blas.cpython-313-darwin.so cvxopt/lapack.cpython-313-darwin.so
+    # cvxopt/cholmod.cpython-313-darwin.so cvxopt/misc_solvers.cpython-313-darwin.so cvxopt/amd.cpython-313-darwin.so cvxopt/base.cpython-313-darwin.so cvxopt/umfpack.cpython-313-darwin.so cvxopt/fftw.cpython-313-darwin.so cvxopt/blas.cpython-313-darwin.so cvxopt/lapack.cpython-313-darwin.so
+    for library in `find cvxopt -name \*.so`
 	do
 		directory=$(dirname $library)
 		mkdir -p $PREFIX/build/lib.macosx-${OSX_VERSION}-x86_64-3.13/$directory >> $PREFIX/make_install_osx.log 2>&1
-		cp ./build/lib.macosx-${OSX_VERSION}-x86_64-cpython-313/$library $PREFIX/build/lib.macosx-${OSX_VERSION}-x86_64-3.13/$library >> $PREFIX/make_install_osx.log 2>&1
+		cp $library $PREFIX/build/lib.macosx-${OSX_VERSION}-x86_64-3.13/$library >> $PREFIX/make_install_osx.log 2>&1
 		# Fix the reference to libopenblas.dylib -> openblas.framework
 		if [[ $(otool -l $PREFIX/build/lib.macosx-${OSX_VERSION}-x86_64-3.13/$library | grep libopenblas) ]];
 		then 
@@ -1001,423 +1065,423 @@ then
 	done
 	popd  >> $PREFIX/make_install_osx.log 2>&1
 	popd  >> $PREFIX/make_install_osx.log 2>&1
+	popd  >> $PREFIX/make_install_osx.log 2>&1
 	unset LIBRARY_PATH
 fi
 # Pandas
 pushd packages >> $PREFIX/make_install_osx.log 2>&1
 downloadSource pandas  >> $PREFIX/make_install_osx.log 2>&1
 pushd pandas*  >> $PREFIX/make_install_osx.log 2>&1
-rm -rf build/*  >> $PREFIX/make_install_osx.log 2>&1
+mkdir -p build_osx >> $PREFIX/make_install_osx.log 2>&1
+rm -rf build_osx/*  >> $PREFIX/make_install_osx.log 2>&1
 # To make a single module, we need these functions to be static:
-sed -i bak 's/^void.*traced/static &/' ./pandas/_libs/src/klib/khash_python.h >> $PREFIX/make_install_osx.log 2>&1
-env CC=clang CXX=clang++ CPPFLAGS="-isysroot $OSX_SDKROOT" CFLAGS="-isysroot $OSX_SDKROOT  -DCYTHON_PEP489_MULTI_PHASE_INIT=0 -DCYTHON_USE_DICT_VERSIONS=0 $DEBUG" CXXFLAGS="-isysroot $OSX_SDKROOT  -DCYTHON_PEP489_MULTI_PHASE_INIT=0 -DCYTHON_USE_DICT_VERSIONS=0 $DEBUG" LDFLAGS="-isysroot $OSX_SDKROOT $DEBUG " LDSHARED="clang -v -undefined error -dynamiclib -isysroot $OSX_SDKROOT -lz -L$PREFIX -lpython3.13 -lc++ $DEBUG" NPY_BLAS_ORDER="" NPY_LAPACK_ORDER="" MATHLIB="-lm" PLATFORM=macosx python3.13 setup.py build  >> $PREFIX/make_install_osx.log 2>&1
-env CC=clang CXX=clang++ CPPFLAGS="-isysroot $OSX_SDKROOT" CFLAGS="-isysroot $OSX_SDKROOT  -DCYTHON_PEP489_MULTI_PHASE_INIT=0 -DCYTHON_USE_DICT_VERSIONS=0 $DEBUG" CXXFLAGS="-isysroot $OSX_SDKROOT  -DCYTHON_PEP489_MULTI_PHASE_INIT=0 -DCYTHON_USE_DICT_VERSIONS=0 $DEBUG" LDFLAGS="-isysroot $OSX_SDKROOT $DEBUG " LDSHARED="clang -v -undefined error -dynamiclib -isysroot $OSX_SDKROOT -lz -L$PREFIX -lpython3.13 -lc++ $DEBUG" NPY_BLAS_ORDER="" NPY_LAPACK_ORDER="" MATHLIB="-lm" PLATFORM=macosx python3.13 -m pip install . --no-build-isolation >> $PREFIX/make_install_osx.log 2>&1
+sed -i bak 's/^void.*traced/static &/' ./pandas/_libs/include/pandas/vendored/klib/khash_python.h >> $PREFIX/make_install_osx.log 2>&1
+env CC=clang CXX=clang++ CPPFLAGS="-isysroot $OSX_SDKROOT" CFLAGS="-isysroot $OSX_SDKROOT  $CYTHON_OPTIONS $DEBUG" CXXFLAGS="-isysroot $OSX_SDKROOT  $CYTHON_OPTIONS $DEBUG" LDFLAGS="-isysroot $OSX_SDKROOT $DEBUG " LDSHARED="clang -v -undefined error -dynamiclib -isysroot $OSX_SDKROOT -lz -L$PREFIX -lpython3.13 -lc++ $DEBUG" NPY_BLAS_ORDER="" NPY_LAPACK_ORDER="" MATHLIB="-lm" PLATFORM=macosx $PREFIX/Library/bin/meson build_osx >> $PREFIX/make_install_osx.log 2>&1
+pushd build_osx  >> $PREFIX/make_install_osx.log 2>&1
+ninja  >> $PREFIX/make_install_osx.log 2>&1
+popd  >> $PREFIX/make_install_osx.log 2>&1
+env CC=clang CXX=clang++ CPPFLAGS="-isysroot $OSX_SDKROOT" CFLAGS="-isysroot $OSX_SDKROOT  $CYTHON_OPTIONS $DEBUG" CXXFLAGS="-isysroot $OSX_SDKROOT  $CYTHON_OPTIONS $DEBUG" LDFLAGS="-isysroot $OSX_SDKROOT $DEBUG " LDSHARED="clang -v -undefined error -dynamiclib -isysroot $OSX_SDKROOT -lz -L$PREFIX -lpython3.13 -lc++ $DEBUG" NPY_BLAS_ORDER="" NPY_LAPACK_ORDER="" MATHLIB="-lm" PLATFORM=macosx python3.13 -m pip install . --no-build-isolation >> $PREFIX/make_install_osx.log 2>&1
 echo pandas libraries for OSX: >> $PREFIX/make_install_osx.log 2>&1
-find build -name \*.so -print  >> $PREFIX/make_install_osx.log 2>&1
+find build_osx -name \*.so -print  >> $PREFIX/make_install_osx.log 2>&1
 mkdir -p $PREFIX/build/lib.macosx-${OSX_VERSION}-x86_64-3.13/pandas/  >> $PREFIX/make_install_osx.log 2>&1
-mkdir -p $PREFIX/build/lib.macosx-${OSX_VERSION}-x86_64-3.13/pandas/io  >> $PREFIX/make_install_osx.log 2>&1
-mkdir -p $PREFIX/build/lib.macosx-${OSX_VERSION}-x86_64-3.13/pandas/io/sas  >> $PREFIX/make_install_osx.log 2>&1
 mkdir -p $PREFIX/build/lib.macosx-${OSX_VERSION}-x86_64-3.13/pandas/_libs  >> $PREFIX/make_install_osx.log 2>&1
 mkdir -p $PREFIX/build/lib.macosx-${OSX_VERSION}-x86_64-3.13/pandas/_libs/window  >> $PREFIX/make_install_osx.log 2>&1
 mkdir -p $PREFIX/build/lib.macosx-${OSX_VERSION}-x86_64-3.13/pandas/_libs/tslibs  >> $PREFIX/make_install_osx.log 2>&1
-cp build/lib.macosx-${OSX_VERSION}-x86_64-cpython-313/pandas/io/sas/_sas.cpython-313-darwin.so $PREFIX/build/lib.macosx-${OSX_VERSION}-x86_64-3.13/pandas/io/sas >> $PREFIX/make_install_osx.log 2>&1
-cp build/lib.macosx-${OSX_VERSION}-x86_64-cpython-313/pandas/_libs/*.so $PREFIX/build/lib.macosx-${OSX_VERSION}-x86_64-3.13/pandas/_libs >> $PREFIX/make_install_osx.log 2>&1
-cp build/lib.macosx-${OSX_VERSION}-x86_64-cpython-313/pandas/_libs/window/*.so $PREFIX/build/lib.macosx-${OSX_VERSION}-x86_64-3.13/pandas/_libs/window >> $PREFIX/make_install_osx.log 2>&1
-cp build/lib.macosx-${OSX_VERSION}-x86_64-cpython-313/pandas/_libs/tslibs/*.so $PREFIX/build/lib.macosx-${OSX_VERSION}-x86_64-3.13/pandas/_libs/tslibs >> $PREFIX/make_install_osx.log 2>&1
+cp build_osx/pandas/_libs/*.so $PREFIX/build/lib.macosx-${OSX_VERSION}-x86_64-3.13/pandas/_libs >> $PREFIX/make_install_osx.log 2>&1
+cp build_osx/pandas/_libs/window/*.so $PREFIX/build/lib.macosx-${OSX_VERSION}-x86_64-3.13/pandas/_libs/window >> $PREFIX/make_install_osx.log 2>&1
+cp build_osx/pandas/_libs/tslibs/*.so $PREFIX/build/lib.macosx-${OSX_VERSION}-x86_64-3.13/pandas/_libs/tslibs >> $PREFIX/make_install_osx.log 2>&1
 # Making a single pandas dynamic library:
 echo Making a single pandas library for OSX: >> $PREFIX/make_install_osx.log 2>&1
+mkdir -p tmp_osx/pandas/_libs/lib.cpython-313-darwin.so.p/
+mkdir -p tmp_osx/pandas/_libs/parsers.cpython-313-darwin.so.p
+mkdir -p tmp_osx/pandas/_libs/pandas_parser.cpython-313-darwin.so.p
+mv build_osx/pandas/_libs/lib.cpython-313-darwin.so.p/src_parser_tokenizer.c.o  tmp_osx/pandas/_libs/lib.cpython-313-darwin.so.p/
+mv build_osx/pandas/_libs/parsers.cpython-313-darwin.so.p/src_parser_tokenizer.c.o tmp_osx/pandas/_libs/parsers.cpython-313-darwin.so.p
+mv build_osx/pandas/_libs/pandas_parser.cpython-313-darwin.so.p/src_parser_tokenizer.c.o tmp_osx/pandas/_libs/pandas_parser.cpython-313-darwin.so.p/src_parser_tokenizer.c.o
+mv build_osx/pandas/_libs/parsers.cpython-313-darwin.so.p/src_parser_io.c.o tmp_osx/pandas/_libs/parsers.cpython-313-darwin.so.p/
+#
 clang -v -undefined error -dynamiclib \
 -isysroot $OSX_SDKROOT \
 -lz -lm -lc++ \
 -lpython3.13 \
 -L$PREFIX/build/lib.macosx-${OSX_VERSION}-x86_64-3.13 \
 -O3 -Wall  \
-`find build -name \*.o` \
+`find build_osx -name \*.o` \
 -L$PREFIX/Library/lib \
--Lbuild/temp.macosx-${OSX_VERSION}-x86_64-cpython-313 \
--o build/pandas.so  >> $PREFIX/make_install_osx.log 2>&1
-cp build/pandas.so $PREFIX/build/lib.macosx-${OSX_VERSION}-x86_64-3.13 >> $PREFIX/make_install_osx.log 2>&1
+-o build_osx/pandas.so  >> $PREFIX/make_install_osx.log 2>&1
+cp build_osx/pandas.so $PREFIX/build/lib.macosx-${OSX_VERSION}-x86_64-3.13 >> $PREFIX/make_install_osx.log 2>&1
 popd  >> $PREFIX/make_install_osx.log 2>&1
 popd  >> $PREFIX/make_install_osx.log 2>&1
 # nbextensions (all disabled with notebook v7 -- are they still useful for nbclassic?)
-	# python3.13 -m pip install --upgrade jupyter_contrib_core >> $PREFIX/make_install_osx.log 2>&1
-	# python3.13 -m pip install --upgrade jupyter_contrib_nbextensions >> $PREFIX/make_install_osx.log 2>&1
-	python3.13 -m pip install --upgrade jupyter_nbextensions_configurator >> $PREFIX/make_install_osx.log 2>&1
-	python3.13 -m pip install --upgrade ipysheet >> $PREFIX/make_install_osx.log 2>&1
-	# python3.13 -m pip install --upgrade widgetsnbextension >> $PREFIX/make_install_osx.log 2>&1
-	# # Bug fix for cell_filter (jquery, not jqueryui): 
-	# cp packages/cell_filter.js $PREFIX/Library/lib/python3.13/site-packages/jupyter_contrib_nbextensions/nbextensions/cell_filter/cell_filter.js  >> $PREFIX/make_install_osx.log 2>&1
-	# replace template_path with template_paths to avoid errors at loading: 
-	# Remove these lines in jupyter_contrib_nbextensions is updated (above 0.5.1) or latex_envs (above 1.4.6)
-	# cp packages/jupyter_contrib_nbextensions/latex_envs_latex_envs.py $PREFIX/Library/lib/python3.13/site-packages/latex_envs/latex_envs.py
-	# cp packages/jupyter_contrib_nbextensions/config_scripts/highlight_html_cfg.py $PREFIX/Library/lib/python3.13/site-packages/jupyter_contrib_nbextensions/config_scripts/highlight_html_cfg.py
-	# cp packages/jupyter_contrib_nbextensions/config_scripts/highlight_latex_cfg.py $PREFIX/Library/lib/python3.13/site-packages/jupyter_contrib_nbextensions/config_scripts/highlight_latex_cfg.py
-	# cp packages/jupyter_contrib_nbextensions/nbconvert_support/exporter_inliner.py $PREFIX/Library/lib/python3.13/site-packages/jupyter_contrib_nbextensions/nbconvert_support/exporter_inliner.py
-	# cp packages/jupyter_contrib_nbextensions/nbconvert_support/toc2.py $PREFIX/Library/lib/python3.13/site-packages/jupyter_contrib_nbextensions/nbconvert_support/toc2.py
-	# cp packages/jupyter_contrib_nbextensions/install.py $PREFIX/Library/lib/python3.13/site-packages/jupyter_contrib_nbextensions/install.py
-	# cp packages/jupyter_contrib_nbextensions/migrate.py $PREFIX/Library/lib/python3.13/site-packages/jupyter_contrib_nbextensions/migrate.py
-	# dill: preparing for the next step
-	# python3.13 -m pip install dill >> $PREFIX/make_install_osx.log 2>&1
-	# bokeh: Pure Python, only one modification, where it stores data:
-	python3.13 -m pip install --upgrade jsdeps >> $PREFIX/make_install_osx.log 2>&1
-	pushd packages >> $PREFIX/make_install_osx.log 2>&1
-	downloadSource bokeh  >> $PREFIX/make_install_osx.log 2>&1
-	pushd bokeh-* >> $PREFIX/make_install_osx.log 2>&1
-	cp ../bokeh_sampledata.py src/bokeh/util/sampledata.py >> $PREFIX/make_install_osx.log 2>&1
-	python3.13 -m pip install .  >> $PREFIX/make_install_osx.log 2>&1
-	popd  >> $PREFIX/make_install_osx.log 2>&1
-	popd  >> $PREFIX/make_install_osx.log 2>&1
-	# Also jupyter_bokeh for jupyterlab:
-	pushd packages >> $PREFIX/make_install_osx.log 2>&1
-	# This one might create issues when re-downloading (jupyter-bokeh / jupyter_bokeh)
-	downloadSource jupyter_bokeh >> $PREFIX/make_install_osx.log 2>&1
-	pushd jupyter_bokeh-* >> $PREFIX/make_install_osx.log 2>&1
-	rm -rf build/*  >> $PREFIX/make_install_osx.log 2>&1
-	env CC=clang CXX=clang++ CPPFLAGS="-isysroot $OSX_SDKROOT" CFLAGS="-isysroot $OSX_SDKROOT" CXXFLAGS="-isysroot $OSX_SDKROOT" LDFLAGS="-isysroot $OSX_SDKROOT " LDSHARED="clang -v -undefined error -dynamiclib -isysroot $OSX_SDKROOT -lz -L$PREFIX -lpython3.13 -lc++ " python3.13 setup.py build  >> $PREFIX/make_install_osx.log 2>&1
-	env CC=clang CXX=clang++ CPPFLAGS="-isysroot $OSX_SDKROOT" CFLAGS="-isysroot $OSX_SDKROOT" CXXFLAGS="-isysroot $OSX_SDKROOT" LDFLAGS="-isysroot $OSX_SDKROOT " LDSHARED="clang -v -undefined error -dynamiclib -isysroot $OSX_SDKROOT -lz -L$PREFIX -lpython3.13 -lc++ " python3.13 -m pip install . --no-build-isolation >> $PREFIX/make_install_osx.log 2>&1
-	popd  >> $PREFIX/make_install_osx.log 2>&1
-	popd  >> $PREFIX/make_install_osx.log 2>&1
-	# pyerfa (for astropy >= 4.6.2)
-	pushd packages >> $PREFIX/make_install_osx.log 2>&1
-	# pushd pyerfa  >> $PREFIX/make_install_osx.log 2>&1
-	downloadSource pyerfa  >> $PREFIX/make_install_osx.log 2>&1
-	pushd pyerfa-*  >> $PREFIX/make_install_osx.log 2>&1
-	rm -rf build/*  >> $PREFIX/make_install_osx.log 2>&1
-	rm -rf .eggs  >> $PREFIX/make_install_osx.log 2>&1
-	python3.13 setup.py build >> $PREFIX/make_install_osx.log 2>&1
-	# pip install . does not work here 
-    python3.13 -m pip install . --no-build-isolation >> $PREFIX/make_install_osx.log 2>&1
-	echo pyerfa libraries for OSX: >> $PREFIX/make_install_osx.log 2>&1
-	find build -name \*.so -print  >> $PREFIX/make_install_osx.log 2>&1
-	mkdir -p $PREFIX/build/lib.macosx-${OSX_VERSION}-x86_64-3.13/erfa/  >> $PREFIX/make_install_osx.log 2>&1
-    cp  build/lib.macosx-${OSX_VERSION}-x86_64-cpython-313/erfa/ufunc.cpython-313-darwin.so \
-$PREFIX/build/lib.macosx-${OSX_VERSION}-x86_64-3.13/erfa/ >> $PREFIX/make_install_osx.log 2>&1
-	popd  >> $PREFIX/make_install_osx.log 2>&1
-	popd  >> $PREFIX/make_install_osx.log 2>&1
-	# astropy
-	python3.13 -m pip install extension_helpers >> $PREFIX/make_install_osx.log 2>&1
-	pushd packages >> $PREFIX/make_install_osx.log 2>&1
-    downloadSource astropy  >> $PREFIX/make_install_osx.log 2>&1
-	pushd astropy*  >> $PREFIX/make_install_osx.log 2>&1
-	rm -rf build/*  >> $PREFIX/make_install_osx.log 2>&1
-	# We need to edit the position of .astropy (updated for 4.6.2):
-	# Only do this once!
-	if [ ! -f astropy/config/paths.pybak ];
-	then
-	sed -i bak 's/^        homedir = os.path.expanduser(...)/&\
-        # iOS: change homedir to HOME/Documents
-        if (sys.platform == "darwin" and os.uname().machine.startswith("iP")):\
-            homedir = homedir + "/Documents"' astropy/config/paths.py  >> $PREFIX/make_install_osx.log 2>&1
-	fi
-	env CC=clang CXX=clang++ CPPFLAGS="-isysroot $OSX_SDKROOT" CFLAGS="-isysroot $OSX_SDKROOT  -DCYTHON_PEP489_MULTI_PHASE_INIT=0 -DCYTHON_USE_DICT_VERSIONS=0 $DEBUG" CXXFLAGS="-isysroot $OSX_SDKROOT  -DCYTHON_PEP489_MULTI_PHASE_INIT=0 -DCYTHON_USE_DICT_VERSIONS=0 $DEBUG" LDFLAGS="-isysroot $OSX_SDKROOT $DEBUG" LDSHARED="clang -v -undefined error -dynamiclib -isysroot $OSX_SDKROOT -lz -L$PREFIX -lpython3.13 -lc++ $DEBUG" NPY_BLAS_ORDER="" NPY_LAPACK_ORDER="" MATHLIB="-lm" PLATFORM=macosx python3.13 setup.py build  >> $PREFIX/make_install_osx.log 2>&1
-	# pip install . pulls the old version from pip, so fails.
-#	env CC=clang CXX=clang++ CPPFLAGS="-isysroot $OSX_SDKROOT" CFLAGS="-isysroot $OSX_SDKROOT  -DCYTHON_PEP489_MULTI_PHASE_INIT=0 -DCYTHON_USE_DICT_VERSIONS=0 $DEBUG" CXXFLAGS="-isysroot $OSX_SDKROOT  -DCYTHON_PEP489_MULTI_PHASE_INIT=0 -DCYTHON_USE_DICT_VERSIONS=0 $DEBUG" LDFLAGS="-isysroot $OSX_SDKROOT $DEBUG -L/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/lib" LDSHARED="clang -v -undefined error -dynamiclib -isysroot $OSX_SDKROOT -L/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/lib -lz -L$PREFIX -lpython3.13 -lc++ $DEBUG" NPY_BLAS_ORDER="" NPY_LAPACK_ORDER="" MATHLIB="-lm" PLATFORM=macosx python3.13 -m pip install .  >> $PREFIX/make_install_osx.log 2>&1
-	env CC=clang CXX=clang++ CPPFLAGS="-isysroot $OSX_SDKROOT" CFLAGS="-isysroot $OSX_SDKROOT  -DCYTHON_PEP489_MULTI_PHASE_INIT=0 -DCYTHON_USE_DICT_VERSIONS=0 $DEBUG" CXXFLAGS="-isysroot $OSX_SDKROOT  -DCYTHON_PEP489_MULTI_PHASE_INIT=0 -DCYTHON_USE_DICT_VERSIONS=0 $DEBUG" LDFLAGS="-isysroot $OSX_SDKROOT $DEBUG " LDSHARED="clang -v -undefined error -dynamiclib -isysroot $OSX_SDKROOT -lz -L$PREFIX -lpython3.13 -lc++ $DEBUG" NPY_BLAS_ORDER="" NPY_LAPACK_ORDER="" MATHLIB="-lm" PLATFORM=macosx python3.13 -m pip install . --no-build-isolation --no-deps >> $PREFIX/make_install_osx.log 2>&1
-	# python3.13 setup.py install  >> $PREFIX/make_install_osx.log 2>&1
-	# TODO: move that to a `find . -name \*.so...`
-	echo astropy libraries for OSX: >> $PREFIX/make_install_osx.log 2>&1
-	find build -name \*.so -print  >> $PREFIX/make_install_osx.log 2>&1
-	pushd build/lib.macosx-${OSX_VERSION}-x86_64-cpython-313 >> $PREFIX/make_install_osx.log 2>&1
-	for library in `find astropy -name \*.so`
-	do
-		directory=$(dirname $library)
-		mkdir -p $PREFIX/build/lib.macosx-${OSX_VERSION}-x86_64-3.13/$directory >> $PREFIX/make_install_osx.log 2>&1
-		cp $library $PREFIX/build/lib.macosx-${OSX_VERSION}-x86_64-3.13/$library >> $PREFIX/make_install_osx.log 2>&1
-	done
-	popd  >> $PREFIX/make_install_osx.log 2>&1
-	# Making a single astropy dynamic library:
-	echo Making a single astropy library for OSX: >> $PREFIX/make_install_osx.log 2>&1
-	clang -v -undefined error -dynamiclib \
-		-isysroot $OSX_SDKROOT \
-		-lz -lm -lc++ \
-		-lpython3.13 \
-		-L$PREFIX/build/lib.macosx-${OSX_VERSION}-x86_64-3.13 \
-		-O3 -Wall  \
-		`find build -name \*.o` \
-		-L$PREFIX/Library/lib \
-		-Lbuild/temp.macosx-${OSX_VERSION}-x86_64-cpython-313 \
-		-o build/astropy.so  >> $PREFIX/make_install_osx.log 2>&1
+# python3.13 -m pip install --upgrade jupyter_contrib_core >> $PREFIX/make_install_osx.log 2>&1
+# python3.13 -m pip install --upgrade jupyter_contrib_nbextensions >> $PREFIX/make_install_osx.log 2>&1
+python3.13 -m pip install --upgrade jupyter_nbextensions_configurator >> $PREFIX/make_install_osx.log 2>&1
+python3.13 -m pip install --upgrade ipysheet >> $PREFIX/make_install_osx.log 2>&1
+# python3.13 -m pip install --upgrade widgetsnbextension >> $PREFIX/make_install_osx.log 2>&1
+# # Bug fix for cell_filter (jquery, not jqueryui): 
+# cp packages/cell_filter.js $PREFIX/Library/lib/python3.13/site-packages/jupyter_contrib_nbextensions/nbextensions/cell_filter/cell_filter.js  >> $PREFIX/make_install_osx.log 2>&1
+# replace template_path with template_paths to avoid errors at loading: 
+# Remove these lines if jupyter_contrib_nbextensions is updated (above 0.5.1) or latex_envs (above 1.4.6)
+# cp packages/jupyter_contrib_nbextensions/latex_envs_latex_envs.py $PREFIX/Library/lib/python3.13/site-packages/latex_envs/latex_envs.py
+# cp packages/jupyter_contrib_nbextensions/config_scripts/highlight_html_cfg.py $PREFIX/Library/lib/python3.13/site-packages/jupyter_contrib_nbextensions/config_scripts/highlight_html_cfg.py
+# cp packages/jupyter_contrib_nbextensions/config_scripts/highlight_latex_cfg.py $PREFIX/Library/lib/python3.13/site-packages/jupyter_contrib_nbextensions/config_scripts/highlight_latex_cfg.py
+# cp packages/jupyter_contrib_nbextensions/nbconvert_support/exporter_inliner.py $PREFIX/Library/lib/python3.13/site-packages/jupyter_contrib_nbextensions/nbconvert_support/exporter_inliner.py
+# cp packages/jupyter_contrib_nbextensions/nbconvert_support/toc2.py $PREFIX/Library/lib/python3.13/site-packages/jupyter_contrib_nbextensions/nbconvert_support/toc2.py
+# cp packages/jupyter_contrib_nbextensions/install.py $PREFIX/Library/lib/python3.13/site-packages/jupyter_contrib_nbextensions/install.py
+# cp packages/jupyter_contrib_nbextensions/migrate.py $PREFIX/Library/lib/python3.13/site-packages/jupyter_contrib_nbextensions/migrate.py
+# bokeh: Pure Python, only one modification, where it stores data:
+python3.13 -m pip install --upgrade jsdeps >> $PREFIX/make_install_osx.log 2>&1
+# No need to edit the bokeh package anymore; we keep it because we had it (backwards compatibility)
+python3.13 -m pip install --upgrade bokeh  >> $PREFIX/make_install_osx.log 2>&1
+# Also jupyter_bokeh for jupyterlab (for that one, python setup.py build fails, pip install works):
+python3.13 -m pip install --upgrade jupyter-bokeh  >> $PREFIX/make_install_osx.log 2>&1
+# pyerfa (for astropy >= 4.6.2)
+pushd packages >> $PREFIX/make_install_osx.log 2>&1
+# pushd pyerfa  >> $PREFIX/make_install_osx.log 2>&1
+downloadSource pyerfa  >> $PREFIX/make_install_osx.log 2>&1
+pushd pyerfa-*  >> $PREFIX/make_install_osx.log 2>&1
+rm -rf build/*  >> $PREFIX/make_install_osx.log 2>&1
+rm -rf .eggs  >> $PREFIX/make_install_osx.log 2>&1
+python3.13 setup.py build >> $PREFIX/make_install_osx.log 2>&1
+python3.13 -m pip install . --no-build-isolation >> $PREFIX/make_install_osx.log 2>&1
+echo pyerfa libraries for OSX: >> $PREFIX/make_install_osx.log 2>&1
+find build -name \*.so -print  >> $PREFIX/make_install_osx.log 2>&1
+mkdir -p $PREFIX/build/lib.macosx-${OSX_VERSION}-x86_64-3.13/erfa/  >> $PREFIX/make_install_osx.log 2>&1
+cp  build/lib.macosx-${OSX_VERSION}-x86_64-cpython-313/erfa/ufunc.*.so \
+	$PREFIX/build/lib.macosx-${OSX_VERSION}-x86_64-3.13/erfa/ >> $PREFIX/make_install_osx.log 2>&1
+popd  >> $PREFIX/make_install_osx.log 2>&1
+popd  >> $PREFIX/make_install_osx.log 2>&1
+# astropy
+python3.13 -m pip install extension_helpers >> $PREFIX/make_install_osx.log 2>&1
+python3.13 -m pip install astropy-iers-data >> $PREFIX/make_install_osx.log 2>&1
+pushd packages >> $PREFIX/make_install_osx.log 2>&1
+downloadSource astropy  >> $PREFIX/make_install_osx.log 2>&1
+pushd astropy*  >> $PREFIX/make_install_osx.log 2>&1
+rm -rf build/*  >> $PREFIX/make_install_osx.log 2>&1
+# We need to edit the position of .astropy (updated for 4.6.2):
+# Only do this once!
+if [ ! -f astropy/config/paths.pybak ];
+then
+    sed -i bak 's/^        innerdir = Path.home() \/ f".{pkgname}"/&\
+        # iOS: change homedir to HOME\/Documents\
+        if (sys.platform == "ios"):\
+            innerdir =  Path.home() \/ "Documents" \/ f".{pkgname}"/' astropy/config/paths.py >> $PREFIX/make_install_osx.log 2>&1
+fi
+env CC=clang CXX=clang++ CPPFLAGS="-isysroot $OSX_SDKROOT" CFLAGS="-isysroot $OSX_SDKROOT  $CYTHON_OPTIONS $DEBUG" CXXFLAGS="-isysroot $OSX_SDKROOT  $CYTHON_OPTIONS $DEBUG" LDFLAGS="-isysroot $OSX_SDKROOT $DEBUG" LDSHARED="clang -v -undefined error -dynamiclib -isysroot $OSX_SDKROOT -lz -L$PREFIX -lpython3.13 -lc++ $DEBUG" NPY_BLAS_ORDER="" NPY_LAPACK_ORDER="" MATHLIB="-lm" PLATFORM=macosx python3.13 setup.py build  >> $PREFIX/make_install_osx.log 2>&1
+env CC=clang CXX=clang++ CPPFLAGS="-isysroot $OSX_SDKROOT" CFLAGS="-isysroot $OSX_SDKROOT  $CYTHON_OPTIONS $DEBUG" CXXFLAGS="-isysroot $OSX_SDKROOT  $CYTHON_OPTIONS $DEBUG" LDFLAGS="-isysroot $OSX_SDKROOT $DEBUG " LDSHARED="clang -v -undefined error -dynamiclib -isysroot $OSX_SDKROOT -lz -L$PREFIX -lpython3.13 -lc++ $DEBUG" NPY_BLAS_ORDER="" NPY_LAPACK_ORDER="" MATHLIB="-lm" PLATFORM=macosx python3.13 -m pip install . --no-build-isolation --no-deps >> $PREFIX/make_install_osx.log 2>&1
+echo astropy libraries for OSX: >> $PREFIX/make_install_osx.log 2>&1
+find build -name \*.so -print  >> $PREFIX/make_install_osx.log 2>&1
+pushd build/lib.macosx-${OSX_VERSION}-x86_64-cpython-313 >> $PREFIX/make_install_osx.log 2>&1
+for library in `find astropy -name \*.so`
+do
+	directory=$(dirname $library)
+	mkdir -p $PREFIX/build/lib.macosx-${OSX_VERSION}-x86_64-3.13/$directory >> $PREFIX/make_install_osx.log 2>&1
+	cp $library $PREFIX/build/lib.macosx-${OSX_VERSION}-x86_64-3.13/$library >> $PREFIX/make_install_osx.log 2>&1
+done
+popd  >> $PREFIX/make_install_osx.log 2>&1
+# Making a single astropy dynamic library:
+echo Making a single astropy library for OSX: >> $PREFIX/make_install_osx.log 2>&1
+clang -v -undefined error -dynamiclib \
+	-isysroot $OSX_SDKROOT \
+	-lz -lm -lc++ \
+	-lpython3.13 \
+	-L$PREFIX/build/lib.macosx-${OSX_VERSION}-x86_64-3.13 \
+	-O3 -Wall  \
+	`find build -name \*.o` \
+	-L$PREFIX/Library/lib \
+	-Lbuild/temp.macosx-${OSX_VERSION}-x86_64-cpython-313 \
+	-o build/astropy.so  >> $PREFIX/make_install_osx.log 2>&1
 	cp build/astropy.so $PREFIX/build/lib.macosx-${OSX_VERSION}-x86_64-3.13 >> $PREFIX/make_install_osx.log 2>&1
 	popd  >> $PREFIX/make_install_osx.log 2>&1
 	popd  >> $PREFIX/make_install_osx.log 2>&1
-	# geopandas and cartopy: require Shapely (GEOS), fiona (GDAL), pyproj (PROJ), rtree
-	# Shapely (interface for geos)
-	# Warning: changes case (shapely) and compilation method with 2.0
-	# Currently unable to load Shapely 2.0, stick to 1.8.5
-	pushd packages >> $PREFIX/make_install_osx.log 2>&1
-	downloadSource Shapely 1.8.5 >> $PREFIX/make_install_osx.log 2>&1
-	pushd Shapely-* >> $PREFIX/make_install_osx.log 2>&1
-	cp ./setup.py setup.bak.py  >> $PREFIX/make_install_osx.log 2>&1
-	cp ../setup_Shapely.py ./setup.py  >> $PREFIX/make_install_osx.log 2>&1
-	rm -rf build/*  >> $PREFIX/make_install_osx.log 2>&1
-	# Make sure we rebuild Cython files:
-	find . -type f -name \*.pyx -exec touch {} \; -print >> $PREFIX/make_install_osx.log 2>&1
-	env CC=clang CXX=clang++ CPPFLAGS="-isysroot $OSX_SDKROOT -I $PREFIX/Frameworks_macosx/include" \
-		CFLAGS="-isysroot $OSX_SDKROOT $DEBUG -I $PREFIX/Frameworks_macosx/include/" \
-		CXXFLAGS="-isysroot $OSX_SDKROOT $DEBUG -I $PREFIX/Frameworks_macosx/include" \
-		LDFLAGS="-isysroot $OSX_SDKROOT $DEBUG -F $PREFIX/Frameworks_macosx/ -framework libgeos_c" \
-		LDSHARED="clang -v -undefined error -dynamiclib -isysroot $OSX_SDKROOT  -lz -L$PREFIX -lpython3.13 $DEBUG -F $PREFIX/Frameworks_macosx/ -framework libgeos_c" \
-		PLATFORM=macosx \
-		NO_GEOS_CONFIG=1 \
-		python3.13 setup.py build >> $PREFIX/make_install_osx.log 2>&1
-	env CC=clang CXX=clang++ CPPFLAGS="-isysroot $OSX_SDKROOT -I $PREFIX/Frameworks_macosx/include" \
-		CFLAGS="-isysroot $OSX_SDKROOT $DEBUG -I $PREFIX/Frameworks_macosx/include/" \
-		CXXFLAGS="-isysroot $OSX_SDKROOT $DEBUG -I $PREFIX/Frameworks_macosx/include" \
-		LDFLAGS="-isysroot $OSX_SDKROOT $DEBUG -F $PREFIX/Frameworks_macosx/ -framework libgeos_c" \
-		LDSHARED="clang -v -undefined error -dynamiclib -isysroot $OSX_SDKROOT -lz -L$PREFIX -lpython3.13 $DEBUG -F $PREFIX/Frameworks_macosx/ -framework libgeos_c" \
-		PLATFORM=macosx \
-		NO_GEOS_CONFIG=1 \
-		python3.13 -m pip install . --no-build-isolation >> $PREFIX/make_install_osx.log 2>&1
-	echo "Shapely libraries for OSX: "  >> $PREFIX/make_install_osx.log 2>&1
-	find . -name \*.so  >> $PREFIX/make_install_osx.log 2>&1
-	pushd ./build/lib.macosx-${OSX_VERSION}-x86_64-cpython-313  >> $PREFIX/make_install_osx.log 2>&1
-	for library in `find . -name \*.so`
-	do
-		directory=$(dirname $library)
-		mkdir -p $PREFIX/build/lib.macosx-${OSX_VERSION}-x86_64-3.13/$directory >> $PREFIX/make_install_osx.log 2>&1
-		cp $library $PREFIX/build/lib.macosx-${OSX_VERSION}-x86_64-3.13/$library >> $PREFIX/make_install_osx.log 2>&1
-	done
-	popd  >> $PREFIX/make_install_osx.log 2>&1
-	popd  >> $PREFIX/make_install_osx.log 2>&1
-	popd  >> $PREFIX/make_install_osx.log 2>&1
-	# Fiona (interface for GDAL)
-	pushd packages >> $PREFIX/make_install_osx.log 2>&1
-	# We need to install from the repository, because the source from pip do not include the .pyx files.
-	# Install munch before (requirement): 
-	python3.13 -m pip install cligj >> $PREFIX/make_install_osx.log 2>&1
-	python3.13 -m pip install click_plugins >> $PREFIX/make_install_osx.log 2>&1
-	python3.13 -m pip install munch >> $PREFIX/make_install_osx.log 2>&1
-	pushd Fiona >> $PREFIX/make_install_osx.log 2>&1
-	# Make sure we rebuild Cython files:
-	rm -rf build/*  >> $PREFIX/make_install_osx.log 2>&1
-	touch fiona/*.pyx >> $PREFIX/make_install_osx.log 2>&1
-	env CC=clang CXX=clang++ CPPFLAGS="-isysroot $OSX_SDKROOT -I $PREFIX/Frameworks_macosx/include/gdal " \
-		CFLAGS="-isysroot $OSX_SDKROOT $DEBUG -I $PREFIX/Frameworks_macosx/include/gdal " \
-		CXXFLAGS="-isysroot $OSX_SDKROOT $DEBUG -I $PREFIX/Frameworks_macosx/include/gdal " \
-		LDFLAGS="-isysroot $OSX_SDKROOT $DEBUG -F $PREFIX/Frameworks_macosx/ -framework libgdal" \
-		LDSHARED="clang -v -undefined error -dynamiclib -isysroot $OSX_SDKROOT -lz -L$PREFIX -lpython3.13 $DEBUG -F $PREFIX/Frameworks_macosx/ -framework libgdal" \
-		PLATFORM=macosx \
-		GDAL_VERSION=3.6.0 \
-		python3.13 setup.py build >> $PREFIX/make_install_osx.log 2>&1
-	env CC=clang CXX=clang++ CPPFLAGS="-isysroot $OSX_SDKROOT -I $PREFIX/Frameworks_macosx/include/gdal " \
-		CFLAGS="-isysroot $OSX_SDKROOT $DEBUG -I $PREFIX/Frameworks_macosx/include/gdal " \
-		CXXFLAGS="-isysroot $OSX_SDKROOT $DEBUG -I $PREFIX/Frameworks_macosx/include/gdal " \
-		LDFLAGS="-isysroot $OSX_SDKROOT $DEBUG -F $PREFIX/Frameworks_macosx/ -framework libgdal" \
-		LDSHARED="clang -v -undefined error -dynamiclib -isysroot $OSX_SDKROOT -lz -L$PREFIX -lpython3.13 $DEBUG -F $PREFIX/Frameworks_macosx/ -framework libgdal" \
-		PLATFORM=macosx \
-		GDAL_VERSION=3.6.0 \
-		python3.13 -m pip install . --no-build-isolation >> $PREFIX/make_install_osx.log 2>&1
-	# also installs: cligj, click_plugins, munch
-	echo "Fiona libraries for OSX: "  >> $PREFIX/make_install_osx.log 2>&1
-	find . -name \*.so  >> $PREFIX/make_install_osx.log 2>&1
-	for library in `find fiona -name \*.so`
-	do
-		directory=$(dirname $library)
-		mkdir -p $PREFIX/build/lib.macosx-${OSX_VERSION}-x86_64-3.13/$directory >> $PREFIX/make_install_osx.log 2>&1
-		cp ./build/lib.macosx-${OSX_VERSION}-x86_64-cpython-313/$library $PREFIX/build/lib.macosx-${OSX_VERSION}-x86_64-3.13/$library >> $PREFIX/make_install_osx.log 2>&1
-	done
-	clang -v -undefined error -dynamiclib \
-		-isysroot $OSX_SDKROOT \
-		-lz -lm -lc++ -lpython3.13 \
-		-L$PREFIX/build/lib.macosx-${OSX_VERSION}-x86_64-3.13 \
-		-O3 -Wall \
-		`find build -name \*.o` \
-		-L$PREFIX/Library/lib \
-		-Lbuild/temp.macosx-${OSX_VERSION}-x86_64-3.13 \
-		-F$PREFIX/Frameworks_macosx -framework libgdal \
-		-o build/fiona.so >> $PREFIX/make_install_osx.log 2>&1
-	cp build/fiona.so $PREFIX/build/lib.macosx-${OSX_VERSION}-x86_64-3.13 >> $PREFIX/make_install_osx.log 2>&1
-	popd  >> $PREFIX/make_install_osx.log 2>&1
-	popd  >> $PREFIX/make_install_osx.log 2>&1
-	# PyProj (interface for Proj)
-	pushd packages >> $PREFIX/make_install_osx.log 2>&1
-	rm -rf pyproj-*  >> $PREFIX/make_install_osx.log 2>&1
-	# pyproj 3.6.0 has issues with dynamic loading and single module pyproj_all; for the time being we stick to 3.4.1.
-	downloadSource pyproj 3.4.1 >> $PREFIX/make_install_osx.log 2>&1
-	# env PROJ_VERSION=9.1.0 pip3.13 download pyproj --no-binary :all: >> $PREFIX/make_install_osx.log 2>&1
-	pushd pyproj-* >> $PREFIX/make_install_osx.log 2>&1
-	rm -rf build/* >> $PREFIX/make_install_osx.log 2>&1
-	cp setup.py setup_bak.py >> $PREFIX/make_install_osx.log 2>&1
-	cp ../setup_pyproj.py ./setup.py  >> $PREFIX/make_install_osx.log 2>&1
-	touch pyproj/*.pyx >> $PREFIX/make_install_osx.log 2>&1
-	env CC=clang CXX=clang++ CPPFLAGS="-isysroot $OSX_SDKROOT -I $PREFIX/Frameworks_macosx/include " \
-		CFLAGS="-isysroot $OSX_SDKROOT $DEBUG -I $PREFIX/Frameworks_macosx/include " \
-		CXXFLAGS="-isysroot $OSX_SDKROOT $DEBUG -I $PREFIX/Frameworks_macosx/include " \
-		LDFLAGS="-isysroot $OSX_SDKROOT $DEBUG -F $PREFIX/Frameworks_macosx/ -framework libproj" \
-		LDSHARED="clang -v -undefined error -dynamiclib -isysroot $OSX_SDKROOT -lz -L$PREFIX -lpython3.13 $DEBUG -F $PREFIX/Frameworks_macosx/ -framework libproj" \
-		PLATFORM=macosx \
-		PROJ_VERSION=9.1.0 \
-		python3.13 setup.py build >> $PREFIX/make_install_osx.log 2>&1
-	env CC=clang CXX=clang++ CPPFLAGS="-isysroot $OSX_SDKROOT -I $PREFIX/Frameworks_macosx/include " \
-		CFLAGS="-isysroot $OSX_SDKROOT $DEBUG -I $PREFIX/Frameworks_macosx/include " \
-		CXXFLAGS="-isysroot $OSX_SDKROOT $DEBUG -I $PREFIX/Frameworks_macosx/include " \
-		LDFLAGS="-isysroot $OSX_SDKROOT $DEBUG -F $PREFIX/Frameworks_macosx/ -framework libproj" \
-		LDSHARED="clang -v -undefined error -dynamiclib -isysroot $OSX_SDKROOT -lz -L$PREFIX -lpython3.13 $DEBUG -F $PREFIX/Frameworks_macosx/ -framework libproj" \
-		PLATFORM=macosx \
-		PROJ_VERSION=9.1.0 \
-		python3.13 -m pip install . --no-build-isolation >> $PREFIX/make_install_osx.log 2>&1
-	echo "pyproj libraries for OSX: "  >> $PREFIX/make_install_osx.log 2>&1
-	find . -name \*.so  >> $PREFIX/make_install_osx.log 2>&1
-    for library in pyproj/_transformer.cpython-313-darwin.so \
-    	pyproj/_datadir.cpython-313-darwin.so \
-    	pyproj/list.cpython-313-darwin.so \
-    	pyproj/_compat.cpython-313-darwin.so \
-    	pyproj/_crs.cpython-313-darwin.so \
-    	pyproj/_network.cpython-313-darwin.so \
-    	pyproj/_geod.cpython-313-darwin.so \
-    	pyproj/database.cpython-313-darwin.so \
-    	pyproj/_sync.cpython-313-darwin.so
-	do
-		directory=$(dirname $library)
-		mkdir -p $PREFIX/build/lib.macosx-${OSX_VERSION}-x86_64-3.13/$directory >> $PREFIX/make_install_osx.log 2>&1
-		cp ./build/lib.macosx-${OSX_VERSION}-x86_64-cpython-313/$library $PREFIX/build/lib.macosx-${OSX_VERSION}-x86_64-3.13/$library >> $PREFIX/make_install_osx.log 2>&1
-	done
-	clang -v -undefined error -dynamiclib \
-		-isysroot $OSX_SDKROOT \
-		-lz -lm -lc++ -lpython3.13 \
-		-L$PREFIX/build/lib.macosx-${OSX_VERSION}-x86_64-3.13 \
-		-O3 -Wall \
-		`find build -name \*.o` \
-		-L$PREFIX/Library/lib \
-		-F$PREFIX/Frameworks_macosx -framework libproj \
-		-o build/pyproj.so >> $PREFIX/make_install_osx.log 2>&1
-	cp build/pyproj.so $PREFIX/build/lib.macosx-${OSX_VERSION}-x86_64-3.13 >> $PREFIX/make_install_osx.log 2>&1
-	popd  >> $PREFIX/make_install_osx.log 2>&1
-	popd  >> $PREFIX/make_install_osx.log 2>&1
-	# rtree:
-	pushd packages >> $PREFIX/make_install_osx.log 2>&1
-	rm -rf Rtree-* >> $PREFIX/make_install_osx.log 2>&1
-	pip3.13 download --no-binary :all: rtree  >> $PREFIX/make_install_osx.log 2>&1
-	tar xzvf Rtree-*.tar.gz >> $PREFIX/make_install_osx.log 2>&1
-	rm Rtree-*.tar.gz >> $PREFIX/make_install_osx.log 2>&1
-	pushd Rtree-* >> $PREFIX/make_install_osx.log 2>&1
+# geopandas and cartopy: require Shapely (GEOS), fiona (GDAL), pyproj (PROJ), rtree
+# Shapely (interface for geos)
+# Warning: changes case (shapely) and compilation method with 2.0
+# Currently unable to load Shapely 2.0, stick to 1.8.5
+# So geopandas has to stick to 0.14.4 at the max
+pushd packages >> $PREFIX/make_install_osx.log 2>&1
+downloadSource Shapely 1.8.5 >> $PREFIX/make_install_osx.log 2>&1
+pushd Shapely-* >> $PREFIX/make_install_osx.log 2>&1
+cp ./setup.py setup.bak.py  >> $PREFIX/make_install_osx.log 2>&1
+cp ../setup_Shapely.py ./setup.py  >> $PREFIX/make_install_osx.log 2>&1
+rm -rf build/*  >> $PREFIX/make_install_osx.log 2>&1
+# Make sure we rebuild Cython files:
+find . -type f -name \*.pyx -exec touch {} \; -print >> $PREFIX/make_install_osx.log 2>&1
+env CC=clang CXX=clang++ CPPFLAGS="-isysroot $OSX_SDKROOT -I $PREFIX/Frameworks_macosx/include" \
+	CFLAGS="-isysroot $OSX_SDKROOT $DEBUG -I $PREFIX/Frameworks_macosx/include/" \
+	CXXFLAGS="-isysroot $OSX_SDKROOT $DEBUG -I $PREFIX/Frameworks_macosx/include" \
+	LDFLAGS="-isysroot $OSX_SDKROOT $DEBUG -F $PREFIX/Frameworks_macosx/ -framework libgeos_c" \
+	LDSHARED="clang -v -undefined error -dynamiclib -isysroot $OSX_SDKROOT  -lz -L$PREFIX -lpython3.13 $DEBUG -F $PREFIX/Frameworks_macosx/ -framework libgeos_c" \
+	PLATFORM=macosx \
+	NO_GEOS_CONFIG=1 \
 	python3.13 setup.py build >> $PREFIX/make_install_osx.log 2>&1
-	python3.13 -m pip install . --no-build-isolation >> $PREFIX/make_install_osx.log 2>&1
-	popd  >> $PREFIX/make_install_osx.log 2>&1
-	popd  >> $PREFIX/make_install_osx.log 2>&1
-    # geopandas now
-    python3.13 -m pip install geopandas >> $PREFIX/make_install_osx.log 2>&1
-    # Disable warning about Shapely 2.0. Obviously remove when Shapely 2.0 is installed.
-    cp packages/geopandas__compat.py $PYTHONHOME/lib/python3.13/site-packages/geopandas/_compat.py
-    # Packages used by geopandas:
-    # rasterio: must use submodule since the Pip version does not include the Cython sources:
-	python3.13 -m pip install snuggs >> $PREFIX/make_install_osx.log 2>&1
-	python3.13 -m pip install affine >> $PREFIX/make_install_osx.log 2>&1
-	pushd packages >> $PREFIX/make_install_osx.log 2>&1
-	pushd rasterio >> $PREFIX/make_install_osx.log 2>&1
-	touch rasterio/*.pyx >> $PREFIX/make_install_osx.log 2>&1
-	cp ../setup_rasterio.py ./setup.py  >> $PREFIX/make_install_osx.log 2>&1
-	rm -rf build/ >>  $PREFIX/make_install_osx.log 2>&1
-	env CC=clang CXX=clang++ CPPFLAGS="-isysroot $OSX_SDKROOT -I $PREFIX/Frameworks_macosx/include/gdal " CFLAGS="-isysroot $OSX_SDKROOT $DEBUG -I $PREFIX/Frameworks_macosx/include/gdal " CXXFLAGS="-isysroot $OSX_SDKROOT $DEBUG -I $PREFIX/Frameworks_macosx/include/gdal " LDFLAGS="-isysroot $OSX_SDKROOT $DEBUG -F $PREFIX/Frameworks_macosx/ -framework libgdal" LDSHARED="clang -v -undefined error -dynamiclib -isysroot $OSX_SDKROOT -lz -L$PREFIX -lpython3.13 $DEBUG -F $PREFIX/Frameworks_macosx/ -framework libgdal" PLATFORM=macosx GDAL_VERSION=3.6.0 python3.13 setup.py build  >> $PREFIX/make_install_osx.log 2>&1
-	env CC=clang CXX=clang++ CPPFLAGS="-isysroot $OSX_SDKROOT -I $PREFIX/Frameworks_macosx/include/gdal " CFLAGS="-isysroot $OSX_SDKROOT $DEBUG -I $PREFIX/Frameworks_macosx/include/gdal " CXXFLAGS="-isysroot $OSX_SDKROOT $DEBUG -I $PREFIX/Frameworks_macosx/include/gdal " LDFLAGS="-isysroot $OSX_SDKROOT $DEBUG -F $PREFIX/Frameworks_macosx/ -framework libgdal" LDSHARED="clang -v -undefined error -dynamiclib -isysroot $OSX_SDKROOT -lz -L$PREFIX -lpython3.13 $DEBUG -F $PREFIX/Frameworks_macosx/ -framework libgdal" PLATFORM=macosx GDAL_VERSION=3.6.0 python3.13 -m pip install . --no-build-isolation >> $PREFIX/make_install_osx.log 2>&1
-	echo "rasterio libraries for OSX: "  >> $PREFIX/make_install_osx.log 2>&1
-	find . -name \*.so  >> $PREFIX/make_install_osx.log 2>&1
-	pushd build/lib.macosx-${OSX_VERSION}-x86_64-cpython-313 >> $PREFIX/make_install_osx.log 2>&1
-	for library in `find rasterio -name \*.so`
-	do
-		directory=$(dirname $library)
-		mkdir -p $PREFIX/build/lib.macosx-${OSX_VERSION}-x86_64-3.13/$directory >> $PREFIX/make_install_osx.log 2>&1
-		cp $library $PREFIX/build/lib.macosx-${OSX_VERSION}-x86_64-3.13/$library >> $PREFIX/make_install_osx.log 2>&1
-	done
-	popd >> $PREFIX/make_install_osx.log 2>&1
-	clang -v -undefined error -dynamiclib \
-		-isysroot $OSX_SDKROOT \
-		-lz -lm -lc++ -lpython3.13 \
-		-L$PREFIX/build/lib.macosx-${OSX_VERSION}-x86_64-3.13 \
-		-O3 -Wall \
-		`find build -name \*.o` \
-		-L$PREFIX/Library/lib \
-		-F$PREFIX/Frameworks_macosx -framework libgdal \
-		-o build/rasterio.so >> $PREFIX/make_install_osx.log 2>&1
-	cp build/rasterio.so $PREFIX/build/lib.macosx-${OSX_VERSION}-x86_64-3.13 >> $PREFIX/make_install_osx.log 2>&1
-    popd >> $PREFIX/make_install_osx.log 2>&1
-    popd >> $PREFIX/make_install_osx.log 2>&1
-    # mercantile, geopy, contextily are all pure-python: 
-    python3.13 -m pip install mercantile --upgrade >> $PREFIX/make_install_osx.log 2>&1
-    python3.13 -m pip install geopy --upgrade >> $PREFIX/make_install_osx.log 2>&1
-    python3.13 -m pip install contextily --upgrade >> $PREFIX/make_install_osx.log 2>&1
-	if [ $USE_FORTRAN == 1 ];	
-	then
-		export LIBRARY_PATH="/Library/Developer/CommandLineTools/SDKs/MacOSX12.0.sdk/usr/lib"
-		# scikit-build (for OpenCV):
-		python3.13 -m pip install distro >> $PREFIX/make_install_osx.log 2>&1
-		# Submodule forked because many changes to help cmake in the right direction.
-		pushd packages >> $PREFIX/make_install_osx.log 2>&1
-		pushd scikit-build >> $PREFIX/make_install_osx.log 2>&1
-		# This one only works *without* the --no-build-isolation, I don't make the rules.
-		python3.13 -m pip install . >> $PREFIX/make_install_osx.log 2>&1
-		popd >> $PREFIX/make_install_osx.log 2>&1
-		popd >> $PREFIX/make_install_osx.log 2>&1
-		# pysal contains pointpats, which uses OpenCV (and OpenCV-contrib)
-		# OpenCV uses skbuild to compile, and doesn't think iOS likes Python. So we forked.
-		pushd packages >> $PREFIX/make_install_osx.log 2>&1
-		pushd opencv-python >> $PREFIX/make_install_osx.log 2>&1
-		# 2 Cmake files edited, updated
-		cp opencv_CMakeLists.txt opencv/CMakeLists.txt >> $PREFIX/make_install_osx.log 2>&1
-		mkdir -p opencv/cmake
-		mkdir -p opencv/modules/videoio
-		cp opencv_cmake_OpenCVDetectPython.cmake opencv/cmake/OpenCVDetectPython.cmake >> $PREFIX/make_install_osx.log 2>&1
-		cp opencv_modules_videoio_CMakeLists.txt opencv/modules/videoio/CMakeLists.txt >> $PREFIX/make_install_osx.log 2>&1
-		rm -rf _skbuild/*  >> $PREFIX/make_install_osx.log 2>&1
 		env CC=clang CXX=clang++ CPPFLAGS="-isysroot $OSX_SDKROOT -I $PREFIX/Frameworks_macosx/include" \
 			CFLAGS="-isysroot $OSX_SDKROOT $DEBUG -I $PREFIX/Frameworks_macosx/include/" \
 			CXXFLAGS="-isysroot $OSX_SDKROOT $DEBUG -I $PREFIX/Frameworks_macosx/include" \
-			LDFLAGS="-isysroot $OSX_SDKROOT $DEBUG -F $PREFIX/Frameworks_macosx/ " \
-			LDSHARED="clang -v -undefined error -dynamiclib -isysroot $OSX_SDKROOT -lz -L$PREFIX -lpython3.13 $DEBUG -F $PREFIX/Frameworks_macosx/ " \
-			CMAKE_INSTALL_PREFIX=@rpath \
-			CMAKE_BUILD_TYPE=Release \
-			ENABLE_CONTRIB=1 \
-			ENABLE_HEADLESS=1 \
-			PYTHON_DEFAULT_EXECUTABLE=python3.13 \
-			CMAKE_OSX_SYSROOT=${OSX_SDKROOT} \
-			CMAKE_C_COMPILER=clang \
-			CMAKE_CXX_COMPILER=clang++ \
-			CMAKE_LIBRARY_PATH="${OSX_SDKROOT}/lib/:$PREFIX/Frameworks_macosx/lib/" \
-			CMAKE_INCLUDE_PATH="${OSX_SDKROOT}/include/:$PREFIX/Frameworks_macosx/include" \
-            SETUPTOOLS_USE_DISTUTILS=stdlib \
-            PLATFORM=macosx \
-			python3.13 setup.py build >> $PREFIX/make_install_osx.log 2>&1
-		env CC=clang CXX=clang++ CPPFLAGS="-isysroot $OSX_SDKROOT -I $PREFIX/Frameworks_macosx/include" \
-			CFLAGS="-isysroot $OSX_SDKROOT $DEBUG -I $PREFIX/Frameworks_macosx/include/" \
-			CXXFLAGS="-isysroot $OSX_SDKROOT $DEBUG -I $PREFIX/Frameworks_macosx/include" \
-			LDFLAGS="-isysroot $OSX_SDKROOT $DEBUG -F $PREFIX/Frameworks_macosx/ " \
-			LDSHARED="clang -v -undefined error -dynamiclib -isysroot $OSX_SDKROOT -lz -L$PREFIX -lpython3.13 $DEBUG -F $PREFIX/Frameworks_macosx/ " \
-			CMAKE_INSTALL_PREFIX=@rpath \
-			CMAKE_BUILD_TYPE=Release \
-			ENABLE_CONTRIB=1 \
-			ENABLE_HEADLESS=1 \
-			PYTHON_DEFAULT_EXECUTABLE=python3.13 \
-			CMAKE_OSX_SYSROOT=${OSX_SDKROOT} \
-			CMAKE_C_COMPILER=clang \
-			CMAKE_CXX_COMPILER=clang++ \
-			CMAKE_LIBRARY_PATH="${OSX_SDKROOT}/lib/:$PREFIX/Frameworks_macosx/lib/" \
-			CMAKE_INCLUDE_PATH="${OSX_SDKROOT}/include/:$PREFIX/Frameworks_macosx/include" \
-            SETUPTOOLS_USE_DISTUTILS=stdlib \
+			LDFLAGS="-isysroot $OSX_SDKROOT $DEBUG -F $PREFIX/Frameworks_macosx/ -framework libgeos_c" \
+			LDSHARED="clang -v -undefined error -dynamiclib -isysroot $OSX_SDKROOT -lz -L$PREFIX -lpython3.13 $DEBUG -F $PREFIX/Frameworks_macosx/ -framework libgeos_c" \
 			PLATFORM=macosx \
+			NO_GEOS_CONFIG=1 \
 			python3.13 -m pip install . --no-build-isolation >> $PREFIX/make_install_osx.log 2>&1
-		# All these are the same. They use libopenblas: must change to openblas.framework
-		echo "opencv libraries for OSX: "  >> $PREFIX/make_install_osx.log 2>&1
-		find . -name \*.so -exec ls -l {} \; >> $PREFIX/make_install_osx.log 2>&1
-	    for library in cv2/cv2.cpython-313-darwin.so
-	    do
-	    	directory=$(dirname $library)
-	    	mkdir -p $PREFIX/build/lib.macosx-${OSX_VERSION}-x86_64-3.13/$directory >> $PREFIX/make_install_osx.log 2>&1
-	    	cp ./_skbuild/macosx-11.0-x86_64-3.13/setuptools/lib.macosx-11.0-x86_64-3.13/$library $PREFIX/build/lib.macosx-${OSX_VERSION}-x86_64-3.13/$library >> $PREFIX/make_install_osx.log 2>&1
-	    	# Fix the reference to libopenblas.dylib -> openblas.framework
-	    	if [[ $(otool -l $PREFIX/build/lib.macosx-${OSX_VERSION}-x86_64-3.13/$library | grep libopenblas) ]];
-	    	then 
-	    		install_name_tool -change $PREFIX/Frameworks_macosx/lib/libopenblas.dylib @rpath/openblas.framework/openblas  $PREFIX/build/lib.macosx-${OSX_VERSION}-x86_64-3.13/$library  >> $PREFIX/make_install_osx.log 2>&1
-	    	fi
-	    done
-	    popd  >> $PREFIX/make_install_osx.log 2>&1
-	    popd  >> $PREFIX/make_install_osx.log 2>&1
-	    unset LIBRARY_PATH
-	    # TODO: add scikit-image
-	fi
-# scipy
-# for Carnets specifically (or all apps with Jupyter notebooks):
-if [ $APP == "Carnets" ]; 
+						echo "Shapely libraries for OSX: "  >> $PREFIX/make_install_osx.log 2>&1
+						find . -name \*.so  >> $PREFIX/make_install_osx.log 2>&1
+						pushd ./build/lib.macosx-${OSX_VERSION}-x86_64-cpython-313  >> $PREFIX/make_install_osx.log 2>&1
+						for library in `find . -name \*.so`
+						do
+							directory=$(dirname $library)
+							mkdir -p $PREFIX/build/lib.macosx-${OSX_VERSION}-x86_64-3.13/$directory >> $PREFIX/make_install_osx.log 2>&1
+							cp $library $PREFIX/build/lib.macosx-${OSX_VERSION}-x86_64-3.13/$library >> $PREFIX/make_install_osx.log 2>&1
+						done
+popd  >> $PREFIX/make_install_osx.log 2>&1
+popd  >> $PREFIX/make_install_osx.log 2>&1
+popd  >> $PREFIX/make_install_osx.log 2>&1
+# Fiona (interface for GDAL)
+pushd packages >> $PREFIX/make_install_osx.log 2>&1
+# We need to install from the repository, because the source from pip do not include the .pyx files.
+# Install munch before (requirement): 
+python3.13 -m pip install cligj >> $PREFIX/make_install_osx.log 2>&1
+python3.13 -m pip install click_plugins >> $PREFIX/make_install_osx.log 2>&1
+python3.13 -m pip install munch >> $PREFIX/make_install_osx.log 2>&1
+pushd Fiona >> $PREFIX/make_install_osx.log 2>&1
+# Make sure we rebuild Cython files:
+rm -rf build/*  >> $PREFIX/make_install_osx.log 2>&1
+touch fiona/*.pyx >> $PREFIX/make_install_osx.log 2>&1
+env CC=clang CXX=clang++ CPPFLAGS="-isysroot $OSX_SDKROOT -I $PREFIX/Frameworks_macosx/include/gdal " \
+	CFLAGS="-isysroot $OSX_SDKROOT $DEBUG -I $PREFIX/Frameworks_macosx/include/gdal " \
+	CXXFLAGS="-isysroot $OSX_SDKROOT $DEBUG -I $PREFIX/Frameworks_macosx/include/gdal " \
+	LDFLAGS="-isysroot $OSX_SDKROOT $DEBUG -F $PREFIX/Frameworks_macosx/ -framework libgdal" \
+	LDSHARED="clang -v -undefined error -dynamiclib -isysroot $OSX_SDKROOT -lz -L$PREFIX -lpython3.13 $DEBUG -F $PREFIX/Frameworks_macosx/ -framework libgdal" \
+	PLATFORM=macosx \
+	GDAL_VERSION=3.6.0 \
+	python3.13 setup.py build >> $PREFIX/make_install_osx.log 2>&1
+env CC=clang CXX=clang++ CPPFLAGS="-isysroot $OSX_SDKROOT -I $PREFIX/Frameworks_macosx/include/gdal " \
+	CFLAGS="-isysroot $OSX_SDKROOT $DEBUG -I $PREFIX/Frameworks_macosx/include/gdal " \
+	CXXFLAGS="-isysroot $OSX_SDKROOT $DEBUG -I $PREFIX/Frameworks_macosx/include/gdal " \
+	LDFLAGS="-isysroot $OSX_SDKROOT $DEBUG -F $PREFIX/Frameworks_macosx/ -framework libgdal" \
+	LDSHARED="clang -v -undefined error -dynamiclib -isysroot $OSX_SDKROOT -lz -L$PREFIX -lpython3.13 $DEBUG -F $PREFIX/Frameworks_macosx/ -framework libgdal" \
+	PLATFORM=macosx \
+	GDAL_VERSION=3.6.0 \
+	python3.13 -m pip install . --no-build-isolation >> $PREFIX/make_install_osx.log 2>&1
+# also installs: cligj, click_plugins, munch
+echo "Fiona libraries for OSX: "  >> $PREFIX/make_install_osx.log 2>&1
+find . -name \*.so  >> $PREFIX/make_install_osx.log 2>&1
+for library in `find fiona -name \*.so`
+do
+	directory=$(dirname $library)
+	mkdir -p $PREFIX/build/lib.macosx-${OSX_VERSION}-x86_64-3.13/$directory >> $PREFIX/make_install_osx.log 2>&1
+	cp ./build/lib.macosx-${OSX_VERSION}-x86_64-cpython-313/$library $PREFIX/build/lib.macosx-${OSX_VERSION}-x86_64-3.13/$library >> $PREFIX/make_install_osx.log 2>&1
+done
+# Single library for Fiona:
+clang -v -undefined error -dynamiclib \
+	-isysroot $OSX_SDKROOT \
+	-lz -lm -lc++ -lpython3.13 \
+	-L$PREFIX/build/lib.macosx-${OSX_VERSION}-x86_64-3.13 \
+	-O3 -Wall \
+	`find build -name \*.o` \
+	-L$PREFIX/Library/lib \
+	-Lbuild/temp.macosx-${OSX_VERSION}-x86_64-3.13 \
+	-F$PREFIX/Frameworks_macosx -framework libgdal \
+	-o build/fiona.so >> $PREFIX/make_install_osx.log 2>&1
+cp build/fiona.so $PREFIX/build/lib.macosx-${OSX_VERSION}-x86_64-3.13 >> $PREFIX/make_install_osx.log 2>&1
+popd  >> $PREFIX/make_install_osx.log 2>&1
+popd  >> $PREFIX/make_install_osx.log 2>&1
+
+# PyProj (interface for Proj)
+pushd packages >> $PREFIX/make_install_osx.log 2>&1
+rm -rf pyproj-*  >> $PREFIX/make_install_osx.log 2>&1
+# pyproj 3.6.0 has issues with dynamic loading and single module pyproj_all; for the time being we stick to 3.4.1.
+downloadSource pyproj 3.4.1 >> $PREFIX/make_install_osx.log 2>&1
+# env PROJ_VERSION=9.1.0 pip3.13 download pyproj --no-binary :all: >> $PREFIX/make_install_osx.log 2>&1
+pushd pyproj-* >> $PREFIX/make_install_osx.log 2>&1
+rm -rf build/* >> $PREFIX/make_install_osx.log 2>&1
+cp setup.py setup_bak.py >> $PREFIX/make_install_osx.log 2>&1
+cp ../setup_pyproj.py ./setup.py  >> $PREFIX/make_install_osx.log 2>&1
+touch pyproj/*.pyx >> $PREFIX/make_install_osx.log 2>&1
+env CC=clang CXX=clang++ CPPFLAGS="-isysroot $OSX_SDKROOT -I $PREFIX/Frameworks_macosx/include " \
+	CFLAGS="-isysroot $OSX_SDKROOT $DEBUG -I $PREFIX/Frameworks_macosx/include " \
+	CXXFLAGS="-isysroot $OSX_SDKROOT $DEBUG -I $PREFIX/Frameworks_macosx/include " \
+	LDFLAGS="-isysroot $OSX_SDKROOT $DEBUG -F $PREFIX/Frameworks_macosx/ -framework libproj" \
+	LDSHARED="clang -v -undefined error -dynamiclib -isysroot $OSX_SDKROOT -lz -L$PREFIX -lpython3.13 $DEBUG -F $PREFIX/Frameworks_macosx/ -framework libproj" \
+	PLATFORM=macosx \
+	PROJ_VERSION=9.1.0 \
+	python3.13 setup.py build >> $PREFIX/make_install_osx.log 2>&1
+env CC=clang CXX=clang++ CPPFLAGS="-isysroot $OSX_SDKROOT -I $PREFIX/Frameworks_macosx/include " \
+	CFLAGS="-isysroot $OSX_SDKROOT $DEBUG -I $PREFIX/Frameworks_macosx/include " \
+	CXXFLAGS="-isysroot $OSX_SDKROOT $DEBUG -I $PREFIX/Frameworks_macosx/include " \
+	LDFLAGS="-isysroot $OSX_SDKROOT $DEBUG -F $PREFIX/Frameworks_macosx/ -framework libproj" \
+	LDSHARED="clang -v -undefined error -dynamiclib -isysroot $OSX_SDKROOT -lz -L$PREFIX -lpython3.13 $DEBUG -F $PREFIX/Frameworks_macosx/ -framework libproj" \
+	PLATFORM=macosx \
+	PROJ_VERSION=9.1.0 \
+	python3.13 -m pip install . --no-build-isolation >> $PREFIX/make_install_osx.log 2>&1
+echo "pyproj libraries for OSX: "  >> $PREFIX/make_install_osx.log 2>&1
+find . -name \*.so  >> $PREFIX/make_install_osx.log 2>&1
+for library in pyproj/_transformer.cpython-313-darwin.so \
+	pyproj/_datadir.cpython-313-darwin.so \
+	pyproj/list.cpython-313-darwin.so \
+	pyproj/_compat.cpython-313-darwin.so \
+	pyproj/_crs.cpython-313-darwin.so \
+	pyproj/_network.cpython-313-darwin.so \
+	pyproj/_geod.cpython-313-darwin.so \
+	pyproj/database.cpython-313-darwin.so \
+	pyproj/_sync.cpython-313-darwin.so
+do
+	directory=$(dirname $library)
+	mkdir -p $PREFIX/build/lib.macosx-${OSX_VERSION}-x86_64-3.13/$directory >> $PREFIX/make_install_osx.log 2>&1
+	cp ./build/lib.macosx-${OSX_VERSION}-x86_64-cpython-313/$library $PREFIX/build/lib.macosx-${OSX_VERSION}-x86_64-3.13/$library >> $PREFIX/make_install_osx.log 2>&1
+done
+clang -v -undefined error -dynamiclib \
+	-isysroot $OSX_SDKROOT \
+	-lz -lm -lc++ -lpython3.13 \
+	-L$PREFIX/build/lib.macosx-${OSX_VERSION}-x86_64-3.13 \
+	-O3 -Wall \
+	`find build -name \*.o` \
+	-L$PREFIX/Library/lib \
+	-F$PREFIX/Frameworks_macosx -framework libproj \
+	-o build/pyproj.so >> $PREFIX/make_install_osx.log 2>&1
+cp build/pyproj.so $PREFIX/build/lib.macosx-${OSX_VERSION}-x86_64-3.13 >> $PREFIX/make_install_osx.log 2>&1
+popd  >> $PREFIX/make_install_osx.log 2>&1
+popd  >> $PREFIX/make_install_osx.log 2>&1
+
+# rtree:
+pushd packages >> $PREFIX/make_install_osx.log 2>&1
+rm -rf rtree-* >> $PREFIX/make_install_osx.log 2>&1
+pip3.13 download --no-binary :all: rtree  >> $PREFIX/make_install_osx.log 2>&1
+tar xzvf rtree-*.tar.gz >> $PREFIX/make_install_osx.log 2>&1
+rm rtree-*.tar.gz >> $PREFIX/make_install_osx.log 2>&1
+pushd rtree-* >> $PREFIX/make_install_osx.log 2>&1
+python3.13 setup.py build >> $PREFIX/make_install_osx.log 2>&1
+python3.13 -m pip install . --no-build-isolation >> $PREFIX/make_install_osx.log 2>&1
+popd  >> $PREFIX/make_install_osx.log 2>&1
+popd  >> $PREFIX/make_install_osx.log 2>&1
+# geopandas now
+python3.13 -m pip install geopandas==0.14.4 >> $PREFIX/make_install_osx.log 2>&1
+# Disable warning about Shapely 2.0. Obviously remove when Shapely 2.0 is installed.
+cp packages/geopandas__compat.py $PYTHONHOME/lib/python3.13/site-packages/geopandas/_compat.py
+# Packages used by geopandas:
+# rasterio: must use submodule since the Pip version does not include the Cython sources:
+python3.13 -m pip install snuggs >> $PREFIX/make_install_osx.log 2>&1
+python3.13 -m pip install affine >> $PREFIX/make_install_osx.log 2>&1
+pushd packages >> $PREFIX/make_install_osx.log 2>&1
+pushd rasterio >> $PREFIX/make_install_osx.log 2>&1
+touch rasterio/*.pyx >> $PREFIX/make_install_osx.log 2>&1
+cp ../setup_rasterio.py ./setup.py  >> $PREFIX/make_install_osx.log 2>&1
+rm -rf build/ >>  $PREFIX/make_install_osx.log 2>&1
+env CC=clang CXX=clang++ CPPFLAGS="-isysroot $OSX_SDKROOT -I $PREFIX/Frameworks_macosx/include/gdal " CFLAGS="-isysroot $OSX_SDKROOT $DEBUG -I $PREFIX/Frameworks_macosx/include/gdal " CXXFLAGS="-isysroot $OSX_SDKROOT $DEBUG -I $PREFIX/Frameworks_macosx/include/gdal " LDFLAGS="-isysroot $OSX_SDKROOT $DEBUG -F $PREFIX/Frameworks_macosx/ -framework libgdal" LDSHARED="clang -v -undefined error -dynamiclib -isysroot $OSX_SDKROOT -lz -L$PREFIX -lpython3.13 $DEBUG -F $PREFIX/Frameworks_macosx/ -framework libgdal" PLATFORM=macosx GDAL_VERSION=3.6.0 python3.13 setup.py build  >> $PREFIX/make_install_osx.log 2>&1
+env CC=clang CXX=clang++ CPPFLAGS="-isysroot $OSX_SDKROOT -I $PREFIX/Frameworks_macosx/include/gdal " CFLAGS="-isysroot $OSX_SDKROOT $DEBUG -I $PREFIX/Frameworks_macosx/include/gdal " CXXFLAGS="-isysroot $OSX_SDKROOT $DEBUG -I $PREFIX/Frameworks_macosx/include/gdal " LDFLAGS="-isysroot $OSX_SDKROOT $DEBUG -F $PREFIX/Frameworks_macosx/ -framework libgdal" LDSHARED="clang -v -undefined error -dynamiclib -isysroot $OSX_SDKROOT -lz -L$PREFIX -lpython3.13 $DEBUG -F $PREFIX/Frameworks_macosx/ -framework libgdal" PLATFORM=macosx GDAL_VERSION=3.6.0 python3.13 -m pip install . --no-build-isolation >> $PREFIX/make_install_osx.log 2>&1
+echo "rasterio libraries for OSX: "  >> $PREFIX/make_install_osx.log 2>&1
+find . -name \*.so  >> $PREFIX/make_install_osx.log 2>&1
+pushd build/lib.macosx-${OSX_VERSION}-x86_64-cpython-313 >> $PREFIX/make_install_osx.log 2>&1
+for library in `find rasterio -name \*.so`
+do
+	directory=$(dirname $library)
+	mkdir -p $PREFIX/build/lib.macosx-${OSX_VERSION}-x86_64-3.13/$directory >> $PREFIX/make_install_osx.log 2>&1
+	cp $library $PREFIX/build/lib.macosx-${OSX_VERSION}-x86_64-3.13/$library >> $PREFIX/make_install_osx.log 2>&1
+done
+popd >> $PREFIX/make_install_osx.log 2>&1
+clang -v -undefined error -dynamiclib \
+	-isysroot $OSX_SDKROOT \
+	-lz -lm -lc++ -lpython3.13 \
+	-L$PREFIX/build/lib.macosx-${OSX_VERSION}-x86_64-3.13 \
+	-O3 -Wall \
+	`find build -name \*.o` \
+	-L$PREFIX/Library/lib \
+	-F$PREFIX/Frameworks_macosx -framework libgdal \
+	-o build/rasterio.so >> $PREFIX/make_install_osx.log 2>&1
+cp build/rasterio.so $PREFIX/build/lib.macosx-${OSX_VERSION}-x86_64-3.13 >> $PREFIX/make_install_osx.log 2>&1
+popd >> $PREFIX/make_install_osx.log 2>&1
+popd >> $PREFIX/make_install_osx.log 2>&1
+# 
+# mercantile, geopy, contextily are all pure-python: 
+python3.13 -m pip install mercantile --upgrade >> $PREFIX/make_install_osx.log 2>&1
+python3.13 -m pip install geopy --upgrade >> $PREFIX/make_install_osx.log 2>&1
+python3.13 -m pip install contextily --upgrade >> $PREFIX/make_install_osx.log 2>&1
+if [ $USE_FORTRAN == 1 ];	
 then
+	export LIBRARY_PATH="/Library/Developer/CommandLineTools/SDKs/MacOSX12.0.sdk/usr/lib"
+	# scikit-build (for OpenCV):
+	python3.13 -m pip install distro >> $PREFIX/make_install_osx.log 2>&1
+	# Submodule forked because many changes to help cmake in the right direction.
+	pushd packages >> $PREFIX/make_install_osx.log 2>&1
+	pushd scikit-build >> $PREFIX/make_install_osx.log 2>&1
+	# This one only works *without* the --no-build-isolation, I don't make the rules.
+	python3.13 -m pip install . >> $PREFIX/make_install_osx.log 2>&1
+	popd >> $PREFIX/make_install_osx.log 2>&1
+	popd >> $PREFIX/make_install_osx.log 2>&1
+	# pysal contains pointpats, which uses OpenCV (and OpenCV-contrib)
+	# OpenCV uses skbuild to compile, and doesn't think iOS likes Python. So we forked.
+	pushd packages >> $PREFIX/make_install_osx.log 2>&1
+	pushd opencv-python >> $PREFIX/make_install_osx.log 2>&1
+	# 2 Cmake files edited, updated
+	cp opencv_CMakeLists.txt opencv/CMakeLists.txt >> $PREFIX/make_install_osx.log 2>&1
+	mkdir -p opencv/cmake
+	mkdir -p opencv/modules/videoio
+	cp opencv_cmake_OpenCVDetectPython.cmake opencv/cmake/OpenCVDetectPython.cmake >> $PREFIX/make_install_osx.log 2>&1
+	cp opencv_modules_videoio_CMakeLists.txt opencv/modules/videoio/CMakeLists.txt >> $PREFIX/make_install_osx.log 2>&1
+	rm -rf _skbuild/*  >> $PREFIX/make_install_osx.log 2>&1
+#   this was causing compilation to fail with Python 3.13. But will it work without?
+#   SETUPTOOLS_USE_DISTUTILS=stdlib \
+	env CC=clang CXX=clang++ CPPFLAGS="-isysroot $OSX_SDKROOT -I $PREFIX/Frameworks_macosx/include" \
+		CFLAGS="-isysroot $OSX_SDKROOT $DEBUG -I $PREFIX/Frameworks_macosx/include/" \
+		CXXFLAGS="-isysroot $OSX_SDKROOT $DEBUG -I $PREFIX/Frameworks_macosx/include" \
+		LDFLAGS="-isysroot $OSX_SDKROOT $DEBUG -F $PREFIX/Frameworks_macosx/ " \
+		LDSHARED="clang -v -undefined error -dynamiclib -isysroot $OSX_SDKROOT -lz -L$PREFIX -lpython3.13 $DEBUG -F $PREFIX/Frameworks_macosx/ " \
+		CMAKE_INSTALL_PREFIX=@rpath \
+		CMAKE_BUILD_TYPE=Release \
+		ENABLE_CONTRIB=1 \
+		ENABLE_HEADLESS=1 \
+		APPLE_FRAMEWORK=0 \
+		PYTHON_DEFAULT_EXECUTABLE=python3.13 \
+		CMAKE_OSX_SYSROOT=${OSX_SDKROOT} \
+		CMAKE_C_COMPILER=clang \
+		CMAKE_CXX_COMPILER=clang++ \
+		CMAKE_LIBRARY_PATH="${OSX_SDKROOT}/lib/:$PREFIX/Frameworks_macosx/lib/" \
+		CMAKE_INCLUDE_PATH="${OSX_SDKROOT}/include/:$PREFIX/Frameworks_macosx/include" \
+        PLATFORM=macosx \
+		python3.13 setup.py build >> $PREFIX/make_install_osx.log 2>&1
+	env CC=clang CXX=clang++ CPPFLAGS="-isysroot $OSX_SDKROOT -I $PREFIX/Frameworks_macosx/include" \
+		CFLAGS="-isysroot $OSX_SDKROOT $DEBUG -I $PREFIX/Frameworks_macosx/include/" \
+		CXXFLAGS="-isysroot $OSX_SDKROOT $DEBUG -I $PREFIX/Frameworks_macosx/include" \
+		LDFLAGS="-isysroot $OSX_SDKROOT $DEBUG -F $PREFIX/Frameworks_macosx/ " \
+		LDSHARED="clang -v -undefined error -dynamiclib -isysroot $OSX_SDKROOT -lz -L$PREFIX -lpython3.13 $DEBUG -F $PREFIX/Frameworks_macosx/ " \
+		CMAKE_INSTALL_PREFIX=@rpath \
+		CMAKE_BUILD_TYPE=Release \
+		ENABLE_CONTRIB=1 \
+		ENABLE_HEADLESS=1 \
+		APPLE_FRAMEWORK=0 \
+		PYTHON_DEFAULT_EXECUTABLE=python3.13 \
+		CMAKE_OSX_SYSROOT=${OSX_SDKROOT} \
+		CMAKE_C_COMPILER=clang \
+		CMAKE_CXX_COMPILER=clang++ \
+		CMAKE_LIBRARY_PATH="${OSX_SDKROOT}/lib/:$PREFIX/Frameworks_macosx/lib/" \
+		CMAKE_INCLUDE_PATH="${OSX_SDKROOT}/include/:$PREFIX/Frameworks_macosx/include" \
+		PLATFORM=macosx \
+		python3.13 -m pip install . --no-build-isolation >> $PREFIX/make_install_osx.log 2>&1
+	# All these are the same. They use libopenblas: must change to openblas.framework
+	# _skbuild/macosx-15.0-x86_64-3.13/cmake-build
+	echo "opencv libraries for OSX: "  >> $PREFIX/make_install_osx.log 2>&1
+	find . -name \*.so -exec ls -l {} \; >> $PREFIX/make_install_osx.log 2>&1
+    for library in cv2/cv2.cpython-313-darwin.so
+    do
+    	directory=$(dirname $library)
+		file=$(basename $library)
+    	mkdir -p $PREFIX/build/lib.macosx-${OSX_VERSION}-x86_64-3.13/$directory >> $PREFIX/make_install_osx.log 2>&1
+    	cp ./_skbuild/macosx-*-x86_64-3.13/cmake-build/lib/python3/$file $PREFIX/build/lib.macosx-${OSX_VERSION}-x86_64-3.13/$library >> $PREFIX/make_install_osx.log 2>&1
+    	# Fix the reference to libopenblas.dylib -> openblas.framework
+    	if [[ $(otool -l $PREFIX/build/lib.macosx-${OSX_VERSION}-x86_64-3.13/$library | grep libopenblas) ]];
+    	then 
+    		install_name_tool -change $PREFIX/Frameworks_macosx/lib/libopenblas.dylib @rpath/openblas.framework/openblas  $PREFIX/build/lib.macosx-${OSX_VERSION}-x86_64-3.13/$library  >> $PREFIX/make_install_osx.log 2>&1
+    	fi
+    done
+    popd  >> $PREFIX/make_install_osx.log 2>&1
+    popd  >> $PREFIX/make_install_osx.log 2>&1
+    unset LIBRARY_PATH
+    # TODO: add scikit-image
+fi
+
+# If you do not want scipy and what depends on scipy, this is where you stop compiling:
+exit 0
+
+# scipy
 if [ $USE_FORTRAN == 1 ];
 then
 	# Copy the version of Library created until now so it can be used for "standard" version of the App:
@@ -1431,7 +1495,7 @@ then
 	pushd scipy-*  >> $PREFIX/make_install_osx.log 2>&1
 	# Separate build directories for OSX / iOS using meson
 	mkdir -p build_osx  >> $PREFIX/make_install_osx.log 2>&1
-	env CC=clang CXX=clang++ CPPFLAGS="-isysroot $OSX_SDKROOT" CFLAGS="-isysroot $OSX_SDKROOT  -DCYTHON_PEP489_MULTI_PHASE_INIT=0 -DCYTHON_USE_DICT_VERSIONS=0 $DEBUG" CXXFLAGS="-isysroot $OSX_SDKROOT  -DCYTHON_PEP489_MULTI_PHASE_INIT=0 -DCYTHON_USE_DICT_VERSIONS=0 $DEBUG" LDFLAGS="-isysroot $OSX_SDKROOT $DEBUG -L/Library/Developer/CommandLineTools/SDKs/MacOSX12.0.sdk/usr/lib -L/usr/local/lib -lgfortran" LDSHARED="clang -v -undefined error -dynamiclib -isysroot $OSX_SDKROOT -lz -L$PREFIX -lpython3.13 -lc++ $DEBUG" meson . build_osx -Duse-pythran=false -Dblas=openblas -Dlapack=openblas >> $PREFIX/make_install_osx.log 2>&1
+	env CC=clang CXX=clang++ CPPFLAGS="-isysroot $OSX_SDKROOT" CFLAGS="-isysroot $OSX_SDKROOT  $CYTHON_OPTIONS $DEBUG" CXXFLAGS="-isysroot $OSX_SDKROOT  $CYTHON_OPTIONS $DEBUG" LDFLAGS="-isysroot $OSX_SDKROOT $DEBUG -L/Library/Developer/CommandLineTools/SDKs/MacOSX12.0.sdk/usr/lib -L/usr/local/lib -lgfortran" LDSHARED="clang -v -undefined error -dynamiclib -isysroot $OSX_SDKROOT -lz -L$PREFIX -lpython3.13 -lc++ $DEBUG" meson . build_osx -Duse-pythran=false -Dblas=openblas -Dlapack=openblas >> $PREFIX/make_install_osx.log 2>&1
 	pushd build_osx  >> $PREFIX/make_install_osx.log 2>&1
 	ninja >> $PREFIX/make_install_osx.log 2>&1
 	echo scipy libraries for OSX: >> $PREFIX/make_install_osx.log 2>&1
@@ -1546,8 +1610,8 @@ then
  	echo "Installing scipy:" >> $PREFIX/make_install_osx.log 2>&1
  	env CC=clang CXX=clang++ \
  		SCIPY_USE_PYTHRAN=0 \
- 		CPPFLAGS="-isysroot $OSX_SDKROOT" CFLAGS="-isysroot $OSX_SDKROOT  -DCYTHON_PEP489_MULTI_PHASE_INIT=0 -DCYTHON_USE_DICT_VERSIONS=0 $DEBUG" \
- 		CXXFLAGS="-isysroot $OSX_SDKROOT  -DCYTHON_PEP489_MULTI_PHASE_INIT=0 -DCYTHON_USE_DICT_VERSIONS=0 $DEBUG" LDFLAGS="-isysroot $OSX_SDKROOT $DEBUG " \
+ 		CPPFLAGS="-isysroot $OSX_SDKROOT" CFLAGS="-isysroot $OSX_SDKROOT  $CYTHON_OPTIONS $DEBUG" \
+ 		CXXFLAGS="-isysroot $OSX_SDKROOT  $CYTHON_OPTIONS $DEBUG" LDFLAGS="-isysroot $OSX_SDKROOT $DEBUG " \
  		LDSHARED="clang -v -undefined error -dynamiclib -isysroot $OSX_SDKROOT -lz -L$PREFIX -lpython3.13 -lc++ $DEBUG" \
  		NPY_BLAS_ORDER="openblas" \
  		NPY_LAPACK_ORDER="openblas" \
@@ -1572,6 +1636,12 @@ then
 	echo "Installing gym" >> $PREFIX/make_install_osx.log 2>&1
 	python3.13 -m pip install gym --upgrade --no-deps --no-build-isolation >> $PREFIX/make_install_osx.log 2>&1
 	echo "Done installing gym" >> $PREFIX/make_install_osx.log 2>&1
+	#
+	#
+	#
+  pip3.13 install protobuf==3.19.0 --no-deps --no-build-isolation
+  pip3.13 install pyaml
+	
 	# Protobuf (required for coremltools, for starter):
 	# Requires protoc with the same version number in the PATH: 
 	# curl -OL https://github.com/protocolbuffers/protobuf/releases/download/v3.20.3/protoc-3.20.3-osx-x86_64.zip
@@ -1636,7 +1706,7 @@ then
  	rm -rf build/* >> $PREFIX/make_install_osx.log 2>&1
  	# force rebuilding of Cython files:
  	find sklearn -name \*.pyx -exec touch {} \; -print >> $PREFIX/make_install_osx.log 2>&1
- 	env CC=clang CXX=clang++ CPPFLAGS="-isysroot $OSX_SDKROOT" CFLAGS="-isysroot $OSX_SDKROOT  -DCYTHON_PEP489_MULTI_PHASE_INIT=0 -DCYTHON_USE_DICT_VERSIONS=0 $DEBUG" CXXFLAGS="-isysroot $OSX_SDKROOT  -DCYTHON_PEP489_MULTI_PHASE_INIT=0 -DCYTHON_USE_DICT_VERSIONS=0 $DEBUG" LDFLAGS="-isysroot $OSX_SDKROOT $DEBUG " LDSHARED="clang -v -undefined error -dynamiclib -isysroot $OSX_SDKROOT -lz -L$PREFIX -lpython3.13 -lc++ $DEBUG" PLATFORM=macosx SETUPTOOLS_USE_DISTUTILS=stdlib python3.13 -m pip install . --no-deps --no-build-isolation >> $PREFIX/make_install_osx.log 2>&1
+ 	env CC=clang CXX=clang++ CPPFLAGS="-isysroot $OSX_SDKROOT" CFLAGS="-isysroot $OSX_SDKROOT  $CYTHON_OPTIONS $DEBUG" CXXFLAGS="-isysroot $OSX_SDKROOT  $CYTHON_OPTIONS $DEBUG" LDFLAGS="-isysroot $OSX_SDKROOT $DEBUG " LDSHARED="clang -v -undefined error -dynamiclib -isysroot $OSX_SDKROOT -lz -L$PREFIX -lpython3.13 -lc++ $DEBUG" PLATFORM=macosx SETUPTOOLS_USE_DISTUTILS=stdlib python3.13 -m pip install . --no-deps --no-build-isolation >> $PREFIX/make_install_osx.log 2>&1
  	# Last time, something installed scikit-learn==1.0.1 -- without uninstalling sklearn==1.0.dev0. WHO?
  	echo scikit-learn libraries for OSX: >> $PREFIX/make_install_osx.log 2>&1
  	find build -name \*.so -print  >> $PREFIX/make_install_osx.log 2>&1
@@ -1662,8 +1732,8 @@ then
 	cp ../qutip_setup.py  ./setup.py  >> $PREFIX/make_install_osx.log 2>&1
 	# force rebuilding of Cython files:
 	find qutip -name \*.pyx -exec touch {} \; -print >> $PREFIX/make_install_osx.log 2>&1
-	env CC=clang CXX=clang++ CPPFLAGS="-isysroot $OSX_SDKROOT" CFLAGS="-isysroot $OSX_SDKROOT  -DCYTHON_PEP489_MULTI_PHASE_INIT=0 -DCYTHON_USE_DICT_VERSIONS=0 $DEBUG" CXXFLAGS="-isysroot $OSX_SDKROOT  -DCYTHON_PEP489_MULTI_PHASE_INIT=0 -DCYTHON_USE_DICT_VERSIONS=0 $DEBUG" LDFLAGS="-isysroot $OSX_SDKROOT $DEBUG " LDSHARED="clang -v -undefined error -dynamiclib -isysroot $OSX_SDKROOT -lz -L$PREFIX -lpython3.13 -lc++ $DEBUG" NPY_BLAS_ORDER="openblas" NPY_LAPACK_ORDER="openblas" MATHLIB="-lm" PLATFORM=macosx python3.13 setup.py build >> $PREFIX/make_install_osx.log 2>&1
-	env CC=clang CXX=clang++ CPPFLAGS="-isysroot $OSX_SDKROOT" CFLAGS="-isysroot $OSX_SDKROOT  -DCYTHON_PEP489_MULTI_PHASE_INIT=0 -DCYTHON_USE_DICT_VERSIONS=0 $DEBUG" CXXFLAGS="-isysroot $OSX_SDKROOT  -DCYTHON_PEP489_MULTI_PHASE_INIT=0 -DCYTHON_USE_DICT_VERSIONS=0 $DEBUG" LDFLAGS="-isysroot $OSX_SDKROOT $DEBUG " LDSHARED="clang -v -undefined error -dynamiclib -isysroot $OSX_SDKROOT -lz -L$PREFIX -lpython3.13 -lc++ $DEBUG" NPY_BLAS_ORDER="openblas" NPY_LAPACK_ORDER="openblas" MATHLIB="-lm" PLATFORM=macosx python3.13 -m pip install . --no-deps --no-build-isolation >> $PREFIX/make_install_osx.log 2>&1
+	env CC=clang CXX=clang++ CPPFLAGS="-isysroot $OSX_SDKROOT" CFLAGS="-isysroot $OSX_SDKROOT  $CYTHON_OPTIONS $DEBUG" CXXFLAGS="-isysroot $OSX_SDKROOT  $CYTHON_OPTIONS $DEBUG" LDFLAGS="-isysroot $OSX_SDKROOT $DEBUG " LDSHARED="clang -v -undefined error -dynamiclib -isysroot $OSX_SDKROOT -lz -L$PREFIX -lpython3.13 -lc++ $DEBUG" NPY_BLAS_ORDER="openblas" NPY_LAPACK_ORDER="openblas" MATHLIB="-lm" PLATFORM=macosx python3.13 setup.py build >> $PREFIX/make_install_osx.log 2>&1
+	env CC=clang CXX=clang++ CPPFLAGS="-isysroot $OSX_SDKROOT" CFLAGS="-isysroot $OSX_SDKROOT  $CYTHON_OPTIONS $DEBUG" CXXFLAGS="-isysroot $OSX_SDKROOT  $CYTHON_OPTIONS $DEBUG" LDFLAGS="-isysroot $OSX_SDKROOT $DEBUG " LDSHARED="clang -v -undefined error -dynamiclib -isysroot $OSX_SDKROOT -lz -L$PREFIX -lpython3.13 -lc++ $DEBUG" NPY_BLAS_ORDER="openblas" NPY_LAPACK_ORDER="openblas" MATHLIB="-lm" PLATFORM=macosx python3.13 -m pip install . --no-deps --no-build-isolation >> $PREFIX/make_install_osx.log 2>&1
 	# 20 libraries by the last count (v 4.7.1, now trying 4.7.3)
 	echo qutip libraries for OSX: >> $PREFIX/make_install_osx.log 2>&1
 	find build -name \*.so -print  >> $PREFIX/make_install_osx.log 2>&1
@@ -1706,9 +1776,9 @@ then
 		cp setup.py setup.pybak >> $PREFIX/make_install_osx.log 2>&1
 		cp ../setup_Cartopy.py setup.py >> $PREFIX/make_install_osx.log 2>&1
 	fi
-	env CC=clang CXX=clang++ CPPFLAGS="-isysroot $OSX_SDKROOT -DCYTHON_PEP489_MULTI_PHASE_INIT=0 -DCYTHON_USE_DICT_VERSIONS=0 -I $PREFIX/Frameworks_macosx/include " \
-		CFLAGS="-isysroot $OSX_SDKROOT $DEBUG -DCYTHON_PEP489_MULTI_PHASE_INIT=0 -DCYTHON_USE_DICT_VERSIONS=0 -I $PREFIX/Frameworks_macosx/include " \
-		CXXFLAGS="-isysroot $OSX_SDKROOT $DEBUG -DCYTHON_PEP489_MULTI_PHASE_INIT=0 -DCYTHON_USE_DICT_VERSIONS=0 -I $PREFIX/Frameworks_macosx/include " \
+	env CC=clang CXX=clang++ CPPFLAGS="-isysroot $OSX_SDKROOT $CYTHON_OPTIONS -I $PREFIX/Frameworks_macosx/include " \
+		CFLAGS="-isysroot $OSX_SDKROOT $DEBUG $CYTHON_OPTIONS -I $PREFIX/Frameworks_macosx/include " \
+		CXXFLAGS="-isysroot $OSX_SDKROOT $DEBUG $CYTHON_OPTIONS -I $PREFIX/Frameworks_macosx/include " \
 		LDFLAGS="-isysroot $OSX_SDKROOT $DEBUG -F $PREFIX/Frameworks_macosx/ -framework libproj -framework libgeos_c" \
 		LDSHARED="clang -v -undefined error -dynamiclib -isysroot $OSX_SDKROOT -lz -L$PREFIX -lpython3.13 $DEBUG -F $PREFIX/Frameworks_macosx/ -framework libproj -framework libgeos_c" \
 		PLATFORM=macosx \
@@ -1747,11 +1817,11 @@ then
 	# cp ../setup_statsmodels.py ./setup.py  >> $PREFIX/make_install_osx.log 2>&1
 	# statsmodels compilation fails, I've applied this PR: https://github.com/statsmodels/statsmodels/pull/8961/files
 	find statsmodels -name \*.pyx -exec touch {} \; -print  >> $PREFIX/make_install_osx.log 2>&1
-	env CC=clang CXX=clang++ CPPFLAGS="-DCYTHON_PEP489_MULTI_PHASE_INIT=0 -DCYTHON_USE_DICT_VERSIONS=0 -isysroot $OSX_SDKROOT" CFLAGS="-isysroot $OSX_SDKROOT  -DCYTHON_PEP489_MULTI_PHASE_INIT=0 -DCYTHON_USE_DICT_VERSIONS=0 $DEBUG" CXXFLAGS="-isysroot $OSX_SDKROOT  -DCYTHON_PEP489_MULTI_PHASE_INIT=0 -DCYTHON_USE_DICT_VERSIONS=0 $DEBUG" LDFLAGS="-isysroot $OSX_SDKROOT $DEBUG " LDSHARED="clang -v -undefined error -dynamiclib -isysroot $OSX_SDKROOT -lz -L$PREFIX -lpython3.13 -lc++ $DEBUG" NPY_BLAS_ORDER="openblas" NPY_LAPACK_ORDER="openblas" MATHLIB="-lm" PLATFORM=macosx python3.13 setup.py build >> $PREFIX/make_install_osx.log 2>&1
+	env CC=clang CXX=clang++ CPPFLAGS="$CYTHON_OPTIONS -isysroot $OSX_SDKROOT" CFLAGS="-isysroot $OSX_SDKROOT  $CYTHON_OPTIONS $DEBUG" CXXFLAGS="-isysroot $OSX_SDKROOT  $CYTHON_OPTIONS $DEBUG" LDFLAGS="-isysroot $OSX_SDKROOT $DEBUG " LDSHARED="clang -v -undefined error -dynamiclib -isysroot $OSX_SDKROOT -lz -L$PREFIX -lpython3.13 -lc++ $DEBUG" NPY_BLAS_ORDER="openblas" NPY_LAPACK_ORDER="openblas" MATHLIB="-lm" PLATFORM=macosx python3.13 setup.py build >> $PREFIX/make_install_osx.log 2>&1
 	# "python3.13 -m pip install ." removes the iOS extensions to Cython modules. 
 	# python3.13 setup.py install used to fail, it now works.
 	# Back to "pip install ."
-	env CC=clang CXX=clang++ CPPFLAGS="-DCYTHON_PEP489_MULTI_PHASE_INIT=0 -DCYTHON_USE_DICT_VERSIONS=0 -isysroot $OSX_SDKROOT" CFLAGS="-isysroot $OSX_SDKROOT  -DCYTHON_PEP489_MULTI_PHASE_INIT=0 -DCYTHON_USE_DICT_VERSIONS=0 $DEBUG" CXXFLAGS="-isysroot $OSX_SDKROOT  -DCYTHON_PEP489_MULTI_PHASE_INIT=0 -DCYTHON_USE_DICT_VERSIONS=0 $DEBUG" LDFLAGS="-isysroot $OSX_SDKROOT $DEBUG " LDSHARED="clang -v -undefined error -dynamiclib -isysroot $OSX_SDKROOT -lz -L$PREFIX -lpython3.13 -lc++ $DEBUG" NPY_BLAS_ORDER="openblas" NPY_LAPACK_ORDER="openblas" MATHLIB="-lm" PLATFORM=macosx python3.13 -m pip install . --no-deps --no-build-isolation >> $PREFIX/make_install_osx.log 2>&1
+	env CC=clang CXX=clang++ CPPFLAGS="$CYTHON_OPTIONS -isysroot $OSX_SDKROOT" CFLAGS="-isysroot $OSX_SDKROOT  $CYTHON_OPTIONS $DEBUG" CXXFLAGS="-isysroot $OSX_SDKROOT  $CYTHON_OPTIONS $DEBUG" LDFLAGS="-isysroot $OSX_SDKROOT $DEBUG " LDSHARED="clang -v -undefined error -dynamiclib -isysroot $OSX_SDKROOT -lz -L$PREFIX -lpython3.13 -lc++ $DEBUG" NPY_BLAS_ORDER="openblas" NPY_LAPACK_ORDER="openblas" MATHLIB="-lm" PLATFORM=macosx python3.13 -m pip install . --no-deps --no-build-isolation >> $PREFIX/make_install_osx.log 2>&1
 	echo statsmodels libraries for OSX: >> $PREFIX/make_install_osx.log 2>&1
 	find build -name \*.so -print  >> $PREFIX/make_install_osx.log 2>&1
 	echo number of statsmodels libraries for OSX: >> $PREFIX/make_install_osx.log 2>&1
@@ -1796,9 +1866,9 @@ then
 	rm -rf build/*  >> $PREFIX/make_install_osx.log 2>&1
 	touch pygeos/*.pyx  >> $PREFIX/make_install_osx.log 2>&1
 	env CC=clang CXX=clang++ \
-		CPPFLAGS="-isysroot $OSX_SDKROOT -DCYTHON_PEP489_MULTI_PHASE_INIT=0 -DCYTHON_USE_DICT_VERSIONS=0 -I $PREFIX/Frameworks_macosx/include" \
-		CFLAGS="-isysroot $OSX_SDKROOT $DEBUG  -DCYTHON_PEP489_MULTI_PHASE_INIT=0 -DCYTHON_USE_DICT_VERSIONS=0 -I $PREFIX/Frameworks_macosx/include/" \
-		CXXFLAGS="-isysroot $OSX_SDKROOT $DEBUG -DCYTHON_PEP489_MULTI_PHASE_INIT=0 -DCYTHON_USE_DICT_VERSIONS=0 -I $PREFIX/Frameworks_macosx/include" \
+		CPPFLAGS="-isysroot $OSX_SDKROOT $CYTHON_OPTIONS -I $PREFIX/Frameworks_macosx/include" \
+		CFLAGS="-isysroot $OSX_SDKROOT $DEBUG  $CYTHON_OPTIONS -I $PREFIX/Frameworks_macosx/include/" \
+		CXXFLAGS="-isysroot $OSX_SDKROOT $DEBUG $CYTHON_OPTIONS -I $PREFIX/Frameworks_macosx/include" \
 		LDFLAGS="-isysroot $OSX_SDKROOT $DEBUG -F $PREFIX/Frameworks_macosx/ -framework libgeos_c" \
 		LDSHARED="clang -v -undefined error -dynamiclib -isysroot $OSX_SDKROOT -lz -L$PREFIX -lpython3.13 $DEBUG -F $PREFIX/Frameworks_macosx/ -framework libgeos_c" \
 		PLATFORM=macosx \
@@ -1809,9 +1879,9 @@ then
 	# python3.13 setup.py install used to not work, seems to work now.
 	# Back to pip install . to remove a pip warning
 	env CC=clang CXX=clang++ \
-		CPPFLAGS="-isysroot $OSX_SDKROOT -DCYTHON_PEP489_MULTI_PHASE_INIT=0 -DCYTHON_USE_DICT_VERSIONS=0 -I $PREFIX/Frameworks_macosx/include" \
-		CFLAGS="-isysroot $OSX_SDKROOT $DEBUG  -DCYTHON_PEP489_MULTI_PHASE_INIT=0 -DCYTHON_USE_DICT_VERSIONS=0 -I $PREFIX/Frameworks_macosx/include/" \
-		CXXFLAGS="-isysroot $OSX_SDKROOT $DEBUG -DCYTHON_PEP489_MULTI_PHASE_INIT=0 -DCYTHON_USE_DICT_VERSIONS=0 -I $PREFIX/Frameworks_macosx/include" \
+		CPPFLAGS="-isysroot $OSX_SDKROOT $CYTHON_OPTIONS -I $PREFIX/Frameworks_macosx/include" \
+		CFLAGS="-isysroot $OSX_SDKROOT $DEBUG  $CYTHON_OPTIONS -I $PREFIX/Frameworks_macosx/include/" \
+		CXXFLAGS="-isysroot $OSX_SDKROOT $DEBUG $CYTHON_OPTIONS -I $PREFIX/Frameworks_macosx/include" \
 		LDFLAGS="-isysroot $OSX_SDKROOT $DEBUG -F $PREFIX/Frameworks_macosx/ -framework libgeos_c" \
 		LDSHARED="clang -v -undefined error -dynamiclib -isysroot $OSX_SDKROOT -lz -L$PREFIX -lpython3.13 $DEBUG -F $PREFIX/Frameworks_macosx/ -framework libgeos_c" \
 		PLATFORM=macosx \
@@ -1860,14 +1930,13 @@ then
 	cp ../frozen_pysal.py ./pysal/frozen.py >> $PREFIX/make_install_osx.log 2>&1
 	cp ../base_pysal.py ./pysal/base.py >> $PREFIX/make_install_osx.log 2>&1
 	# Here, we need "python3.13 -m pip install .", as "python3.13 setup.py install" does not install actually
-	env CC=clang CXX=clang++ CPPFLAGS="-isysroot $OSX_SDKROOT" CFLAGS="-isysroot $OSX_SDKROOT  -DCYTHON_PEP489_MULTI_PHASE_INIT=0 -DCYTHON_USE_DICT_VERSIONS=0 $DEBUG" CXXFLAGS="-isysroot $OSX_SDKROOT  -DCYTHON_PEP489_MULTI_PHASE_INIT=0 -DCYTHON_USE_DICT_VERSIONS=0 $DEBUG " LDFLAGS="-isysroot $OSX_SDKROOT $DEBUG " LDSHARED="clang -v -undefined error -dynamiclib -isysroot $OSX_SDKROOT -lz -L$PREFIX -lpython3.13 -lc++ $DEBUG" NPY_BLAS_ORDER="openblas" NPY_LAPACK_ORDER="openblas" MATHLIB="-lm" PLATFORM=macosx python3.13 -m pip install . >> $PREFIX/make_install_osx.log 2>&1
+	env CC=clang CXX=clang++ CPPFLAGS="-isysroot $OSX_SDKROOT" CFLAGS="-isysroot $OSX_SDKROOT  $CYTHON_OPTIONS $DEBUG" CXXFLAGS="-isysroot $OSX_SDKROOT  $CYTHON_OPTIONS $DEBUG " LDFLAGS="-isysroot $OSX_SDKROOT $DEBUG " LDSHARED="clang -v -undefined error -dynamiclib -isysroot $OSX_SDKROOT -lz -L$PREFIX -lpython3.13 -lc++ $DEBUG" NPY_BLAS_ORDER="openblas" NPY_LAPACK_ORDER="openblas" MATHLIB="-lm" PLATFORM=macosx python3.13 -m pip install . >> $PREFIX/make_install_osx.log 2>&1
 	popd  >> $PREFIX/make_install_osx.log 2>&1
 	popd  >> $PREFIX/make_install_osx.log 2>&1
 	# Not needed anymore. Or so it seems.
 	unset LIBRARY_PATH
 	export PYTHONHOME=$PREFIX/Library/	
 fi # scipy, USE_FORTRAN == 1
-fi # APP == "Carnets"
 # 
 # 4 different kind of package configuration
 # - pure-python packages, no edits: use pip install
