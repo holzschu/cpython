@@ -202,10 +202,9 @@ else:
     ext_modules += cythonize(
         cython_modules,
         compiler_directives={"language_level": "3",
-                             "legacy_implicit_noexcept": True},
+                             "legacy_implicit_noexcept": True})
         # enable once Cython >= 0.3 is released
-        # define_macros=[("NPY_NO_DEPRECATED_API", "NPY_1_7_API_VERSION")],
-    )
+    define_macros=[("NPY_NO_DEPRECATED_API", "NPY_1_7_API_VERSION")]
 
 
 try:
@@ -217,7 +216,6 @@ except IOError:
 version = versioneer.get_version()
 cmdclass = versioneer.get_cmdclass()
 cmdclass["build_ext"] = build_ext
-
 
 setup(
     name="pygeos",

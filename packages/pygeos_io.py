@@ -86,7 +86,7 @@ def check_shapely_version():
                     # only if using conda and having the same GEOS version
                     shapely_compatible = True
             # iOS addition: shapely_compatible is always True.
-            if (sys.platform == "darwin" and os.uname().machine.startswith("iP")):
+            if (sys.platform == "ios"):
                 if geos_version_string.startswith(geos_capi_version_string):
                     # only if using Carnets and having the same GEOS version
                     shapely_compatible = True

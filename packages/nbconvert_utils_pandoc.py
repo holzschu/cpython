@@ -351,7 +351,7 @@ def pandoc(source, fmt, to, extra_args=None, encoding="utf-8"):
     # IOS: also possible: switch to multimarkdown for latex output
     # markdown -> rst used to be done with m2r, but it's not incompatible with docutils
     # and m2r2 is not compatible with mistune > 0.8.4
-    if (sys.platform == 'darwin' and os.uname().machine.startswith('iP')):
+    if (sys.platform == 'ios'):
         if (fmt.startswith('markdown') and to.startswith('latex')):
             markdown_to_latex = mistune.Markdown(renderer=LatexRenderer())
             return markdown_to_latex(source)

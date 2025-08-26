@@ -79,5 +79,4 @@ sh ./scripts/pygeosPackages.sh >> $PREFIX/make_install_osx.log 2>&1
 # pysal (includes networkx)
 sh ./scripts/pysalPackages.sh >> $PREFIX/make_install_osx.log 2>&1
 
-
 # pytorch
