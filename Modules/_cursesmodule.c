@@ -884,7 +884,7 @@ _curses_window_addstr_impl(PyCursesWindowObject *self, int group_left_1,
 			fprintf(thread_stdout, "\033[%d;%dH", y, x);
 		fprintf(thread_stdout, "\033[4l"); // overwrite mode
 		rtn = fprintf(thread_stdout, "%s", str);
-		fflush(thread_stdout);		
+		fflush(thread_stdout);
 #endif
         Py_DECREF(bytesobj);
     }

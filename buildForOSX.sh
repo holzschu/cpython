@@ -515,8 +515,8 @@ popd  >> $PREFIX/make_install_osx.log 2>&1
 popd  >> $PREFIX/make_install_osx.log 2>&1
 echo "Done installing jupyterlab from Pip source"  >> $PREFIX/make_install_osx.log 2>&1
 python3.11 -m pip install notebook-shim >> $PREFIX/make_install_osx.log 2>&1
-# notebook (trying unmodified new version)
-python3.11 -m pip install notebook >> $PREFIX/make_install_osx.log 2>&1
+# notebook (at most version 7.3.2, since 7.3.3 requires jupyterlab 7.4.6, which breaks the "no-rust-yet" rule.
+python3.11 -m pip install notebook==7.3.2 >> $PREFIX/make_install_osx.log 2>&1
 # pushd packages >> $PREFIX/make_install_osx.log 2>&1
 # pushd notebook >> $PREFIX/make_install_osx.log 2>&1
 # rm -rf build/*  >> $PREFIX/make_install_osx.log 2>&1

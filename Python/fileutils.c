@@ -2345,6 +2345,18 @@ _Py_dup(int fd)
     HANDLE handle;
 #endif
 
+#if TARGET_OS_IPHONE
+	// Don't duplicate the streams for stdin/stdout/stderr
+	if (fd == STDIN_FILENO) {
+		return fileno(thread_stdin);
+	} else if (fd == STDOUT_FILENO) {
+		return fileno(thread_stdout);
+	} else if (fd == STDERR_FILENO) {
+		return fileno(thread_stderr);
+	} else if ((fd == fileno(thread_stdin)) || (fd == fileno(thread_stdout)) || (fd == fileno(thread_stderr))) {
+		return fd;
+	}
+#endif
     assert(PyGILState_Check());
 
 #ifdef MS_WINDOWS

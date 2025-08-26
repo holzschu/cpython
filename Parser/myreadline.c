@@ -400,7 +400,7 @@ PyOS_Readline(FILE *sys_stdin, FILE *sys_stdout, const char *prompt)
         if (fileno(sys_stdout) == STDOUT_FILENO)
             sys_stdout = thread_stdout;
 #endif
-        rv = PyOS_StdioReadline (sys_stdin, sys_stdout, prompt);
+        rv = PyOS_StdioReadline(sys_stdin, sys_stdout, prompt);
 	} else {
 #if TARGET_OS_IPHONE
         if (fileno(sys_stdin) == STDIN_FILENO)
@@ -408,8 +408,7 @@ PyOS_Readline(FILE *sys_stdin, FILE *sys_stdout, const char *prompt)
         if (fileno(sys_stdout) == STDOUT_FILENO)
             sys_stdout = thread_stdout;
 #endif
-        rv = (*PyOS_ReadlineFunctionPointer)(sys_stdin, sys_stdout,
-                                             prompt);
+        rv = (*PyOS_ReadlineFunctionPointer)(sys_stdin, sys_stdout, prompt);
 	}
     Py_END_ALLOW_THREADS
 
