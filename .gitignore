@@ -176,4 +176,7 @@ Library/bin/python3
 Library/bin/python3.9
 Library/bin/python3.11
 Library/bin/python3.13
+Python-aux/
+Frameworks_iphoneos/
+Frameworks_macosx/
 
