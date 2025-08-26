@@ -91,6 +91,9 @@ pushd packages
 pushd numpy
 mkdir -p build_osx 
 rm -rf build_osx/* 
+# Edits to meson: 
+cp ../numpy_meson_backend_ninjabackend.py vendored-meson/meson/mesonbuild/backend/ninjabackend.py
+cp ../numpy_meson_linkers_linkers.py vendored-meson/meson/mesonbuild/linkers/linkers.py
 # TODO: this is only the numpy-with-fortran version. 
 # I don't have the manpower to maintain the numpy-without-fortran anymore.
 # If you don't have fortran, you need something like: NPY_BLAS_ORDER= NPY_LAPACK_ORDER= 
