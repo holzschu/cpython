@@ -695,7 +695,7 @@ _PyModule_Clear(PyObject *m)
     // 29/10/21: added lxml, pyfftw, pygeos, wordcloud, qutip (all cython modules).
     // 02/11/21: pygeos, pyproj, fiona, statsmodels, rasterio, shapely
     // 17/06/22: removed contourpy (switch to pybind11)
-    // 26/04/25: not necessary for _asyncio and lxml. Testing the rest, then removing.
+    // 26/04/25: not necessary for _asyncio, lxml or cartopy. But not hurting either.
     int moduleNeedsCleanup = 0;
     PyModuleObject *mod = (PyModuleObject *)m;
 	if (mod->md_name != NULL) {
@@ -703,7 +703,8 @@ _PyModule_Clear(PyObject *m)
 		if ((strncmp(utf8name, "_asyncio", 8) == 0)
 				|| (strncmp(utf8name, "lxml.", 5) == 0)
 				|| (strncmp(utf8name, "numpy.", 6) == 0)
-				|| (strncmp(utf8name, "qutip.", 6) == 0)
+//				qutip crashes with this line
+//				|| (strncmp(utf8name, "qutip.", 6) == 0)
 				|| (strncmp(utf8name, "scipy.", 6) == 0)
 				|| (strncmp(utf8name, "fiona.", 6) == 0)
 				|| (strncmp(utf8name, "pyproj.", 7) == 0)
@@ -713,16 +714,18 @@ _PyModule_Clear(PyObject *m)
 				|| (strncmp(utf8name, "astropy.", 8) == 0)
 				|| (strncmp(utf8name, "shapely.", 8) == 0)
 				|| (strncmp(utf8name, "sklearn.", 8) == 0) 
+				|| (strncmp(utf8name, "cartopy.", 8) == 0)
 				|| (strncmp(utf8name, "rasterio.", 9) == 0)
-				|| (strncmp(utf8name, "cartoppy.", 9) == 0)
 				|| (strncmp(utf8name, "wordcloud.", 10) == 0)
+				|| (strncmp(utf8name, "coremltools.", 12) == 0)
 				|| (strncmp(utf8name, "statsmodels.", 12) == 0)) {
-			// scipy.spatial._distance_pybind uses pybind11, not cython. 
-			// same with scipy.fft._pocketfft.pypocketfft and contourpy
-			// scipy also contains a pybind11 modules, ...highspy.highs_bindings ?
+			// scipy: remove pybind11 modules.
 			// pybind11 cleanup function is already called, and can't be called twice. 
 			if ((strncmp(utf8name, "scipy.spatial._distance_pybind", 30) != 0) && 
-				(strncmp(utf8name, "scipy.fft._pocketfft.pypocketfft", 32) != 0)) {
+				(strncmp(utf8name, "scipy.fft._pocketfft.pypocketfft", 32) != 0) &&
+				(strncmp(utf8name, "scipy.optimize._pava_pybind", 27) != 0) &&
+				(strncmp(utf8name, "scipy.optimize._highspy._highs_options", 38) != 0) &&
+				(strncmp(utf8name, "scipy.io._fast_matrix_market._fmm_core", 38) != 0)) {
 				// iOS, debug:
 				if (mod->md_def && mod->md_def->m_free) {
 					fprintf(thread_stderr, "Module = %x name = %s refCount = %zd ", mod, utf8name, m->ob_refcnt);
