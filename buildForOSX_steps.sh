@@ -2,6 +2,9 @@
 
 export PREFIX=$PWD
 
+# If we build from scratch, cleanup library before, otherwise we'll get extra packages in install_mini and install_regular:
+rm -rf Library/*
+
 # 1) build Python and add a few mandatory packages (setuptools, distutils...)
 sh ./scripts/buildPythonForOSX.sh > $PREFIX/make_osx.log 2>&1
 
@@ -15,9 +18,9 @@ sh ./scripts/cryptoPackages.sh  >> $PREFIX/make_install_osx.log 2>&1
 # 4) copy everything into Library_mini
 
 echo "Creating install_mini"  >> $PREFIX/make_install_osx.log 2>&1
-rm -rf install_mini  >> $PREFIX/make_install_osx.log 2>&1
-mkdir -p install_mini  >> $PREFIX/make_install_osx.log 2>&1
-cp -r Library install_mini  >> $PREFIX/make_install_osx.log 2>&1
+rm -rf install_mini >> $PREFIX/make_install_osx.log 2>&1
+mkdir -p install_mini >> $PREFIX/make_install_osx.log 2>&1
+cp -r Library install_mini >> $PREFIX/make_install_osx.log 2>&1
 
 # 5) Jupyter packages: send2trash, jsonschema, pyzmq, jupyter
 sh ./scripts/jupyterPackages.sh  >> $PREFIX/make_install_osx.log 2>&1
