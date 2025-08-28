@@ -86,6 +86,13 @@ mkdir -p build
 rm -rf build/*
 # force rebuilding of Cython files:
 find sklearn -name \*.pyx -exec touch {} \; -print
+# Compile once (creates some auxiliary files, otherwise missing)
+env CC=clang CXX=clang++ CPPFLAGS="-isysroot $OSX_SDKROOT" CFLAGS="-isysroot $OSX_SDKROOT  $CYTHON_OPTIONS $DEBUG" CXXFLAGS="-isysroot $OSX_SDKROOT  $CYTHON_OPTIONS $DEBUG" LDFLAGS="-isysroot $OSX_SDKROOT $DEBUG " LDSHARED="clang -v -undefined error -dynamiclib -isysroot $OSX_SDKROOT -lz -L$PREFIX -lpython3.13 -lc++ $DEBUG" PLATFORM=macosx SETUPTOOLS_USE_DISTUTILS=stdlib meson build 
+pushd build
+# repeat as needed:
+ninja
+ninja
+popd
 env CC=clang CXX=clang++ CPPFLAGS="-isysroot $OSX_SDKROOT" CFLAGS="-isysroot $OSX_SDKROOT  $CYTHON_OPTIONS $DEBUG" CXXFLAGS="-isysroot $OSX_SDKROOT  $CYTHON_OPTIONS $DEBUG" LDFLAGS="-isysroot $OSX_SDKROOT $DEBUG " LDSHARED="clang -v -undefined error -dynamiclib -isysroot $OSX_SDKROOT -lz -L$PREFIX -lpython3.13 -lc++ $DEBUG" PLATFORM=macosx SETUPTOOLS_USE_DISTUTILS=stdlib python3.13 -m pip install . --no-deps --no-build-isolation
 echo scikit-learn libraries for OSX:
 find $PREFIX/Library/lib/python3.13/site-packages/sklearn/ -name \*.so -print 

@@ -104,8 +104,8 @@ mv pyproject.toml pyproject_debug.toml
 mv pyproject_reference.toml pyproject.toml
 pushd dist
 echo PyZMQ libraries for iOS:
-unzip -l pyzmq-26.2.0-cp313-cp313-macosx_15_0_x86_64.whl | grep darwin.so
-unzip -o pyzmq-26.2.0-cp313-cp313-macosx_15_0_x86_64.whl zmq/backend/cffi/_cffi.cpython-313-darwin.so
+unzip -l pyzmq-*.whl | grep darwin.so
+unzip -o pyzmq-*.whl zmq/backend/cffi/_cffi.cpython-313-darwin.so
 install_site_package zmq/backend/cffi/_cffi zmq/backend/cffi/_cffi.cpython-313-darwin.so
 popd 
 popd 
