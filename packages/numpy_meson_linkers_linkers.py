@@ -130,9 +130,11 @@ class DynamicLinker(metaclass=abc.ABCMeta):
 
     def __init__(self, exelist: T.List[str],
                  for_machine: mesonlib.MachineChoice, prefix_arg: T.Union[str, T.List[str]],
-                 always_args: T.List[str], *, version: str = 'unknown version'):
+                 always_args: T.List[str], *, system: str = 'unknown system',
+                 version: str = 'unknown version'):
         self.exelist = exelist
         self.for_machine = for_machine
+        self.system = system
         self.version = version
         self.prefix_arg = prefix_arg
         self.always_args = always_args
@@ -606,6 +608,9 @@ class GnuLikeDynamicLinkerMixin(DynamicLinkerBase):
         "boot_application": "16",
     }
 
+    def get_accepts_rsp(self) -> bool:
+        return True
+
     def get_pie_args(self) -> T.List[str]:
         return ['-pie']
 
@@ -705,7 +710,9 @@ class GnuLikeDynamicLinkerMixin(DynamicLinkerBase):
         args.extend(self._apply_prefix('-rpath,' + paths))
 
         # TODO: should this actually be "for solaris/sunos"?
-        if mesonlib.is_sunos():
+        # NOTE: Remove the zigcc check once zig support "-rpath-link"
+        # See https://github.com/ziglang/zig/issues/18713
+        if mesonlib.is_sunos() or self.id == 'ld.zigcc':
             return (args, rpath_dirs_to_remove)
 
         # Rpaths to use while linking must be absolute. These are not
@@ -758,15 +765,19 @@ class AppleDynamicLinker(PosixDynamicLinkerMixin, DynamicLinker):
         return self._apply_prefix('-dead_strip_dylibs')
 
     def get_allow_undefined_args(self) -> T.List[str]:
-        return self._apply_prefix('-undefined,dynamic_lookup')
-
-    def get_std_shared_module_args(self, options: 'KeyedOptionDictType') -> T.List[str]:
-        # iOS: make sure we use -dynamiclib
         platform = os.getenv('PLATFORM') or 'macosx'
-        if (platform == 'macosx'): 
-            return ['-bundle'] + self._apply_prefix('-undefined,dynamic_lookup')
+        # iOS doesn't allow undefined symbols when linking
+        if self.system == 'ios' or platform == "iphoneos":
+            return []
         else:
-            return ['-dynamiclib'] + self._apply_prefix('-undefined,dynamic_lookup')
+            return self._apply_prefix('-undefined,dynamic_lookup')
+
+    def get_std_shared_module_args(self, target: 'BuildTarget') -> T.List[str]:
+        platform = os.getenv('PLATFORM') or 'macosx'
+        if self.system == 'ios' or platform == "iphoneos":
+            return ['-dynamiclib']
+        else:
+            return ['-bundle'] + self.get_allow_undefined_args()
 
     def get_pie_args(self) -> T.List[str]:
         return []
@@ -856,9 +867,6 @@ class GnuDynamicLinker(GnuLikeDynamicLinkerMixin, PosixDynamicLinkerMixin, Dynam
 
     """Representation of GNU ld.bfd and ld.gold."""
 
-    def get_accepts_rsp(self) -> bool:
-        return True
-
 
 class GnuGoldDynamicLinker(GnuDynamicLinker):
 
@@ -893,8 +901,9 @@ class LLVMDynamicLinker(GnuLikeDynamicLinkerMixin, PosixDynamicLinkerMixin, Dyna
 
     def __init__(self, exelist: T.List[str],
                  for_machine: mesonlib.MachineChoice, prefix_arg: T.Union[str, T.List[str]],
-                 always_args: T.List[str], *, version: str = 'unknown version'):
-        super().__init__(exelist, for_machine, prefix_arg, always_args, version=version)
+                 always_args: T.List[str], *, system: str = 'unknown system',
+                 version: str = 'unknown version'):
+        super().__init__(exelist, for_machine, prefix_arg, always_args, system=system, version=version)
 
         # Some targets don't seem to support this argument (windows, wasm, ...)
         self.has_allow_shlib_undefined = self._supports_flag('--allow-shlib-undefined', always_args)
@@ -941,6 +950,13 @@ class LLVMDynamicLinker(GnuLikeDynamicLinkerMixin, PosixDynamicLinkerMixin, Dyna
             return self._apply_prefix([f'--subsystem,{value}'])
         else:
             raise mesonlib.MesonBugException(f'win_subsystem: {value} not handled in lld linker. This should not be possible.')
+
+
+class ZigCCDynamicLinker(LLVMDynamicLinker):
+    id = 'ld.zigcc'
+
+    def get_thinlto_cache_args(self, path: str) -> T.List[str]:
+        return []
 
 
 class WASMDynamicLinker(GnuLikeDynamicLinkerMixin, PosixDynamicLinkerMixin, DynamicLinker):
@@ -1281,11 +1297,13 @@ class VisualStudioLikeLinkerMixin(DynamicLinkerBase):
 
     def __init__(self, exelist: T.List[str], for_machine: mesonlib.MachineChoice,
                  prefix_arg: T.Union[str, T.List[str]], always_args: T.List[str], *,
-                 version: str = 'unknown version', direct: bool = True, machine: str = 'x86'):
+                 version: str = 'unknown version', direct: bool = True, machine: str = 'x86',
+                 rsp_syntax: RSPFileSyntax = RSPFileSyntax.MSVC):
         # There's no way I can find to make mypy understand what's going on here
         super().__init__(exelist, for_machine, prefix_arg, always_args, version=version)
         self.machine = machine
         self.direct = direct
+        self.rsp_syntax = rsp_syntax
 
     def invoked_by_compiler(self) -> bool:
         return not self.direct
@@ -1329,7 +1347,10 @@ class VisualStudioLikeLinkerMixin(DynamicLinkerBase):
         return self._apply_prefix(['/IMPLIB:' + implibname])
 
     def rsp_file_syntax(self) -> RSPFileSyntax:
-        return RSPFileSyntax.MSVC
+        return self.rsp_syntax
+
+    def get_pie_args(self) -> T.List[str]:
+        return []
 
     def get_pie_args(self) -> T.List[str]:
         return []
@@ -1345,9 +1366,10 @@ class MSVCDynamicLinker(VisualStudioLikeLinkerMixin, DynamicLinker):
                  exelist: T.Optional[T.List[str]] = None,
                  prefix: T.Union[str, T.List[str]] = '',
                  machine: str = 'x86', version: str = 'unknown version',
-                 direct: bool = True):
+                 direct: bool = True, rsp_syntax: RSPFileSyntax = RSPFileSyntax.MSVC):
         super().__init__(exelist or ['link.exe'], for_machine,
-                         prefix, always_args, machine=machine, version=version, direct=direct)
+                         prefix, always_args, machine=machine, version=version, direct=direct,
+                         rsp_syntax=rsp_syntax)
 
     def get_always_args(self) -> T.List[str]:
         return self._apply_prefix(['/release']) + super().get_always_args()
@@ -1369,9 +1391,10 @@ class ClangClDynamicLinker(VisualStudioLikeLinkerMixin, DynamicLinker):
                  exelist: T.Optional[T.List[str]] = None,
                  prefix: T.Union[str, T.List[str]] = '',
                  machine: str = 'x86', version: str = 'unknown version',
-                 direct: bool = True):
+                 direct: bool = True, rsp_syntax: RSPFileSyntax = RSPFileSyntax.MSVC):
         super().__init__(exelist or ['lld-link.exe'], for_machine,
-                         prefix, always_args, machine=machine, version=version, direct=direct)
+                         prefix, always_args, machine=machine, version=version, direct=direct,
+                         rsp_syntax=rsp_syntax)
 
     def get_output_args(self, outputname: str) -> T.List[str]:
         # If we're being driven indirectly by clang just skip /MACHINE
@@ -1629,9 +1652,6 @@ class MetrowerksLinker(DynamicLinker):
     def get_accepts_rsp(self) -> bool:
         return True
 
-    def get_lib_prefix(self) -> str:
-        return ""
-
     def get_linker_always_args(self) -> T.List[str]:
         return []
 
@@ -1644,8 +1664,9 @@ class MetrowerksLinker(DynamicLinker):
     def invoked_by_compiler(self) -> bool:
         return False
 
-    def rsp_file_syntax(self) -> RSPFileSyntax:
-        return RSPFileSyntax.GCC
+    def get_soname_args(self, env: 'Environment', prefix: str, shlib_name: str,
+                        suffix: str, soversion: str, darwin_versions: T.Tuple[str, str]) -> T.List[str]:
+        raise MesonException(f'{self.id} does not support shared libraries.')
 
 
 class MetrowerksLinkerARM(MetrowerksLinker):
