@@ -273,6 +273,7 @@ then
 	echo "Done installing seaborn" 
 	# Same with gym:
 	echo "Installing gym" 
+	python3.13 -m pip install cloudpickle gym_notices --no-deps --no-build-isolation
 	python3.13 -m pip install gym --upgrade --no-deps --no-build-isolation 
 	echo "Done installing gym" 
 fi
