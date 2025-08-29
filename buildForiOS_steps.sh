@@ -25,8 +25,11 @@ do
 	cp $file install_mini/$file
 done
 # And copy the frameworks:
-mkdir -p install_mini/iOS  >> $PREFIX/make_ios.log 2>&1
-cp -r iOS/Frameworks install_mini/iOS  >> $PREFIX/make_ios.log 2>&1
+mkdir -p install_mini/iOS/Frameworks  >> $PREFIX/make_ios.log 2>&1
+for framework in `find install_mini/Library/ -type f -name \*.fwork -exec cat {} \; | cut -f 2 -d "/" | sort -u`
+do
+	cp -r iOS/Frameworks/$framework install_mini/iOS/Frameworks/$framework  >> $PREFIX/make_ios.log 2>&1
+done
 
 # 5) Jupyter packages: cffi, pyzmq, psutil
 sh ./scripts/jupyterPackages_iOS.sh >> $PREFIX/make_ios.log 2>&1
@@ -65,8 +68,11 @@ do
 	cp $file install_regular/$file
 done
 # And copy the frameworks:
-mkdir -p install_regular/iOS  >> $PREFIX/make_ios.log 2>&1
-cp -r iOS/Frameworks install_regular/iOS  >> $PREFIX/make_ios.log 2>&1
+mkdir -p install_regular/iOS/Frameworks  >> $PREFIX/make_ios.log 2>&1
+for framework in `find install_regular/Library/ -type f -name \*.fwork -exec cat {} \; | cut -f 2 -d "/" | sort -u`
+do
+	cp -r iOS/Frameworks/$framework install_regular/iOS/Frameworks/$framework  >> $PREFIX/make_ios.log 2>&1
+done
 
 # if you don't want scipy and anything that depends on scipy: 
 # exit 0
