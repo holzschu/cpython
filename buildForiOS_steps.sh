@@ -68,7 +68,7 @@ do
 	directory=`dirname $file`
 	if [-d install_regular/$directory]
 	then
-		cp $file install_regular/$file
+		cp $file install_regular/$file >> $PREFIX/make_ios.log 2>&1
 	fi
 done
 # And copy the frameworks:

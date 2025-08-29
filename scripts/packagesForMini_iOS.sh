@@ -80,7 +80,6 @@ env CC=clang CXX=clang++ CPPFLAGS="-arch arm64 -miphoneos-version-min=14.0 -isys
 find build -name \*.so
 # create frameworks with the libraries, and .fwork files:
 install_site_package _cffi_backend build/lib.macosx-11.5-x86_64-cpython-313/_cffi_backend.cpython-313-darwin.so 
-cp $PREFIX/Library/lib/python3.13/site-packages/_cffi_backend.cpython-313-iphoneos.fwork $PREFIX/Library_mini/lib/python3.13/site-packages/ 
 popd 
 popd 
 echo done compiling cffi
@@ -113,7 +112,6 @@ clang -v -undefined error -dynamiclib \
 	-lxml2  \
 	-o build/lxml.so
 install_site_package lxml/lxml build/lxml.so
-cp $PREFIX/Library/lib/python3.13/site-packages/lxml/lxml.cpython-313-iphoneos.fwork $PREFIX/Library_mini/lib/python3.13/site-packages/lxml/ 
 # list of libraries: 
 # lxml/builder.cpython-313-darwin.so
 # lxml/sax.cpython-313-darwin.so
@@ -124,7 +122,6 @@ cp $PREFIX/Library/lib/python3.13/site-packages/lxml/lxml.cpython-313-iphoneos.f
 for library in lxml/builder lxml/sax lxml/html/diff lxml/_elementpath lxml/objectify lxml/etree 
 do
 	cp $PREFIX/Library/lib/python3.13/site-packages/lxml/lxml.cpython-313-iphoneos.fwork $PREFIX/Library/lib/python3.13/site-packages/$library.cpython-313-iphoneos.fwork
-	cp $PREFIX/Library/lib/python3.13/site-packages/lxml/lxml.cpython-313-iphoneos.fwork $PREFIX/Library_mini/lib/python3.13/site-packages/$library.cpython-313-iphoneos.fwork
 done
 popd 
 popd 
@@ -144,7 +141,6 @@ env CC=clang CXX=clang++ \
 echo Libraries for regex: 
 find . -name \*.so
 install_site_package regex/_regex build/lib.macosx-11.5-x86_64-cpython-313/regex/_regex.cpython-313-darwin.so
-cp $PREFIX/Library/lib/python3.13/site-packages/regex/_regex.cpython-313-iphoneos.fwork $PREFIX/Library_mini/lib/python3.13/site-packages/regex/_regex.cpython-313-iphoneos.fwork
 popd 
 popd 
 
