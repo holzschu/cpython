@@ -21,8 +21,10 @@ mkdir -p install_mini  >> $PREFIX/make_ios.log 2>&1
 for file in `find Library -name \*.fwork` 
 do
 	directory=`dirname $file`
-	mkdir -p install_mini/$directory
-	cp $file install_mini/$file
+	if [-d install_mini/$directory]
+	then
+		cp $file install_mini/$file
+	fi
 done
 # And copy the frameworks:
 mkdir -p install_mini/iOS/Frameworks  >> $PREFIX/make_ios.log 2>&1
@@ -64,8 +66,10 @@ mkdir -p install_regular  >> $PREFIX/make_ios.log 2>&1
 for file in `find Library -name \*.fwork` 
 do
 	directory=`dirname $file`
-	mkdir -p install_regular/$directory
-	cp $file install_regular/$file
+	if [-d install_regular/$directory]
+	then
+		cp $file install_regular/$file
+	fi
 done
 # And copy the frameworks:
 mkdir -p install_regular/iOS/Frameworks  >> $PREFIX/make_ios.log 2>&1
@@ -100,6 +104,7 @@ sh ./scripts/statsmodelsPackages_iOS.sh >> $PREFIX/make_ios.log 2>&1
 sh ./scripts/pygeosPackages_iOS.sh >> $PREFIX/make_ios.log 2>&1
 
 # pysal (includes networkx)
+# Nothing to do, pure Python
 
-# pytorch (later)
+# pytorch
 
