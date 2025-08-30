@@ -172,6 +172,9 @@ make
 make install
 # copy sysconfig_data:
 cp iOS/Frameworks/arm64-iphoneos/lib/python3.13/_sysconfigdata__ios_arm64-iphoneos.py $PREFIX/Library/lib/python3.13/
+cp iOS/Frameworks/arm64-iphoneos/lib/python3.13/_sysconfigdata__ios_arm64-iphoneos.py $PREFIX/install_mini/Library/lib/python3.13/
+cp iOS/Frameworks/arm64-iphoneos/lib/python3.13/_sysconfigdata__ios_arm64-iphoneos.py $PREFIX/install_regular/Library/lib/python3.13/
+# TODO (maybe): edit the paths in _sysconfigdata__ios_arm64
 # Create the frameworks 
 cp iOS/Resources/dylib-Info-template.plist $CODESIGNING_FOLDER_PATH
 #

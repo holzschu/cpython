@@ -74,9 +74,30 @@ pushd packages
 pushd coremltools
 mkdir -p build_ios
 rm -rf  build_ios/* 
-rm -f coremltools/*.so 
-rm -f build/lib/coremltools/*.so 
+# There are some libraries in deps/, too:
+find . -type f -name \*.so -delete
 BUILD_TAG=$(python3.13 ./scripts/build_tag.py)
+# We need to build deps/kmeans1d/_core.cpython-313-darwin.so separately
+# The build process uses the MacOSX SDK, and it's less efforts to compile the single file than to change the build process:
+pushd deps/kmeans1d/
+clang++ -fno-strict-overflow -Wsign-compare -Wunreachable-code \
+	-DNDEBUG -isysroot ${IOS_SDKROOT} \
+	-arch arm64 -target arm64-apple-darwin19.6.0 \
+	-O2 -D_LIBCPP_STRING_H_HAS_CONST_OVERLOADS -miphoneos-version-min=14 \
+	-I$PREFIX  -I$PREFIX/Include -c kmeans1d/_core.cpp \
+	-o build/temp.macosx-11.5-x86_64-cpython-313/kmeans1d/_core.o -std=c++11
+clang++ -arch arm64 -target arm64-apple-darwin19.6.0 \
+	-fno-strict-overflow -Wsign-compare -Wunreachable-code \
+	-DNDEBUG -O3 -Wall \
+	-isysroot ${IOS_SDKROOT} -DPYEXPATNS_H -v -undefined error -dynamiclib \
+	 -lz -undefined error -dynamiclib \
+	 -F $PREFIX/ios/Frameworks/arm64-iphoneos -framework Python \
+	 -miphoneos-version-min=14 -F$PREFIX/Frameworks_iphoneos -framework ios_system\
+	 build/temp.macosx-11.5-x86_64-cpython-313/kmeans1d/_core.o \
+	-o build/lib.macosx-11.5-x86_64-cpython-313/kmeans1d/_core.cpython-313-darwin.so
+cp build/lib.macosx-11.5-x86_64-cpython-313/kmeans1d/_core.cpython-313-darwin.so kmeans1d/_core.cpython-313-darwin.so
+file kmeans1d/_core.cpython-313-darwin.so
+popd
 pushd build_ios
 # Now compile. This is extracted from scripts/build.sh
 cmake -DCMAKE_OSX_DEPLOYMENT_TARGET=14.0 \

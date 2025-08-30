@@ -171,16 +171,13 @@ python3.13 -m pip uninstall pyzmq -y
 # We need scikit-build-core, which is different from scikit-build:
 python3.13 -m pip install scikit-build-core
 pushd packages 
-# TODO: pyzmq CMakeLists is modified to use PYZMQ_BACKEND_CFFI. 
 downloadSource pyzmq
 pushd pyzmq*
-if [ ! -f CMakeLists.back.txt ]; 
-then
-	cp CMakeLists.txt CMakeLists.back.txt
-	cp ../CMakeLists_pyzmq.txt CMakeLists.txt
-fi
-export PYZMQ_BACKEND_CFFI=1
-env PYZMQ_BACKEND_CFFI=1 CC=clang CXX=clang++ CPPFLAGS="-isysroot $OSX_SDKROOT" CFLAGS="-isysroot $OSX_SDKROOT" CXXFLAGS="-isysroot $OSX_SDKROOT" LDFLAGS="-isysroot $OSX_SDKROOT " LDSHARED="clang -v -undefined error -dynamiclib -isysroot $OSX_SDKROOT -lz -L$PREFIX -lpython3.13 -lc++ -L/usr/local/lib -lzmq" PYZMQ_BACKEND=cffi python3.13 -m pip install . --no-build-isolation
+env CC=clang CXX=clang++ \
+	CPPFLAGS="-isysroot $OSX_SDKROOT" \
+	CFLAGS="-isysroot $OSX_SDKROOT" CXXFLAGS="-isysroot $OSX_SDKROOT" LDFLAGS="-isysroot $OSX_SDKROOT " \
+	LDSHARED="clang -v -undefined error -dynamiclib -isysroot $OSX_SDKROOT -lz -L$PREFIX -lpython3.13 -lc++ -L/usr/local/lib -lzmq" \
+	PYZMQ_BACKEND=cffi python3.13 -m pip install . --no-build-isolation
 echo Done installing PyZMQ with CFFI
 echo PyZMQ libraries for OSX:
 ls -l $PREFIX/Library/lib/python3.13/site-packages/zmq/backend/cffi/*.so
@@ -189,7 +186,6 @@ cp $PREFIX/Library/lib/python3.13/site-packages/zmq/backend/cffi/*.so $PREFIX/bu
 popd 
 popd 
 # Unset so that other packages can be installed
-unset PYZMQ_BACKEND_CFFI
 unset PYZMQ_BACKEND
 python3.13 -m pip install qtpy --upgrade
 python3.13 -m pip install qtconsole --upgrade

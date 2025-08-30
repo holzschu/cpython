@@ -726,11 +726,11 @@ _PyModule_Clear(PyObject *m)
 				(strncmp(utf8name, "scipy.optimize._pava_pybind", 27) != 0) &&
 				(strncmp(utf8name, "scipy.optimize._highspy._highs_options", 38) != 0) &&
 				(strncmp(utf8name, "scipy.io._fast_matrix_market._fmm_core", 38) != 0)) {
-				// iOS, debug:
 				if (mod->md_def && mod->md_def->m_free) {
-					fprintf(thread_stderr, "Module = %x name = %s refCount = %zd ", mod, utf8name, m->ob_refcnt);
-					fprintf(thread_stderr, "module has a free function: %x", mod->md_def->m_free);
-					fprintf(thread_stderr, "\n"); fflush(thread_stderr);
+				    // iOS, debug:
+					// fprintf(thread_stderr, "Module = %x name = %s refCount = %zd ", mod, utf8name, m->ob_refcnt);
+					// fprintf(thread_stderr, "module has a free function: %x", mod->md_def->m_free);
+					// fprintf(thread_stderr, "\n"); fflush(thread_stderr);
 					moduleNeedsCleanup = 1;
 				}
 			}

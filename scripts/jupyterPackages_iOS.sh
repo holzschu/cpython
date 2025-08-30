@@ -77,13 +77,14 @@ pushd packages
 pushd pyzmq*
 rm -rf dist/*
 export PYZMQ_BACKEND=cffi 
-export PYZMQ_BACKEND_CFFI=1
 cp  $PREFIX/iOS/Frameworks/arm64-iphoneos/include/python3.13/pyconfig.h $PREFIX/Include/
 # pyzmq now uses pyproject.toml, which ignores both CFLAGS and CMAKE_C_FLAGS.
 # so we inject our build variables into pyproject.toml using sed. 
-# [tool.ruff] is the section right after [tool.scikit-build].
+# These lines have to go into the [tool.scikit-build] section, so 
+# we insert them before the section that is after. With pyzmq 27, that is 
+# [[tool.scikit-build.overrides]] (used to be [tool.ruff]).
 cp pyproject.toml pyproject_reference.toml
-sed -i bak "s|^\[tool.ruff\]|# compiling for iOS:\n\
+sed -i bak "s|^\[\[tool.scikit-build.overrides\]\]|# compiling for iOS:\n\
 cmake.define.CMAKE_INSTALL_PREFIX=\"@rpath\"\n\
 cmake.define.CMAKE_BUILD_TYPE=\"Release\"\n\
 cmake.define.CMAKE_OSX_SYSROOT=\"$IOS_SDKROOT\"\n\
@@ -95,9 +96,9 @@ cmake.define.CMAKE_MODULE_LINKER_FLAGS=\"-arch arm64 -miphoneos-version-min=14.0
 cmake.define.CMAKE_SHARED_LINKER_FLAGS=\"-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -F$PREFIX/Frameworks_iphoneos -framework ios_system -L$PREFIX/Frameworks_iphoneos/lib -F $PREFIX/ios/Frameworks/arm64-iphoneos -framework Python -lzmq\"\n\
 cmake.define.CMAKE_EXE_LINKER_FLAGS=\"-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -F$PREFIX/Frameworks_iphoneos -framework ios_system -L$PREFIX/Frameworks_iphoneos/lib -F $PREFIX/ios/Frameworks/arm64-iphoneos -framework Python -lzmq\"\n\
 \
+\
 &|" pyproject.toml
-env PYZMQ_BACKEND_CFFI=1 \
-	PYZMQ_LIBZMQ_RPATH=OFF \
+env PYZMQ_LIBZMQ_RPATH=OFF \
 	PLATFORM=iphoneos PYZMQ_BACKEND=cffi python3.13 -m build . --no-isolation
 # Remove the changes to pyproject.toml for the next compilation:
 mv pyproject.toml pyproject_debug.toml
