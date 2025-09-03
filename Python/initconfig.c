@@ -26,6 +26,9 @@
 
 #include "config_common.h"
 
+#if TARGET_OS_IPHONE
+#define printf(...) fprintf (thread_stdout, ##__VA_ARGS__)
+#endif
 
 /* --- PyConfig spec ---------------------------------------------- */
 
