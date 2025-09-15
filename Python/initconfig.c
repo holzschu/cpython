@@ -2446,11 +2446,15 @@ config_usage(int error, const wchar_t* program)
 {
 #if !TARGET_OS_IPHONE
     FILE *f = error ? stderr : stdout;
+    fprintf(f, usage_line, program);
 #else
     FILE *f = error ? thread_stderr : thread_stdout;
+    if (strcmp(program, "python3") == 0) 
+		fprintf(f, usage_line, program);
+	else // python, pythonA, pythonB...
+		fprintf(f, usage_line, "python");
 #endif
 
-    fprintf(f, usage_line, program);
     if (error)
         fprintf(f, "Try `python -h' for more information.\n");
     else {

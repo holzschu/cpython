@@ -288,13 +288,21 @@ pymain_start_pyrepl_no_main(void)
 
     PyObject *pyrepl = PyImport_ImportModule("_pyrepl.main");
     if (pyrepl == NULL) {
+#if !TARGET_OS_IPHONE
         fprintf(stderr, "Could not import _pyrepl.main\n");
+#else
+        fprintf(thread_stderr, "Could not import _pyrepl.main\n");
+#endif
         res = pymain_exit_err_print();
         goto done;
     }
     console = PyObject_GetAttrString(pyrepl, "interactive_console");
     if (console == NULL) {
+#if !TARGET_OS_IPHONE
         fprintf(stderr, "Could not access _pyrepl.main.interactive_console\n");
+#else
+        fprintf(thread_stderr, "Could not access _pyrepl.main.interactive_console\n");
+#endif
         res = pymain_exit_err_print();
         goto done;
     }

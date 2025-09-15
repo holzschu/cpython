@@ -701,6 +701,7 @@ _PyModule_Clear(PyObject *m)
 	if (mod->md_name != NULL) {
 		const char* utf8name = PyUnicode_AsUTF8(mod->md_name);
 		if ((strncmp(utf8name, "_asyncio", 8) == 0)
+				|| (strncmp(utf8name, "zmq.", 4) == 0)
 				|| (strncmp(utf8name, "lxml.", 5) == 0)
 				|| (strncmp(utf8name, "numpy.", 6) == 0)
 //				qutip crashes with this line

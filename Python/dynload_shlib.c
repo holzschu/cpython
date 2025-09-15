@@ -76,8 +76,21 @@ _PyImport_FindSharedFuncptr(const char *prefix,
     }
 
     dlopenflags = _PyImport_GetDLOpenFlags(_PyInterpreterState_GET());
-
+#if TARGET_OS_IPHONE
+	// add APPDIR in front of pathname for hardened binaries, who don't like relative paths.
+	char absolutePath[PATH_MAX];
+	// for once, we are comfortable with static local variables: this one won't change until the app is reinstalled.
+	static char* appdir = NULL;
+	if (appdir == NULL) appdir = getenv("APPDIR");
+	if (strncmp(pathname, "Frameworks", 10) == 0) {
+		sprintf(absolutePath, "%s/%s", appdir, pathname);
+		handle = dlopen(absolutePath, dlopenflags);
+	} else {
+		handle = dlopen(pathname, dlopenflags);
+	}
+#else
     handle = dlopen(pathname, dlopenflags);
+#endif
 
     if (handle == NULL) {
         PyObject *mod_name;
