@@ -177,9 +177,11 @@ env CC=clang CXX=clang++ \
 	CPPFLAGS="-isysroot $OSX_SDKROOT" \
 	CFLAGS="-isysroot $OSX_SDKROOT" CXXFLAGS="-isysroot $OSX_SDKROOT" LDFLAGS="-isysroot $OSX_SDKROOT " \
 	LDSHARED="clang -v -undefined error -dynamiclib -isysroot $OSX_SDKROOT -lz -L$PREFIX -lpython3.13 -lc++ -L/usr/local/lib -lzmq" \
-	PYZMQ_BACKEND=cffi python3.13 -m pip install . --no-build-isolation
+	PYZMQ_BACKEND=cffi \
+	python3.13 -m pip install . --no-build-isolation
 echo Done installing PyZMQ with CFFI
 echo PyZMQ libraries for OSX:
+find $PREFIX/Library/lib/python3.13/site-packages/zmq/ -name \*.so
 ls -l $PREFIX/Library/lib/python3.13/site-packages/zmq/backend/cffi/*.so
 mkdir -p $PREFIX/build/lib.macosx-${OSX_VERSION}-x86_64-3.13/zmq/backend/cffi
 cp $PREFIX/Library/lib/python3.13/site-packages/zmq/backend/cffi/*.so $PREFIX/build/lib.macosx-${OSX_VERSION}-x86_64-3.13/zmq/backend/cffi 

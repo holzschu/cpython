@@ -78,36 +78,29 @@ pushd pyzmq*
 rm -rf dist/*
 export PYZMQ_BACKEND=cffi 
 cp  $PREFIX/iOS/Frameworks/arm64-iphoneos/include/python3.13/pyconfig.h $PREFIX/Include/
-# pyzmq now uses pyproject.toml, which ignores both CFLAGS and CMAKE_C_FLAGS.
-# so we inject our build variables into pyproject.toml using sed. 
-# These lines have to go into the [tool.scikit-build] section, so 
-# we insert them before the section that is after. With pyzmq 27, that is 
-# [[tool.scikit-build.overrides]] (used to be [tool.ruff]).
-cp pyproject.toml pyproject_reference.toml
-sed -i bak "s|^\[\[tool.scikit-build.overrides\]\]|# compiling for iOS:\n\
-cmake.define.CMAKE_INSTALL_PREFIX=\"@rpath\"\n\
-cmake.define.CMAKE_BUILD_TYPE=\"Release\"\n\
-cmake.define.CMAKE_OSX_SYSROOT=\"$IOS_SDKROOT\"\n\
-cmake.define.CMAKE_C_COMPILER=\"clang\"\n\
-cmake.define.CMAKE_CXX_COMPILER=\"clang++\" \n\
-cmake.define.CMAKE_C_FLAGS=\"-arch arm64 -O2 -miphoneos-version-min=14 $CYTHON_OPTIONS $DEBUG -I$PREFIX\"\n\
-cmake.define.CMAKE_CXX_FLAGS=\"-arch arm64 -O2 -miphoneos-version-min=14 $CYTHON_OPTIONS  $DEBUG -I$PREFIX\"\n\
-cmake.define.CMAKE_MODULE_LINKER_FLAGS=\"-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -F$PREFIX/Frameworks_iphoneos -framework ios_system -L$PREFIX/Frameworks_iphoneos/lib -F $PREFIX/ios/Frameworks/arm64-iphoneos -framework Python -lzmq\"\n\
-cmake.define.CMAKE_SHARED_LINKER_FLAGS=\"-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -F$PREFIX/Frameworks_iphoneos -framework ios_system -L$PREFIX/Frameworks_iphoneos/lib -F $PREFIX/ios/Frameworks/arm64-iphoneos -framework Python -lzmq\"\n\
-cmake.define.CMAKE_EXE_LINKER_FLAGS=\"-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -F$PREFIX/Frameworks_iphoneos -framework ios_system -L$PREFIX/Frameworks_iphoneos/lib -F $PREFIX/ios/Frameworks/arm64-iphoneos -framework Python -lzmq\"\n\
-\
-\
-&|" pyproject.toml
-env PYZMQ_LIBZMQ_RPATH=OFF \
-	PLATFORM=iphoneos PYZMQ_BACKEND=cffi python3.13 -m build . --no-isolation
-# Remove the changes to pyproject.toml for the next compilation:
-mv pyproject.toml pyproject_debug.toml
-mv pyproject_reference.toml pyproject.toml
-pushd dist
-echo PyZMQ libraries for iOS:
-unzip -l pyzmq-*.whl | grep darwin.so
-unzip -o pyzmq-*.whl zmq/backend/cffi/_cffi.cpython-313-darwin.so
-install_site_package zmq/backend/cffi/_cffi zmq/backend/cffi/_cffi.cpython-313-darwin.so
+mkdir -p build_ios
+rm -rf build_ios/*
+pushd build_ios
+env CMAKE_INSTALL_PREFIX="@rpath" \
+CMAKE_BUILD_TYPE="Release" \
+SDKROOT="$IOS_SDKROOT" \
+CMAKE_OSX_SYSROOT="$IOS_SDKROOT" \
+CMAKE_C_COMPILER="clang" \
+ZMQ_PREFIX=$PREFIX/Frameworks_iphoneos \
+Python_ROOT_DIR=$PREFIX/Library \
+CMAKE_C_FLAGS="-arch arm64 -O2 -miphoneos-version-min=14 $DEBUG -I$PREFIX " \
+CMAKE_MODULE_LINKER_FLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -F$PREFIX/Frameworks_iphoneos -framework ios_system -L$PREFIX/Frameworks_iphoneos/lib -F $PREFIX/ios/Frameworks/arm64-iphoneos -framework Python -lzmq" \
+CMAKE_SHARED_LINKER_FLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -F$PREFIX/Frameworks_iphoneos -framework ios_system -L$PREFIX/Frameworks_iphoneos/lib -F $PREFIX/ios/Frameworks/arm64-iphoneos -framework Python -lzmq" \
+CMAKE_EXE_LINKER_FLAGS="-arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -F$PREFIX/Frameworks_iphoneos -framework ios_system -L$PREFIX/Frameworks_iphoneos/lib -F $PREFIX/ios/Frameworks/arm64-iphoneos -framework Python -lzmq" \
+cmake ..
+# CMake has decided to ignore some CFLAGS, so we re-inject them here:
+# Plus the library needs to be a shared library, not a bundle.
+# And we need to link with Python.framework otherwise we'll acces the wrong Python framework.
+sed -i bak "s+^C_FLAGS = +&-arch arm64 -miphoneos-version-min=14.0 +" CMakeFiles/_cffi.dir/flags.make
+sed -i bak "s&bundle&shared -arch arm64 -miphoneos-version-min=14.0 -F $PREFIX/ios/Frameworks/arm64-iphoneos -framework Python -F$PREFIX/Frameworks_iphoneos -framework ios_system -lc++ &" CMakeFiles/_cffi.dir/link.txt
+sed -i bak "s/dynamic_lookup/error/" CMakeFiles/_cffi.dir/link.txt
+make
+install_site_package zmq/backend/cffi/_cffi _cffi.cpython-313-darwin.so
 popd 
 popd 
 popd 

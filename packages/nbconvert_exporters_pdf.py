@@ -182,9 +182,9 @@ class PDFExporter(LatexExporter):
     def from_notebook_node(self, nb, resources=None, **kw):
         """Convert from notebook node."""
         # iOS: warn the user early of the issue:
-        if (sys.platform == "darwin" and os.uname().machine.startswith("iP")):
+        if (sys.platform == "ios" and (os.getenv('APPNAME') != "a-Shell")):
             raise OSError(
-                "Carnets cannot create PDF from LaTeX at the moment. "
+                "This app cannot create PDF from LaTeX at the moment. "
                 "You can export to LaTeX and typeset using a-Shell, another app"
             )
         latex, resources = super().from_notebook_node(nb, resources=resources, **kw)
