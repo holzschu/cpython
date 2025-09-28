@@ -157,6 +157,11 @@ env CC=clang CXX=clang++ CFLAGS="-I /opt/X11/include/freetype2/ -isysroot $OSX_S
 	LDSHARED="clang -v -undefined error -dynamiclib -isysroot $OSX_SDKROOT -lz -L$PREFIX -lpython3.13 -lc++ " \
 	$PREFIX/Library/bin/meson build_osx -Dmacosx=false
 pushd build_osx 
+# Required for compilation with Xcode 26, not part of the git repository:
+if [ ! -f ../subprojects/freetype-2.6.1/src/gzip/zconf.hbak ]
+then
+sed -i bak "s+!defined(MACOS) && !defined(TARGET_OS_MAC)+1 // &+" ../subprojects/freetype-2.6.1/src/gzip/zconf.h
+fi 
 ninja 
 popd
 env CC=clang CXX=clang++ CFLAGS="-I/opt/X11/include/freetype2/ -isysroot $OSX_SDKROOT" \

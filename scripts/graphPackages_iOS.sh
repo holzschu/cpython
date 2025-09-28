@@ -169,11 +169,6 @@ env CC=clang CXX=clang++ CFLAGS="-I /opt/X11/include/freetype2/ -isysroot $OSX_S
 pushd build_ios 
 # Something between ninja and meson is preventing the creation of dynamic libraries, creates bundles instead:
 sed -i bak "s/bundle/shared/" build.ninja
-# Required for compilation with Xcode 26, not part of the git repository:
-if [ ! -f ../subprojects/freetype-2.6.1/src/gzip/zconf.hbak ]
-then
-sed -i bak "s/!defined(MACOS) && !defined(TARGET_OS_MAC)/(&) || TARGET_OS_IPHONE/" ../subprojects/freetype-2.6.1/src/gzip/zconf.h
-fi 
 ninja 
 popd
 echo matplotlib libraries for iOS:
