@@ -173,10 +173,10 @@ ninja
 popd
 echo matplotlib libraries for iOS:
 find build_ios -name \*.so -print 
-# _tkagg.cpython-313-darwin.so
+# _tkagg.cpython-313-darwin.so  --> backends
 # _image.cpython-313-darwin.so
 # _ttconv.cpython-313-darwin.so
-# _backend_agg.cpython-313-darwin.so
+# _backend_agg.cpython-313-darwin.so  --> backends
 # _tri.cpython-313-darwin.so
 # _qhull.cpython-313-darwin.so
 # _path.cpython-313-darwin.so
@@ -188,5 +188,7 @@ do
 	libname=`basename $library .cpython-313-darwin.so`
 	install_site_package matplotlib/$libname $library 
 done
+mv $PREFIX/Library/lib/python3.13/site-packages/matplotlib/_backend_agg.cpython-313-iphoneos.fwork $PREFIX/Library/lib/python3.13/site-packages/matplotlib/backends/
+mv $PREFIX/Library/lib/python3.13/site-packages/matplotlib/_tkagg.cpython-313-iphoneos.fwork $PREFIX/Library/lib/python3.13/site-packages/matplotlib/backends/
 popd 
 popd 
