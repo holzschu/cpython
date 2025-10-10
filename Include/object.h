@@ -1223,10 +1223,14 @@ times.
 #  undef Py_CPYTHON_OBJECT_H
 #endif
 
-
 static inline int
 PyType_HasFeature(PyTypeObject *type, unsigned long feature)
 {
+#if TARGET_OS_IPHONE
+	// With out intensive memory cleaning, we can arrive here
+	// with type == NULL
+	if (type == NULL) return 0;
+#endif
     unsigned long flags;
 #ifdef Py_LIMITED_API
     // PyTypeObject is opaque in the limited C API

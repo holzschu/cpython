@@ -2449,10 +2449,10 @@ config_usage(int error, const wchar_t* program)
     fprintf(f, usage_line, program);
 #else
     FILE *f = error ? thread_stderr : thread_stdout;
-    if (strcmp(program, "python3") == 0) 
+    if (wcscmp(program, L"python3") == 0) 
 		fprintf(f, usage_line, program);
 	else // python, pythonA, pythonB...
-		fprintf(f, usage_line, "python");
+		fprintf(f, usage_line, L"python");
 #endif
 
     if (error)

@@ -3038,7 +3038,9 @@ _Py_closerange(int first, int last)
 #if TARGET_OS_IPHONE
 			// Don't close the streams for stdin/stdout/stderr
 			if ((i == STDIN_FILENO) ||  (i == STDOUT_FILENO) || (i == STDERR_FILENO) || 
-					(i == fileno(thread_stdin)) || (i == fileno(thread_stdout)) || (i == fileno(thread_stderr))) 
+					((thread_stdin != NULL) && (i == fileno(thread_stdin))) ||
+					((thread_stdout != NULL) && (i == fileno(thread_stdout))) ||
+					((thread_stderr != NULL) && (i == fileno(thread_stderr)))) 
 			{
 				continue;
 			} 

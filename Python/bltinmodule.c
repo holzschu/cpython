@@ -2205,7 +2205,10 @@ builtin_input_impl(PyObject *module, PyObject *prompt)
 #if !TARGET_OS_IPHONE
         tty = fd == fileno(stdin) && isatty(fd);
 #else
-        tty = fd == fileno(thread_stdin) && isatty(fd);
+		if (thread_stdin != NULL)
+			tty = fd == fileno(thread_stdin) && isatty(fd);
+		else
+			tty = 0;
 #endif
     }
     if (tty) {
@@ -2222,7 +2225,10 @@ builtin_input_impl(PyObject *module, PyObject *prompt)
 #if !TARGET_OS_IPHONE
             tty = fd == fileno(stdout) && isatty(fd);
 #else
-            tty = fd == fileno(thread_stdout) && ios_isatty(fd);
+			if (thread_stdout != NULL)
+				tty = fd == fileno(thread_stdout) && ios_isatty(fd);
+			else 
+				tty = 0;
 #endif
         }
     }

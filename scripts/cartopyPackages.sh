@@ -92,6 +92,9 @@ then
 	cp setup.py setup.pybak 
 	cp ../setup_Cartopy.py setup.py 
 fi
+# Don't use multi-threading to load Stadia tiles:
+cp lib/cartopy/io/img_tiles.py lib/cartopy/io/img_tiles.pybak
+cp ../cartopy_io_img_tiles.py lib/cartopy/io/img_tiles.py
 env CC=clang CXX=clang++ CPPFLAGS="-isysroot $OSX_SDKROOT $CYTHON_OPTIONS -I $PREFIX/Frameworks_macosx/include " \
 	CFLAGS="-isysroot $OSX_SDKROOT $DEBUG $CYTHON_OPTIONS -I $PREFIX/Frameworks_macosx/include " \
 	CXXFLAGS="-isysroot $OSX_SDKROOT $DEBUG $CYTHON_OPTIONS -I $PREFIX/Frameworks_macosx/include " \

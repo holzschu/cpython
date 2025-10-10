@@ -11175,7 +11175,9 @@ os_close_impl(PyObject *module, int fd)
 #if TARGET_OS_IPHONE
 	// Don't close the streams for stdin/stdout/stderr
 	if ((fd == STDIN_FILENO) ||  (fd == STDOUT_FILENO) || (fd == STDERR_FILENO) || 
-			(fd == fileno(thread_stdin)) || (fd == fileno(thread_stdout)) || (fd == fileno(thread_stderr))) 
+			((thread_stdin != NULL) && (fd == fileno(thread_stdin))) ||
+			((thread_stdout != NULL) && (fd == fileno(thread_stdout))) ||
+			((thread_stderr != NULL) && (fd == fileno(thread_stderr)))) 
 	{
 		Py_RETURN_NONE;
 	} 
@@ -15327,7 +15329,8 @@ os_get_terminal_size_impl(PyObject *module, int fd)
      */
 #if TARGET_OS_IPHONE
 	// ioctl will not five us the right answer for stdout:
-	if ((fd == fileno(stdout)) || (fd == fileno(thread_stdout)))
+	if (((stdout != NULL) && (fd == fileno(stdout))) ||
+			((thread_stdout != NULL) && (fd == fileno(thread_stdout))))
 	{ 
 		columns = atoi(getenv("COLUMNS"));
 		lines = atoi(getenv("LINES")); 
