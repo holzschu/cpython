@@ -145,6 +145,10 @@ pushd packages
 pushd psutil
 rm -rf build/*
 # if that fails, add --no-build-isolation
+env CC=clang CXX=clang++ \
+	CPPFLAGS="-isysroot $OSX_SDKROOT" \
+	CFLAGS="-isysroot $OSX_SDKROOT" CXXFLAGS="-isysroot $OSX_SDKROOT" LDFLAGS="-isysroot $OSX_SDKROOT " \
+	LDSHARED="clang -v -undefined error -dynamiclib -isysroot $OSX_SDKROOT -lz -L$PREFIX -lpython3.13 " \
 python3.13 -m pip install . 
 mkdir -p $PREFIX/build/lib.macosx-${OSX_VERSION}-x86_64-3.13/psutil
 cp $PREFIX/Library/lib/python3.13/site-packages/psutil/*.so $PREFIX/build/lib.macosx-${OSX_VERSION}-x86_64-3.13/psutil 
@@ -285,7 +289,7 @@ pip3.13 install jupyterlab-language-pack-pl-PL
 pip3.13 install jupyterlab-language-pack-pt-BR
 pip3.13 install jupyterlab-language-pack-ro-RO
 pip3.13 install jupyterlab-language-pack-ru-RU
-pip3.13 install jupyterlab-language-pack-si-LK
+# pip3.13 install jupyterlab-language-pack-si-LK
 pip3.13 install jupyterlab-language-pack-tr-TR
 pip3.13 install jupyterlab-language-pack-uk-UA
 pip3.13 install jupyterlab-language-pack-vi-VN
@@ -327,9 +331,18 @@ popd
 find $PREFIX/Library/share/jupyter -type f -name \*.css -exec sed -i bak 's/--jp-editor-cursor-color: var(--jp-ui-font-color0);/&\
   caret-color: #007aff;/' {} \; -print 
 #
+# re-introduce the cell toolbar for screens below 760px:
+# note the overuse of "." to have a simpler regexp
+#
+for file in `find $PREFIX/Library -type f -name \*.js -exec grep -q ".jp-cell-toolbar {..  display:" {} \; -print`
+do
+	echo patching $file
+	sed -i bak "s+.width .. 760px. ...  .jp-cell-toolbar ...    display: none...+(width <= 760px) {\\\\n  .jp-toolbar-overlap .jp-cell-toolbar {\\\\n display: flex;\\\\n }\\\\n .jp-cell-toolbar {\\\\n    display: flex;\\\\n+" $file
+done
+find $PREFIX/Library -type f -name \*bak -delete
+cp packages/share_jupyter_lab_schemas_jupyterlab_cell_toolbar_extension_plugin.json $PREFIX/Library/share/jupyter/lab/schemas/@jupyterlab/cell-toolbar-extension/plugin.json
 # done jupyterlab/retrolab. That works on a-Shell so far.
 
-# End packages that are not included with a-Shell mini
 # python3.13 -m pip install ipython --upgrade
 # nbconvert has removed setup.py install. We install it and patch on the fly:
 echo Installing nbconvert and patch it for iOS 
