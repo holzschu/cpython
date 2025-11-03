@@ -180,6 +180,7 @@ class ReadlineAlikeReader(historical_reader.HistoricalReader, CompletingReader):
     def collect_keymap(self) -> tuple[tuple[KeySpec, CommandName], ...]:
         return super().collect_keymap() + (
             (r"\n", "maybe-accept"),
+            (r"\r", "maybe-accept"),    # iOS addition for a-Shell
             (r"\<backspace>", "backspace-dedent"),
         )
 
