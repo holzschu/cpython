@@ -92,4 +92,5 @@ do
 done
 popd
 popd 
-popd 	
+popd
+install_name_tool -change @rpath/libgeos.3.11.0.dylib @rpath/libgeos.framework/libgeos $PREFIX/Python-aux/libgeos_c.xcframework/ios-arm64/libgeos_c.framework/libgeos_c

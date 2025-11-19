@@ -76,13 +76,14 @@ install_site_package () {
 pushd packages
 pushd kiwisolver*
 rm -rf build/* 
+# Due to many templated inline functions, kiwisolver *needs* -Oz to work.
 env CC=clang CXX=clang++ \
-	CPPFLAGS="-g -arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -I$PREFIX" \
-	CFLAGS="-g -arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -I$PREFIX" \
-	CXXFLAGS="-g -arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -I$PREFIX" \
-	LDFLAGS="-g -arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -F$PREFIX/Frameworks_iphoneos -framework ios_system -F $PREFIX/ios/Frameworks/arm64-iphoneos -framework Python" \
-	LDSHARED="clang -v -g -undefined error -dynamiclib -isysroot $IOS_SDKROOT -F$PREFIX/Frameworks_iphoneos -framework ios_system -lz -F $PREFIX/ios/Frameworks/arm64-iphoneos -framework Python" \
-	LDCXXSHARED="clang -v -g -undefined error -dynamiclib -isysroot $IOS_SDKROOT -F$PREFIX/Frameworks_iphoneos -framework ios_system -lz -F $PREFIX/ios/Frameworks/arm64-iphoneos -framework Python" \
+	CPPFLAGS="-g -Oz  -arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -I$PREFIX" \
+	CFLAGS="-g  -Oz -arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -I$PREFIX" \
+	CXXFLAGS="-g  -Oz -arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -I$PREFIX" \
+	LDFLAGS="-g -Oz -arch arm64 -miphoneos-version-min=14.0 -isysroot $IOS_SDKROOT -F$PREFIX/Frameworks_iphoneos -framework ios_system -F $PREFIX/ios/Frameworks/arm64-iphoneos -framework Python" \
+	LDSHARED="clang -Oz  -v -g -undefined error -dynamiclib -isysroot $IOS_SDKROOT -F$PREFIX/Frameworks_iphoneos -framework ios_system -lz -F $PREFIX/ios/Frameworks/arm64-iphoneos -framework Python" \
+	LDCXXSHARED="clang -Oz -g -undefined error -dynamiclib -isysroot $IOS_SDKROOT -F$PREFIX/Frameworks_iphoneos -framework ios_system -lz -F $PREFIX/ios/Frameworks/arm64-iphoneos -framework Python" \
 	PLATFORM=iphoneos python3.13 setup.py build 
 echo kiwisolver libraries for iOS:
 # build/lib.macosx-11.5-x86_64-cpython-313/kiwisolver/_cext.cpython-313-darwin.so

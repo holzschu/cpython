@@ -81,9 +81,35 @@ python3.13 -m pip install cycler --upgrade
 ## kiwisolver
 pushd packages
 python3.13 -m pip install cppy --upgrade 
+# Replace inline methods with static inline methods:
+if [ ! -f $PREFIX/Library/lib/python3.13/site-packages/cppy/include/cppy/ptr.hbak ]
+then
+sed -i bak "s/^inline /static inline /" $PREFIX/Library/lib/python3.13/site-packages/cppy/include/cppy/ptr.h
+fi 
+if [ ! -f $PREFIX/Library/lib/python3.13/site-packages/cppy/include/cppy/errors.hbak ]
+then
+sed -i bak "s/^inline /static inline /" $PREFIX/Library/lib/python3.13/site-packages/cppy/include/cppy/errors.h
+fi 
 # kiwisolver 1.4.8 causes a crash; it doesn't make sense and takes too long to debug.
 downloadSource kiwisolver 1.4.4
 pushd kiwisolver*
+# Fix the source code:
+pushd py/src
+for file in constraint.cpp expression.cpp solver.cpp strength.cpp term.cpp types.h util.h variable.cpp 
+do
+	if [ ! -f ${file}bak ]
+	then
+		sed -i bak "s/static PyMethodDef /static thread_local PyMethodDef /" $file
+		sed -i bak "s/static PyType_Slot /static thread_local PyType_Slot /" $file
+		sed -i bak "s/static PyType_Spec /static thread_local PyType_Spec /" $file
+		sed -i bak "s/^PyType_Spec /PyType_Spec thread_local /" $file
+		sed -i bak "s/^PyTypeObject\* /thread_local PyTypeObject* /" $file
+		sed -i bak "s/^PyTypeObject \*/thread_local PyTypeObject* /" $file
+		sed -i bak "s/static PyTypeObject\* /static thread_local PyTypeObject* /" $file
+	fi
+done
+popd
+#
 rm -rf build/* 
 env CC=clang CXX=clang++ CPPFLAGS="-isysroot $OSX_SDKROOT" CFLAGS="-isysroot $OSX_SDKROOT" CXXFLAGS="-isysroot $OSX_SDKROOT" LDFLAGS="-isysroot $OSX_SDKROOT " LDSHARED="clang -v -undefined error -dynamiclib -isysroot $OSX_SDKROOT -lz -L$PREFIX -lpython3.13 -lc++ " python3.13 setup.py build
 env CC=clang CXX=clang++ CPPFLAGS="-isysroot $OSX_SDKROOT" CFLAGS="-isysroot $OSX_SDKROOT" CXXFLAGS="-isysroot $OSX_SDKROOT" LDFLAGS="-isysroot $OSX_SDKROOT " LDSHARED="clang -v -undefined error -dynamiclib -isysroot $OSX_SDKROOT -lz -L$PREFIX -lpython3.13 -lc++ " python3.13 -m pip install .
