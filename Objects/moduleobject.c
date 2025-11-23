@@ -845,6 +845,10 @@ static int
 module___init___impl(PyModuleObject *self, PyObject *name, PyObject *doc)
 /*[clinic end generated code: output=e7e721c26ce7aad7 input=57f9e177401e5e1e]*/
 {
+#if TARGET_OS_IPHONE 
+	// const char* utf8name = PyUnicode_AsUTF8(name);
+	// fprintf(stderr, "# initialising module = %s %x\n", utf8name, self);
+#endif
     return module_init_dict(self, self->md_dict, name, doc);
 }
 

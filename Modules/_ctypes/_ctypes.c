@@ -3807,6 +3807,62 @@ PyCFuncPtr_FromDll(PyTypeObject *type, PyObject *args, PyObject *kwds)
         (void)dlerror();
     #endif
     address = (PPROC)dlsym(handle, name);
+#if TARGET_OS_IPHONE
+	// RTLD_DEFAULT is loading the first symbol it finds. With multiple Python libraries co-existing, we need the right one.
+	if (handle == RTLD_DEFAULT) {
+	    Dl_info info;
+		int res_dl = dladdr(address, &info);
+		const char* fullPath = info.dli_fname; // full path to the library loaded.
+		// for once, we are comfortable with static local variables: this one won't change until the app is reinstalled.
+		static char* appdir = NULL;
+		if (appdir == NULL) appdir = ios_getenv("APPDIR");
+		if (strncmp(fullPath, appdir, strlen(appdir)) == 0) {
+			char* frameworkPath = fullPath + strlen(appdir) + strlen("/Frameworks/");
+			if (strncmp(frameworkPath, "Python", strlen("Python")) == 0) {
+				// The library name begins with Python, so we may have an issue
+				int argc; 
+				wchar_t** argv;
+				Py_GetArgcArgv(&argc, &argv);
+				char interpreterName[8];
+				int length = wcstombs(interpreterName, argv[0], 7);
+				interpreterName[0] = 'P'; // Python, PythonA
+				// Now the tricky bit: the first 7 characters of framework Path can be either Python[ABCDE], Python- or Python.
+				int correctFramework = (strncmp(frameworkPath, interpreterName, length) == 0);
+				if (length == 6) 
+					correctFramework = correctFramework && ((frameworkPath[6] == '.') || (frameworkPath[6] == '-'));
+				if (!correctFramework)  {
+					// dlsym loaded name from Python.framework/Python or Python-name.framework/Python-name
+					// We need instead the symbol from PythonA.framework/PythonA or PythonAname.framework/PythonAname
+					// dlsym(RTLD_NEXT, name) doesn't work for that.
+					char newFrameworkName[PATH_MAX];
+					newFrameworkName[0] = 0;
+					if (strcmp(frameworkPath, "Python.framework/Python") == 0) {
+						interpreterName[0] = 'p'; // it's pythonA.framework in that case.
+						sprintf(newFrameworkName, "%s/Frameworks/%s.framework/%s", appdir, interpreterName, interpreterName);
+					} else if (strncmp(frameworkPath, "Python", 6) == 0) {
+						if (length == 7) {
+							frameworkPath[6] = interpreterName[6];
+							char* secondHyphen = strstr(frameworkPath, "Python-");
+							if (secondHyphen != NULL) {
+								secondHyphen[6] = interpreterName[6];
+							}
+						} else {
+							frameworkPath[6] = '-';
+							char* secondInterpreter = strstr(frameworkPath, interpreterName);
+							if (secondInterpreter != NULL) {
+								secondInterpreter[6] = '-';
+							}
+						}
+						sprintf(newFrameworkName, "%s/Frameworks/%s", appdir, frameworkPath);
+					}
+					handle = dlopen(newFrameworkName, RTLD_LOCAL);
+					if (handle) address = (PPROC)dlsym(handle, name);
+					else address = NULL;
+				}
+			}
+		}
+	}
+#endif
 
     if (!address) {
 	#ifdef USE_DLERROR
