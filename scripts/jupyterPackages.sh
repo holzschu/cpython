@@ -327,6 +327,8 @@ cp jupyter_server_nbconvert_handlers.py $PREFIX/Library/lib/python3.13/site-pack
 # Do not create new files in "/", but in the current directory instead:
 cp  jupyter_server_services_contents_handlers.py $PREFIX/Library/lib/python3.13/site-packages/jupyter_server/services/contents/handlers.py
 popd 
+# Do not map alt + [ to something (for international keyboards):
+cp Library_share_jupyter_lab_schemas_jupyterlab_completer-extension_inline-completer.json $PREFIX/Library/share/jupyter/lab/schemas/@jupyterlab/completer-extension/inline-completer.json
 # Add caret-color to all css files:
 find $PREFIX/Library/share/jupyter -type f -name \*.css -exec sed -i bak 's/--jp-editor-cursor-color: var(--jp-ui-font-color0);/&\
   caret-color: #007aff;/' {} \; -print 
