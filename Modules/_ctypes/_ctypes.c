@@ -3813,6 +3813,7 @@ PyCFuncPtr_FromDll(PyTypeObject *type, PyObject *args, PyObject *kwds)
 	    Dl_info info;
 		int res_dl = dladdr(address, &info);
 		const char* fullPath = info.dli_fname; // full path to the library loaded.
+		// fprintf(stderr, "fullPath: %s\n", fullPath);
 		// for once, we are comfortable with static local variables: this one won't change until the app is reinstalled.
 		static char* appdir = NULL;
 		if (appdir == NULL) appdir = ios_getenv("APPDIR");
@@ -3826,6 +3827,11 @@ PyCFuncPtr_FromDll(PyTypeObject *type, PyObject *args, PyObject *kwds)
 				char interpreterName[8];
 				int length = wcstombs(interpreterName, argv[0], 7);
 				interpreterName[0] = 'P'; // Python, PythonA
+				if ((length == 7) && (interpreterName[6] == '3')) {
+					// Python3 should be Python
+					length = 6; 
+					interpreterName[6] = 0;
+				}
 				// Now the tricky bit: the first 7 characters of framework Path can be either Python[ABCDE], Python- or Python.
 				int correctFramework = (strncmp(frameworkPath, interpreterName, length) == 0);
 				if (length == 6) 
@@ -3855,6 +3861,7 @@ PyCFuncPtr_FromDll(PyTypeObject *type, PyObject *args, PyObject *kwds)
 						}
 						sprintf(newFrameworkName, "%s/Frameworks/%s", appdir, frameworkPath);
 					}
+					// fprintf(stderr, "Opening framework: %s\n", newFrameworkName);
 					handle = dlopen(newFrameworkName, RTLD_LOCAL);
 					if (handle) address = (PPROC)dlsym(handle, name);
 					else address = NULL;

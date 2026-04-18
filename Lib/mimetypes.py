@@ -45,8 +45,8 @@ __all__ = [
     "suffix_map", "encodings_map", "types_map", "common_types"
 ]
 
-# This fixes an issue when running on the Arm macs with iPad compatibility mode. No change on iOS (all these files are unreadable anyway)
-if (sys.platform == "darwin"):
+# This fixes an issue when running on the Arm macs with iPad compatibility mode.
+if (sys.platform == "ios") or (sys.platform == "darwin"):
     knownfiles = []
 else:
     knownfiles = [
