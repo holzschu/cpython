@@ -124,6 +124,7 @@ then
         full_path = os.path.join(home, "Frameworks", frameworkName + ".framework", frameworkName)\
         if os.path.isfile(full_path):\
             return load_lib(full_path, cdecl)\
+        raise OSError("Cannot load native framework %s: file not found" % full_path)\
     # Not iOS case: test all possible suffixes and libraries:\
 &/' lib/Crypto/Util/_raw_api.py 
 	fi
