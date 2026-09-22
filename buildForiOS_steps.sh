@@ -13,6 +13,10 @@ sh ./scripts/packagesForMini_iOS.sh >> $PREFIX/make_ios.log 2>&1
 
 sh ./scripts/cryptoPackages_iOS.sh >> $PREFIX/make_ios.log 2>&1
 
+# 3b) curl_cffi
+
+sh ./scripts/curl_cffi_iOS.sh >> $PREFIX/make_ios.log 2>&1
+
 # 4) copy everything into Library_mini
 
 echo "Copying into install_mini"  >> $PREFIX/make_ios.log 2>&1
