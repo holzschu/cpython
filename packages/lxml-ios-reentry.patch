@@ -1,0 +1,91 @@
+--- a/src/lxml/_elementpath.c
++++ b/src/lxml/_elementpath.c
+@@ -17099,6 +17099,10 @@
+   Py_CLEAR(__pyx_mstate->__pyx_cython_runtime);
+   Py_CLEAR(__pyx_mstate->__pyx_b);
+   Py_CLEAR(__pyx_mstate->__pyx_d);
++  #if !CYTHON_USE_MODULE_STATE
++  /* Match the iOS Cython fork: allow the next interpreter initialization. */
++  __pyx_m = NULL;
++  #endif
+ }
+ /* #### Code section: main_method ### */
+ /* #### Code section: utility_code_pragmas ### */
+--- a/src/lxml/builder.c
++++ b/src/lxml/builder.c
+@@ -8005,6 +8005,10 @@
+   Py_CLEAR(__pyx_mstate->__pyx_cython_runtime);
+   Py_CLEAR(__pyx_mstate->__pyx_b);
+   Py_CLEAR(__pyx_mstate->__pyx_d);
++  #if !CYTHON_USE_MODULE_STATE
++  /* Match the iOS Cython fork: allow the next interpreter initialization. */
++  __pyx_m = NULL;
++  #endif
+ }
+ /* #### Code section: main_method ### */
+ /* #### Code section: utility_code_pragmas ### */
+--- a/src/lxml/etree.c
++++ b/src/lxml/etree.c
+@@ -290826,6 +290826,10 @@
+   Py_CLEAR(__pyx_mstate->__pyx_cython_runtime);
+   Py_CLEAR(__pyx_mstate->__pyx_b);
+   Py_CLEAR(__pyx_mstate->__pyx_d);
++  #if !CYTHON_USE_MODULE_STATE
++  /* Match the iOS Cython fork: allow the next interpreter initialization. */
++  __pyx_m = NULL;
++  #endif
+ }
+ /* #### Code section: main_method ### */
+ /* #### Code section: utility_code_pragmas ### */
+--- a/src/lxml/html/_difflib.c
++++ b/src/lxml/html/_difflib.c
+@@ -40353,6 +40353,10 @@
+   Py_CLEAR(__pyx_mstate->__pyx_cython_runtime);
+   Py_CLEAR(__pyx_mstate->__pyx_b);
+   Py_CLEAR(__pyx_mstate->__pyx_d);
++  #if !CYTHON_USE_MODULE_STATE
++  /* Match the iOS Cython fork: allow the next interpreter initialization. */
++  __pyx_m = NULL;
++  #endif
+ }
+ /* #### Code section: main_method ### */
+ /* #### Code section: utility_code_pragmas ### */
+--- a/src/lxml/html/diff.c
++++ b/src/lxml/html/diff.c
+@@ -24186,6 +24186,10 @@
+   Py_CLEAR(__pyx_mstate->__pyx_cython_runtime);
+   Py_CLEAR(__pyx_mstate->__pyx_b);
+   Py_CLEAR(__pyx_mstate->__pyx_d);
++  #if !CYTHON_USE_MODULE_STATE
++  /* Match the iOS Cython fork: allow the next interpreter initialization. */
++  __pyx_m = NULL;
++  #endif
+ }
+ /* #### Code section: main_method ### */
+ /* #### Code section: utility_code_pragmas ### */
+--- a/src/lxml/objectify.c
++++ b/src/lxml/objectify.c
+@@ -44019,6 +44019,10 @@
+   Py_CLEAR(__pyx_mstate->__pyx_cython_runtime);
+   Py_CLEAR(__pyx_mstate->__pyx_b);
+   Py_CLEAR(__pyx_mstate->__pyx_d);
++  #if !CYTHON_USE_MODULE_STATE
++  /* Match the iOS Cython fork: allow the next interpreter initialization. */
++  __pyx_m = NULL;
++  #endif
+ }
+ /* #### Code section: main_method ### */
+ /* #### Code section: utility_code_pragmas ### */
+--- a/src/lxml/sax.c
++++ b/src/lxml/sax.c
+@@ -12322,6 +12322,10 @@
+   Py_CLEAR(__pyx_mstate->__pyx_cython_runtime);
+   Py_CLEAR(__pyx_mstate->__pyx_b);
+   Py_CLEAR(__pyx_mstate->__pyx_d);
++  #if !CYTHON_USE_MODULE_STATE
++  /* Match the iOS Cython fork: allow the next interpreter initialization. */
++  __pyx_m = NULL;
++  #endif
+ }
+ /* #### Code section: main_method ### */
+ /* #### Code section: utility_code_pragmas ### */

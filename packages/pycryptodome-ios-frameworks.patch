@@ -1,0 +1,15 @@
+--- a/lib/Crypto/Util/_raw_api.py
++++ b/lib/Crypto/Util/_raw_api.py
+@@ -310,6 +310,12 @@
+         try:
+             filename = basename + ext
+             full_name = pycryptodome_filename(dir_comps, filename)
++            if sys.platform == "ios":
++                marker = full_name[:-3] + ".fwork"
++                if os.path.isfile(marker):
++                    with open(marker, encoding="utf-8") as file:
++                        binary = file.read().strip()
++                    return load_lib(os.path.join(os.environ["APPDIR"], binary), cdecl)
+             if not os.path.isfile(full_name):
+                 attempts.append("Not found '%s'" % filename)
+                 continue

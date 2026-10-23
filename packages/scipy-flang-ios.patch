@@ -1,0 +1,204 @@
+--- a/meson.build
++++ b/meson.build
+@@ -87,6 +87,9 @@
+ # Adding at project level causes many spurious -lgfortran flags.
+ add_languages('fortran', native: false)
+ ff = meson.get_compiler('fortran')
++# LLVM Flang does not accept Apple's framework or -dynamiclib driver flags.
++# The C linker uses the explicitly supplied iOS flang runtime instead.
++fortran_link_language = host_machine.system() == 'ios' and ff.get_id() == 'llvm-flang' ? 'c' : 'fortran'
+ if ff.get_id() == 'gcc'
+   # -std=legacy is not supported by all Fortran compilers, but very useful with
+   # gfortran since it avoids a ton of warnings that we don't care about.
+--- a/scipy/integrate/meson.build
++++ b/scipy/integrate/meson.build
+@@ -75,7 +75,7 @@
+   link_args: version_link_args,
+   dependencies: [lapack_dep, np_dep],
+   install: true,
+-  link_language: 'fortran',
++  link_language: fortran_link_language,
+   subdir: 'scipy/integrate'
+ )
+ 
+@@ -86,7 +86,7 @@
+   link_args: version_link_args,
+   dependencies: [lapack_dep, blas_dep, fortranobject_dep],
+   install: true,
+-  link_language: 'fortran',
++  link_language: fortran_link_language,
+   subdir: 'scipy/integrate'
+ )
+ 
+@@ -97,7 +97,7 @@
+   dependencies: [lapack_dep, fortranobject_dep],
+   link_args: version_link_args,
+   install: true,
+-  link_language: 'fortran',
++  link_language: fortran_link_language,
+   subdir: 'scipy/integrate'
+ )
+ 
+@@ -108,7 +108,7 @@
+   dependencies: [fortranobject_dep],
+   link_args: version_link_args,
+   install: true,
+-  link_language: 'fortran',
++  link_language: fortran_link_language,
+   subdir: 'scipy/integrate'
+ )
+ 
+@@ -127,7 +127,7 @@
+   link_args: version_link_args,
+   dependencies: [lapack_dep, fortranobject_dep],
+   install: true,
+-  link_language: 'fortran',
++  link_language: fortran_link_language,
+   subdir: 'scipy/integrate',
+   install_tag: 'tests'
+ )
+--- a/scipy/interpolate/meson.build
++++ b/scipy/interpolate/meson.build
+@@ -146,7 +146,7 @@
+   include_directories: 'src/',
+   dependencies: np_dep,
+   link_args: version_link_args,
+-  link_language: 'fortran',
++  link_language: fortran_link_language,
+   install: true,
+   subdir: 'scipy/interpolate'
+ )
+@@ -160,7 +160,7 @@
+   link_with: [fitpack_lib],
+   override_options: ['b_lto=false'],
+   install: true,
+-  link_language: 'fortran',
++  link_language: fortran_link_language,
+   subdir: 'scipy/interpolate'
+ )
+ 
+--- a/scipy/io/meson.build
++++ b/scipy/io/meson.build
+@@ -8,7 +8,7 @@
+   link_args: version_link_args,
+   dependencies: [lapack_dep, fortranobject_dep],
+   install: true,
+-  link_language: 'fortran',
++  link_language: fortran_link_language,
+   subdir: 'scipy/io',
+   install_tag: 'tests'
+ )
+--- a/scipy/odr/meson.build
++++ b/scipy/odr/meson.build
+@@ -16,7 +16,7 @@
+   link_args: version_link_args,
+   dependencies: [blas_dep, np_dep],
+   install: true,
+-  link_language: 'fortran',
++  link_language: fortran_link_language,
+   subdir: 'scipy/odr'
+ )
+ 
+--- a/scipy/sparse/linalg/_eigen/arpack/meson.build
++++ b/scipy/sparse/linalg/_eigen/arpack/meson.build
+@@ -107,7 +107,7 @@
+   link_args: version_link_args,
+   dependencies: [lapack_dep, blas_dep, fortranobject_dep],
+   install: true,
+-  link_language: 'fortran',
++  link_language: fortran_link_language,
+   subdir: 'scipy/sparse/linalg/_eigen/arpack'
+ )
+ 
+--- a/scipy/sparse/linalg/_propack/meson.build
++++ b/scipy/sparse/linalg/_propack/meson.build
+@@ -87,10 +87,33 @@
+ 
+ fargs_propack = ['-U_OPENMP']
+ foreach ele: elements
++  # Keep private procedures and COMMON blocks separate in the iOS aggregate.
++  ios_namespace_args = []
++  ios_wrapper_c_args = []
++  ios_wrapper_fortran_args = []
++  if host_machine.system() == 'ios'
++    foreach helper: [
++      'pizero', 'clearstat', 'dbdqr', 'dbsvdstep', 'dgemm_ovwr', 'dgemm_ovwr_left',
++      'drefinebounds', 'pdaxpby', 'pdaxpy', 'pdaxty', 'pdcopy', 'pddot',
++      'pdnrm2', 'pdscal', 'pdset', 'pdzero', 'printstat', 'psaxpby',
++      'psaxpy', 'psaxty', 'pscopy', 'psdot', 'psnrm2', 'psscal',
++      'psset', 'pszero', 'sbdqr', 'sbsvdstep', 'sgemm_ovwr', 'sgemm_ovwr_left',
++      'srefinebounds', 'izero', 'szero', 'dzero', 'sset_mu', 'scompute_int',
++      'supdate_mu', 'supdate_nu', 'dset_mu', 'dcompute_int', 'dupdate_mu', 'dupdate_nu',
++      'timing', 'BBcom',
++    ]
++      ios_namespace_args += '-D' + helper + '=' + ele[0].substring(1) + '_' + helper
++    endforeach
++    ios_wrapper_c_args = ['-Df2pyinittiming_=' + ele[0].substring(1) + '_f2pyinittiming_']
++    ios_wrapper_fortran_args = ['-cpp',
++      '-Df2pyinittiming=' + ele[0].substring(1) + '_f2pyinittiming',
++      '-Dtiming=' + ele[0].substring(1) + '_timing']
++  endif
+   propack_lib = static_library('lib_' + ele[0],
+     ele[1],
+     fortran_args: [
+       fargs_propack,
++      ios_namespace_args,
+       fortran_ignore_warnings,
+       _fflag_Wno_intrinsic_shadow,
+       _fflag_Wno_uninitialized,
+@@ -102,12 +125,12 @@
+   propacklib = py3.extension_module(ele[0],
+     f2py_gen.process(ele[2]),
+     link_with: propack_lib,
+-    c_args: ['-U_OPENMP', _cpp_Wno_cpp],
+-    fortran_args: _fflag_Wno_maybe_uninitialized,
++    c_args: ['-U_OPENMP', _cpp_Wno_cpp, ios_wrapper_c_args],
++    fortran_args: [_fflag_Wno_maybe_uninitialized, ios_wrapper_fortran_args],
+     dependencies: [lapack_dep, blas_dep, fortranobject_dep],
+     link_args: version_link_args,
+     install: true,
+-    link_language: 'fortran',
++    link_language: fortran_link_language,
+     subdir: 'scipy/sparse/linalg/_propack'
+   )
+ endforeach
+--- a/scipy/sparse/linalg/_propack/PROPACK/single/stat.h
++++ b/scipy/sparse/linalg/_propack/PROPACK/single/stat.h
+@@ -10,5 +10,6 @@
+ 
+ 
+-      common/timing/ nopx, nreorth, ndot, nreorthu, nreorthv, nitref,
++      common/spropack_timing/ nopx, nreorth, ndot,
++     c     nreorthu, nreorthv, nitref,
+      c     nrestart, nbsvd, tmvopx, tgetu0, tupdmu, tupdnu, tintv,
+      c     tlanbpro, treorth, treorthu, treorthv, telru, telrv, tbsvd,
+--- a/scipy/sparse/linalg/_propack/PROPACK/double/stat.h
++++ b/scipy/sparse/linalg/_propack/PROPACK/double/stat.h
+@@ -10,5 +10,6 @@
+ 
+ 
+-      common/timing/ nopx, nreorth, ndot, nreorthu, nreorthv, nitref,
++      common/dpropack_timing/ nopx, nreorth, ndot,
++     c     nreorthu, nreorthv, nitref,
+      c     nrestart, nbsvd, tmvopx, tgetu0, tupdmu, tupdnu, tintv,
+      c     tlanbpro, treorth, treorthu, treorthv, telru, telrv, tbsvd,
+--- a/scipy/sparse/linalg/_propack/PROPACK/complex8/stat.h
++++ b/scipy/sparse/linalg/_propack/PROPACK/complex8/stat.h
+@@ -10,5 +10,6 @@
+ 
+ 
+-      common/timing/ nopx, nreorth, ndot, nreorthu, nreorthv, nitref,
++      common/cpropack_timing/ nopx, nreorth, ndot,
++     c     nreorthu, nreorthv, nitref,
+      c     nrestart, nbsvd, tmvopx, tgetu0, tupdmu, tupdnu, tintv,
+      c     tlanbpro, treorth, treorthu, treorthv, telru, telrv, tbsvd,
+--- a/scipy/sparse/linalg/_propack/PROPACK/complex16/stat.h
++++ b/scipy/sparse/linalg/_propack/PROPACK/complex16/stat.h
+@@ -10,5 +10,6 @@
+ 
+ 
+-      common/timing/ nopx, nreorth, ndot, nreorthu, nreorthv, nitref,
++      common/zpropack_timing/ nopx, nreorth, ndot,
++     c     nreorthu, nreorthv, nitref,
+      c     nrestart, nbsvd, tmvopx, tgetu0, tupdmu, tupdnu, tintv,
+      c     tlanbpro, treorth, treorthu, treorthv, telru, telrv, tbsvd,

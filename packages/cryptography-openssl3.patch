@@ -1,0 +1,221 @@
+--- a/src/_cffi_src/openssl/src/osrandom_engine.h
++++ b/src/_cffi_src/openssl/src/osrandom_engine.h
+@@ -16,7 +16,6 @@
+   #endif
+ 
+   #ifdef __APPLE__
+-    #include <sys/random.h>
+     /* To support weak linking we need to declare this as a weak import even if
+      * it's not present in sys/random (e.g. macOS < 10.12). */
+     extern int getentropy(void *buffer, size_t size) __attribute((weak_import));
+--- a/src/_cffi_src/openssl/err.py
++++ b/src/_cffi_src/openssl/err.py
+@@ -17,6 +17,7 @@
+ static const int EVP_R_UNKNOWN_PBE_ALGORITHM;
+ 
+ static const int ERR_LIB_EVP;
++static const int ERR_LIB_PROV;
+ static const int ERR_LIB_PEM;
+ static const int ERR_LIB_ASN1;
+ static const int ERR_LIB_PKCS12;
+@@ -39,10 +40,12 @@
+ void ERR_put_error(int, int, int, const char *, int);
+ 
+ int ERR_GET_LIB(unsigned long);
+-int ERR_GET_FUNC(unsigned long);
+ int ERR_GET_REASON(unsigned long);
+ 
+ """
+ 
+ CUSTOMIZATIONS = """
++#if !CRYPTOGRAPHY_OPENSSL_300_OR_GREATER
++static const int ERR_LIB_PROV = 0;
++#endif
+ """
+--- a/src/_cffi_src/openssl/fips.py
++++ b/src/_cffi_src/openssl/fips.py
+@@ -17,7 +17,7 @@
+ """
+ 
+ CUSTOMIZATIONS = """
+-#if CRYPTOGRAPHY_IS_LIBRESSL
++#if CRYPTOGRAPHY_IS_LIBRESSL || OPENSSL_VERSION_NUMBER >= 0x30000000L
+ static const long Cryptography_HAS_FIPS = 0;
+ int (*FIPS_mode_set)(int) = NULL;
+ int (*FIPS_mode)(void) = NULL;
+--- /dev/null
++++ b/src/_cffi_src/openssl/provider.py
+@@ -0,0 +1,42 @@
++# This file is dual licensed under the terms of the Apache License, Version
++# 2.0, and the BSD License. See the LICENSE file in the root of this repository
++# for complete details.
++
++
++INCLUDES = """
++#if CRYPTOGRAPHY_OPENSSL_300_OR_GREATER
++#include <openssl/provider.h>
++#include <openssl/proverr.h>
++#endif
++"""
++
++TYPES = """
++static const long Cryptography_HAS_PROVIDERS;
++
++typedef ... OSSL_PROVIDER;
++typedef ... OSSL_LIB_CTX;
++
++static const long PROV_R_BAD_DECRYPT;
++static const long PROV_R_XTS_DUPLICATED_KEYS;
++static const long PROV_R_WRONG_FINAL_BLOCK_LENGTH;
++"""
++
++FUNCTIONS = """
++OSSL_PROVIDER *OSSL_PROVIDER_load(OSSL_LIB_CTX *, const char *);
++int OSSL_PROVIDER_unload(OSSL_PROVIDER *prov);
++"""
++
++CUSTOMIZATIONS = """
++#if CRYPTOGRAPHY_OPENSSL_300_OR_GREATER
++static const long Cryptography_HAS_PROVIDERS = 1;
++#else
++static const long Cryptography_HAS_PROVIDERS = 0;
++typedef void OSSL_PROVIDER;
++typedef void OSSL_LIB_CTX;
++static const long PROV_R_BAD_DECRYPT = 0;
++static const long PROV_R_XTS_DUPLICATED_KEYS = 0;
++static const long PROV_R_WRONG_FINAL_BLOCK_LENGTH = 0;
++OSSL_PROVIDER *(*OSSL_PROVIDER_load)(OSSL_LIB_CTX *, const char *) = NULL;
++int (*OSSL_PROVIDER_unload)(OSSL_PROVIDER *) = NULL;
++#endif
++"""
+--- a/src/_cffi_src/openssl/cryptography.py
++++ b/src/_cffi_src/openssl/cryptography.py
+@@ -32,6 +32,9 @@
+ #include <Winsock2.h>
+ #endif
+ 
++#define CRYPTOGRAPHY_OPENSSL_300_OR_GREATER \
++    (OPENSSL_VERSION_NUMBER >= 0x30000000 && !CRYPTOGRAPHY_IS_LIBRESSL)
++
+ #define CRYPTOGRAPHY_OPENSSL_110F_OR_GREATER \
+     (OPENSSL_VERSION_NUMBER >= 0x1010006f && !CRYPTOGRAPHY_IS_LIBRESSL)
+ 
+@@ -52,6 +55,7 @@
+ """
+ 
+ TYPES = """
++static const int CRYPTOGRAPHY_OPENSSL_300_OR_GREATER;
+ static const int CRYPTOGRAPHY_OPENSSL_110F_OR_GREATER;
+ 
+ static const int CRYPTOGRAPHY_OPENSSL_LESS_THAN_111;
+--- a/src/_cffi_src/build_openssl.py
++++ b/src/_cffi_src/build_openssl.py
+@@ -96,6 +96,7 @@
+         "err",
+         "evp",
+         "fips",
++        "provider",
+         "hmac",
+         "nid",
+         "objects",
+--- a/src/cryptography/hazmat/bindings/openssl/binding.py
++++ b/src/cryptography/hazmat/bindings/openssl/binding.py
+@@ -15,15 +15,14 @@
+ from cryptography.hazmat.bindings.openssl._conditional import CONDITIONAL_NAMES
+ 
+ _OpenSSLErrorWithText = collections.namedtuple(
+-    "_OpenSSLErrorWithText", ["code", "lib", "func", "reason", "reason_text"]
++    "_OpenSSLErrorWithText", ["code", "lib", "reason", "reason_text"]
+ )
+ 
+ 
+ class _OpenSSLError(object):
+-    def __init__(self, code, lib, func, reason):
++    def __init__(self, code, lib, reason):
+         self._code = code
+         self._lib = lib
+-        self._func = func
+         self._reason = reason
+ 
+     def _lib_reason_match(self, lib, reason):
+@@ -31,7 +30,6 @@
+ 
+     code = utils.read_only_property("_code")
+     lib = utils.read_only_property("_lib")
+-    func = utils.read_only_property("_func")
+     reason = utils.read_only_property("_reason")
+ 
+ 
+@@ -43,10 +41,9 @@
+             break
+ 
+         err_lib = lib.ERR_GET_LIB(code)
+-        err_func = lib.ERR_GET_FUNC(code)
+         err_reason = lib.ERR_GET_REASON(code)
+ 
+-        errors.append(_OpenSSLError(code, err_lib, err_func, err_reason))
++        errors.append(_OpenSSLError(code, err_lib, err_reason))
+ 
+     return errors
+ 
+@@ -60,7 +57,7 @@
+ 
+         errors_with_text.append(
+             _OpenSSLErrorWithText(
+-                err.code, err.lib, err.func, err.reason, err_text_reason
++                err.code, err.lib, err.reason, err_text_reason
+             )
+         )
+ 
+@@ -140,6 +137,15 @@
+                 # adds all ciphers/digests for EVP
+                 cls.lib.OpenSSL_add_all_algorithms()
+                 cls._register_osrandom_engine()
++                if cls.lib.CRYPTOGRAPHY_OPENSSL_300_OR_GREATER:
++                    cls._legacy_provider = cls.lib.OSSL_PROVIDER_load(
++                        cls.ffi.NULL, b"legacy"
++                    )
++                    _openssl_assert(cls.lib, cls._legacy_provider != cls.ffi.NULL)
++                    cls._default_provider = cls.lib.OSSL_PROVIDER_load(
++                        cls.ffi.NULL, b"default"
++                    )
++                    _openssl_assert(cls.lib, cls._default_provider != cls.ffi.NULL)
+ 
+     @classmethod
+     def init_static_locks(cls):
+--- a/src/cryptography/hazmat/backends/openssl/ciphers.py
++++ b/src/cryptography/hazmat/backends/openssl/ciphers.py
+@@ -112,7 +112,18 @@
+             iv_nonce,
+             operation,
+         )
+-        self._backend.openssl_assert(res != 0)
++        errors = self._backend._consume_errors()
++        lib = self._backend._lib
++        if (
++            res == 0
++            and lib.Cryptography_HAS_PROVIDERS
++            and errors
++            and errors[0]._lib_reason_match(
++                lib.ERR_LIB_PROV, lib.PROV_R_XTS_DUPLICATED_KEYS
++            )
++        ):
++            raise ValueError("In XTS mode duplicated keys are not allowed")
++        self._backend.openssl_assert(res != 0, errors=errors)
+         # We purposely disable padding here as it's handled higher up in the
+         # API.
+         self._backend._lib.EVP_CIPHER_CTX_set_padding(ctx, 0)
+@@ -174,6 +185,13 @@
+                 errors[0]._lib_reason_match(
+                     self._backend._lib.ERR_LIB_EVP,
+                     self._backend._lib.EVP_R_DATA_NOT_MULTIPLE_OF_BLOCK_LENGTH,
++                )
++                or (
++                    self._backend._lib.Cryptography_HAS_PROVIDERS
++                    and errors[0]._lib_reason_match(
++                        self._backend._lib.ERR_LIB_PROV,
++                        self._backend._lib.PROV_R_WRONG_FINAL_BLOCK_LENGTH,
++                    )
+                 ),
+                 errors=errors,
+             )

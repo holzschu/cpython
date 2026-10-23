@@ -15,6 +15,19 @@ experiment with writing an iOS app in Python, tools such as `BeeWare's Briefcase
 <https://buildozer.readthedocs.io>`__ will provide a much more approachable
 user experience.
 
+CI builds for a-Shell
+=====================
+
+The ``iOS frameworks`` workflow builds arm64 device and universal arm64/x86_64 Simulator Python 3.13 frameworks using ``Modules/Setup_iOS.local``, as ``buildForiOS.sh`` does. SSL, ctypes and lzma are built into ``Python.framework``; seven test extensions remain separate frameworks. It builds pinned OpenSSL, libffi, XZ and ios_system sources and needs no Fortran compiler. Run ``nice -n 15 bash scripts/build-ci-ios.sh`` with Xcode 26.6, Homebrew autoconf, automake, libtool, CMake, Ninja and openssl@3 installed. The deployment target is iOS 14, matching ``buildForiOS.sh``.
+
+Pull requests, pushes to ``3.13``, tags and manual runs upload the ``python-ios`` artifact: xcframework ZIPs, ``python-stdlib.tar.gz`` and ``checksums.txt``. The stdlib archive contains separate ``iphoneos/lib`` and ``iphonesimulator/lib`` trees with a-Shell's ``.fwork`` placeholders. Third-party Python packages are built separately. A ``v*`` tag in holzschu/cpython also publishes these files as release assets; existing assets are never overwritten.
+
+NumPy and SciPy use ``bash scripts/build-ci-science.sh <core-build-directory> <native-xcframework-directory> [build-directory]``. Run it after ``build-ci-ios.sh``, with the NumPy, Cython and pybind11 submodules initialized recursively, Homebrew Flang 23, pkgconf and uv installed, and matching ``openblas.xcframework`` and ``flang_rt.xcframework`` inputs built by the Python-aux Flang recipe. It builds NumPy 2.3.1 and SciPy 1.16.1 for the same three architectures, packages the eight a-Shell framework products and their Python files, and builds a Simulator Python launcher for ``iOS/tests/science.py``. The launcher runs the fixture on two sequential command threads in one process on the arm64 Simulator, including numerical operations and interpreter re-entry. It uses the pinned iOS Cython generator and pybind11 headers so their module cleanup and thread-local state match a-Shell. PROPACK's private helpers and COMMON blocks have distinct names per scalar type so the modules can share one SciPy framework.
+
+Mini packages use ``bash scripts/build-ci-mini.sh <core-build-directory> <native-xcframework-directory> [build-directory]`` after the core build. The native directory must contain the static ``libxslt.xcframework`` and ``libexslt.xcframework`` products from Python-aux. The script needs uv and pkgconf, downloads checksum-pinned package sources and the publisher's curl-impersonate iOS archive, and runs the existing mini, crypto and curl_cffi recipes for all three architectures. It produces 86 xcframework ZIPs, ``python-mini.tar.gz`` and ``mini-checksums.txt`` under ``.build/mini/dist``. These are the primary interpreter products; the app's ``updatePythonFiles.sh`` owns its additional interpreter copies.
+
+The mini recipe retains cryptography 3.4.8 without Rust for interpreter re-entry, with an OpenSSL 3 compatibility patch. PyCryptodome follows a-Shell's ``.fwork`` markers to load its native frameworks. Its x86-only AES-NI and CLMUL implementations share the AES/GHASH frameworks through additional loader aliases, keeping the same framework set on both Simulator architectures. lxml uses its generated C sources with the module-pointer reset from the iOS Cython fork so a second Python command can initialize them again. ``iOS/tests/mini.py`` checks CFFI, AES through both Crypto namespaces and cryptography, invalid cipher input, all seven lxml native modules, XSLT, regex and HTTP against a local fixture through two fresh command threads on the arm64 Simulator. The workflow runs it against the unpacked mini ZIPs and Python data, with core Python from the same build. The x86_64 products are built and audited.
+
 Compilers for building on iOS
 =============================
 
