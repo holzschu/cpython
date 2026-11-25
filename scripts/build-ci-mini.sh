@@ -142,9 +142,16 @@ tar -czf "$build_root/dist/python-mini.tar.gz" -C "$build_root/stdlib" iphoneos/
 (cd "$build_root/dist" && shasum -a 256 python-mini.tar.gz) >> "$build_root/dist/mini-checksums.txt"
 cp "$build_root/dist/mini-checksums.txt" "$build_root/dist/mini-release.md"
 
-# Runtime qualification uses arm64; x86_64 products are built and audited above.
+# The Simulator runs the host architecture; all product slices are audited above.
+runtime_arch=$(uname -m)
+case $runtime_arch in
+	arm64) runtime_target=iphonesimulator ;;
+	x86_64) runtime_target=iphonesimulator-x86_64 ;;
+	*) echo "Unsupported Simulator host architecture: $runtime_arch" >&2; exit 1 ;;
+esac
 # Reuse the public Python command launcher, including its two fresh command threads.
-xcrun --sdk iphonesimulator clang -target arm64-apple-ios14.0-simulator "$source_root/iOS/tests/science.c" \
+xcrun --sdk iphonesimulator clang -target "$runtime_arch-apple-ios14.0-simulator" "$source_root/iOS/tests/science.c" \
 	-I"$core_root/install/iphonesimulator/Python.framework/Headers" -F"$core_root/install/iphonesimulator" -framework Python \
-	-F"$build_root/iphonesimulator/native" -framework ios_system -o "$build_root/mini-python-arm64"
-codesign --force --sign - "$build_root/mini-python-arm64"
+	-F"$build_root/$runtime_target/native" -framework ios_system \
+	-Xlinker -rpath -Xlinker "@loader_path/$runtime_target/native" -o "$build_root/mini-python"
+codesign --force --sign - "$build_root/mini-python"

@@ -17,7 +17,7 @@ permissions:
 
 jobs:
   build:
-    runs-on: macos-26
+    runs-on: macos-26-intel
     timeout-minutes: 180
     env:
       DEVELOPER_DIR: /Applications/Xcode_26.6.app/Contents/Developer
@@ -79,9 +79,9 @@ jobs:
         SIMCTL_CHILD_PYTHONHOME="$core/install/iphonesimulator" \
         SIMCTL_CHILD_PYTHONPATH="$consumer/iphonesimulator/lib/python3.13/site-packages" \
         SIMCTL_CHILD_APPDIR="$consumer" \
-        SIMCTL_CHILD_DYLD_FRAMEWORK_PATH="$core/install/iphonesimulator:$mini/iphonesimulator/native" \
+        SIMCTL_CHILD_DYLD_FRAMEWORK_PATH="$core/install/iphonesimulator" \
         SIMCTL_CHILD_MINI_TEST_URL=http://127.0.0.1:18716/fixture.txt \
-          xcrun simctl spawn "$device" "$mini/mini-python-arm64" "$PWD/iOS/tests/mini.py" > "$mini/dist/mini-runtime.log" 2>&1 || result=$?
+          xcrun simctl spawn "$device" "$mini/mini-python" "$PWD/iOS/tests/mini.py" > "$mini/dist/mini-runtime.log" 2>&1 || result=$?
         cat "$mini/dist/mini-runtime.log"
         test "$result" = 0
         for line in "CFFI allocation PASS" "Crypto, Cryptodome and cryptography AES PASS" "lxml XSLT and regex overlap PASS" "curl_cffi HTTP PASS"; do
