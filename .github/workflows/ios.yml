@@ -42,9 +42,9 @@ jobs:
     - name: Build native XSLT inputs and mini packages
       run: |
         git init .build/native-recipes
-        git -C .build/native-recipes fetch --depth 1 https://github.com/demrom/Python-aux.git f6710efd9f0c03e5073b43521f04759283d3fc40
+        git -C .build/native-recipes fetch --depth 1 https://github.com/holzschu/Python-aux.git 037f103e10f5987d9a728590dddc579eafdee702
         git -C .build/native-recipes checkout --detach FETCH_HEAD
-        test "$(git -C .build/native-recipes rev-parse HEAD)" = f6710efd9f0c03e5073b43521f04759283d3fc40
+        test "$(git -C .build/native-recipes rev-parse HEAD)" = 037f103e10f5987d9a728590dddc579eafdee702
         git -C .build/native-recipes submodule update --init --depth 1 libxslt
         (cd .build/native-recipes && nice -n 15 bash build_libxslt.sh)
         nice -n 15 bash scripts/build-ci-mini.sh "$PWD/.build/ci" "$PWD/.build/native-recipes"
