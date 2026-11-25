@@ -101,6 +101,9 @@ for device in "$build_root/iphoneos/iOS/Frameworks/"*.framework; do
 	cp -R "$build_root/iphonesimulator/iOS/Frameworks/$name.framework" "$framework"
 	lipo -create "$framework/$name" "$build_root/iphonesimulator-x86_64/iOS/Frameworks/$name.framework/$name" -output "$framework/$name.universal"
 	mv "$framework/$name.universal" "$framework/$name"
+	# Replace the complete arrays; plutil can insert when given an array index.
+	plutil -replace CFBundleSupportedPlatforms -json '["iPhoneOS"]' "$device/Info.plist"
+	plutil -replace CFBundleSupportedPlatforms -json '["iPhoneSimulator"]' "$framework/Info.plist"
 	xcodebuild -create-xcframework -framework "$device" -framework "$framework" -output "$build_root/dist/$name.xcframework"
 	for slice in ios-arm64 ios-arm64_x86_64-simulator; do
 		binary=$build_root/dist/$name.xcframework/$slice/$name.framework/$name

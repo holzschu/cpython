@@ -114,7 +114,8 @@ for target in iphoneos iphonesimulator iphonesimulator-x86_64; do
   )
   installed=$build_root/install/$target
   cp "$build_root/ios_error.h" "$installed/Python.framework/Headers/"
-  plutil -replace CFBundleSupportedPlatforms.0 -string "$platform" "$installed/Python.framework/Info.plist"
+  # Replace the array: replacing an indexed entry can insert a second platform.
+  plutil -replace CFBundleSupportedPlatforms -json "[\"$platform\"]" "$installed/Python.framework/Info.plist"
   # Match a-Shell's existing framework loader and .fwork placeholders.
   mkdir -p "$installed/Frameworks"
   for extension in "$installed/lib/python3.13/lib-dynload/"*.so; do
@@ -126,7 +127,7 @@ for target in iphoneos iphonesimulator iphonesimulator-x86_64; do
     cp "$source_root/iOS/Resources/dylib-Info-template.plist" "$framework/Info.plist"
     plutil -replace CFBundleExecutable -string "$name" "$framework/Info.plist"
     plutil -replace CFBundleIdentifier -string "org.python.${name//_/-}" "$framework/Info.plist"
-    plutil -replace CFBundleSupportedPlatforms.0 -string "$platform" "$framework/Info.plist"
+    plutil -replace CFBundleSupportedPlatforms -json "[\"$platform\"]" "$framework/Info.plist"
     plutil -replace MinimumOSVersion -string 14.0 "$framework/Info.plist"
     cp "$extension" "$framework/$name"
     install_name_tool -id "@rpath/$name.framework/$name" "$framework/$name"
