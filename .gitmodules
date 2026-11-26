@@ -43,7 +43,7 @@
 	url = https://github.com/holzschu/scikit-build.git
 [submodule "packages/pybind11"]
 	path = packages/pybind11
-	url = git@github.com:holzschu/pybind11.git
+	url = https://github.com/holzschu/pybind11.git
 [submodule "packages/word_cloud"]
 	path = packages/word_cloud
 	url = https://github.com/amueller/word_cloud

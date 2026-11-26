@@ -54,7 +54,7 @@ _blake2 _blake2/blake2module.c _blake2/blake2b_impl.c _blake2/blake2s_impl.c
 # pyexpat module uses libexpat
 # either static libexpat.a from Modules/expat or libexpat.so with
 # ./configure --with-system-expat
-pyexpat pyexpat.c Modules/expat/libexpat.a
+pyexpat pyexpat.c
 
 # _elementtree libexpat via CAPI hook in pyexpat.
 _elementtree _elementtree.c

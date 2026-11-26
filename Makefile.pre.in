@@ -974,7 +974,7 @@ $(PYTHONFRAMEWORKDIR)/$(PYTHONFRAMEWORK): \
 		-install_name $(PYTHONFRAMEWORKINSTALLNAMEPREFIX)/$(PYTHONFRAMEWORK) \
 		-compatibility_version $(VERSION) \
 		-current_version $(VERSION) \
-		-framework CoreFoundation $(LIBS);
+		-framework CoreFoundation $(MODLIBS) $(LIBS);
 	$(INSTALL_DATA) $(RESSRCDIR)/Info.plist $(PYTHONFRAMEWORKDIR)/Info.plist
 
 # This rule builds the Cygwin Python DLL and import library if configured
